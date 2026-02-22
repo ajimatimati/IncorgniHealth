@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "cd server && npm start",
-    "build": "cd server && npm install && npm run build"
+    "build": "cd server && npm install && npx prisma generate && npx prisma db push"
   },
   "engines": {
     "node": "22.x"
