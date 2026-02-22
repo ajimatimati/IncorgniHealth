@@ -25,5 +25,4 @@ databases:
   # PostgreSQL Database
   - name: incorgnihealth-db
     databaseName: mcnuels
-    user: postgres
     plan: free
