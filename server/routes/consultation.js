@@ -114,4 +114,50 @@ router.put('/:id/close', auth, async (req, res) => {
   }
 });
 
+// @route   POST /api/v1/consultation/:id/review
+const reviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(1000).optional(),
+});
+
+router.post('/:id/review', auth, validate(reviewSchema), async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+    const consultation = await prisma.consultation.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!consultation || consultation.patientId !== req.user.id) {
+      return res.status(403).json({ msg: 'Unauthorized' });
+    }
+    if (consultation.status !== 'COMPLETED') {
+      return res.status(400).json({ msg: 'Consultation must be completed to review' });
+    }
+
+    // Check if review already exists
+    const existing = await prisma.review.findUnique({
+      where: { consultationId: consultation.id },
+    });
+    if (existing) {
+      return res.status(400).json({ msg: 'Review already submitted' });
+    }
+
+    const review = await prisma.review.create({
+      data: {
+        consultationId: consultation.id,
+        patientId: req.user.id,
+        doctorId: consultation.doctorId,
+        rating,
+        comment,
+      },
+    });
+
+    logger.info('Review submitted', { consultationId: consultation.id, rating });
+    res.status(201).json({ msg: 'Review submitted', review });
+  } catch (err) {
+    logger.error('Review submission error', { error: err.message });
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 module.exports = router;

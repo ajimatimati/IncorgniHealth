@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { AlertCircle } from 'lucide-react';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -24,9 +25,7 @@ class ErrorBoundary extends Component {
         <div className="min-h-screen bg-primary flex items-center justify-center p-6">
           <div className="text-center max-w-md">
             <div className="w-20 h-20 rounded-3xl bg-red-500/10 flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-              </svg>
+              <AlertCircle className="w-10 h-10 text-red-400" strokeWidth={1.5} />
             </div>
             <h1 className="text-2xl font-bold text-text-primary mb-2">Something went wrong</h1>
             <p className="text-sm text-text-muted mb-6">
@@ -51,8 +50,8 @@ class ErrorBoundary extends Component {
                 <summary className="text-xs text-text-dim cursor-pointer hover:text-text-muted transition">
                   Error details
                 </summary>
-                <pre className="mt-2 text-xs text-red-400/80 bg-red-500/5 p-3 rounded-xl overflow-x-auto border border-red-500/10">
-                  {this.state.error.toString()}
+                <pre className="mt-2 text-xs text-red-400/80 bg-red-500/5 p-3 rounded-xl overflow-x-auto border border-red-500/10 whitespace-pre-wrap">
+                  {this.state.error.stack || this.state.error.toString()}
                 </pre>
               </details>
             )}

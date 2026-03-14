@@ -1,98 +1,22 @@
-import { useCallback } from "react";
-import Particles from "@tsparticles/react";
-import { loadSlim } from "@tsparticles/slim"; // if you are going to use `loadSlim`, install the "@tsparticles/slim" package too.
+import React from "react";
 
 const LivingBackground = () => {
-  const particlesInit = useCallback(async engine => {
-    // you can initiate the tsParticles instance (engine) here, adding custom shapes or presets
-    // this loads the tsparticles package bundle, it's the easiest method for getting everything ready
-    // starting from v2 you can add only the features you need reducing the bundle size
-    await loadSlim(engine);
-  }, []);
-
-  const particlesLoaded = useCallback(async container => {
-    console.log(container);
-  }, []);
-
   return (
-    <Particles
-        id="tsparticles"
-        init={particlesInit}
-        loaded={particlesLoaded}
-        options={{
-            background: {
-                color: {
-                    value: "transparent",
-                },
-            },
-            fpsLimit: 60,
-            interactivity: {
-                events: {
-                    onClick: {
-                        enable: true,
-                        mode: "push",
-                    },
-                    onHover: {
-                        enable: true,
-                        mode: "repulse",
-                    },
-                    resize: true,
-                },
-                modes: {
-                    push: {
-                        quantity: 4,
-                    },
-                    repulse: {
-                        distance: 200,
-                        duration: 0.4,
-                    },
-                },
-            },
-            particles: {
-                color: {
-                    value: "#4facfe",
-                },
-                links: {
-                    color: "#00f2fe",
-                    distance: 150,
-                    enable: true,
-                    opacity: 0.5,
-                    width: 1,
-                },
-                collisions: {
-                    enable: true,
-                },
-                move: {
-                    direction: "none",
-                    enable: true,
-                    outModes: {
-                        default: "bounce",
-                    },
-                    random: false,
-                    speed: 1,
-                    straight: false,
-                },
-                number: {
-                    density: {
-                        enable: true,
-                        area: 800,
-                    },
-                    value: 40,
-                },
-                opacity: {
-                    value: 0.5,
-                },
-                shape: {
-                    type: "circle",
-                },
-                size: {
-                    value: { min: 1, max: 3 },
-                },
-            },
-            detectRetina: true,
+    <div className="fixed inset-0 pointer-events-none z-[-1] overflow-hidden bg-primary">
+        {/* Subtle, harsh noise filter for the film-grain feel */}
+      <div 
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
         }}
-    />
+      />
+      {/* Clean neutral background context */}
+      <div className="absolute top-1/2 left-0 w-full h-px bg-white/5 opacity-50 transform -translate-y-1/2" />
+      <div className="absolute top-0 left-1/4 w-px h-full bg-white/5 opacity-50" />
+      <div className="absolute top-0 right-1/4 w-px h-full bg-white/5 opacity-50" />
+    </div>
   );
 };
 
 export default LivingBackground;
+

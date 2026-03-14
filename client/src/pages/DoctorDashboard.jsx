@@ -1,33 +1,45 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { useToast } from '../components/Toast';
 import EmptyState from '../components/EmptyState';
 import AvatarGenerator from '../components/AvatarGenerator';
 import api from '../api';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import RippleButton from '../components/RippleButton';
+import DiagnosticOverview from '../components/DiagnosticOverview';
+import { Clock, MessageCircle, CheckCircle, CircleDollarSign, Stethoscope } from 'lucide-react';
 
-/* ─── SVG Icons ─── */
 const Icons = {
-  queue: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-  chat: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.159 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>,
-  check: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-  money: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-  empty: <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>,
+  queue: <Clock className="w-5 h-5" strokeWidth={1.5} />,
+  chat: <MessageCircle className="w-5 h-5" strokeWidth={1.5} />,
+  check: <CheckCircle className="w-5 h-5" strokeWidth={1.5} />,
+  money: <CircleDollarSign className="w-5 h-5" strokeWidth={1.5} />,
+  stethoscope: <Stethoscope className="w-6 h-6" strokeWidth={1.5} />,
 };
+
+const STAT_COLOURS = [
+  { icon: 'text-[#6D28D9]', bg: 'bg-[#F5F3FF]' }, // Violet
+  { icon: 'text-[#D97706]', bg: 'bg-[#FEF3C7]' }, // Amber
+  { icon: 'text-[#059669]', bg: 'bg-[#D1FAE5]' }, // Green
+  { icon: 'text-[#18181B]', bg: 'bg-[#F4F4F5]' }, // Gray
+];
 
 const DoctorDashboard = () => {
   const [queue, setQueue] = useState([]);
   const [stats, setStats] = useState({ completed: 0, active: 0, totalEarnings: 0 });
   const [loading, setLoading] = useState(true);
+  const [incomingPatients, setIncomingPatients] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { socket } = useSocket();
   const toast = useToast();
 
   useEffect(() => {
     if (!user || user.role !== 'DOCTOR') { navigate('/auth'); return; }
-
     const fetchData = async () => {
       try {
         const results = await Promise.allSettled([
@@ -36,129 +48,216 @@ const DoctorDashboard = () => {
         ]);
         if (results[0].status === 'fulfilled') setQueue(results[0].value.data);
         if (results[1].status === 'fulfilled') setStats(results[1].value.data);
-      } catch {
-        // Silent fail
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     };
-
     fetchData();
     const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
-  }, [navigate, user]);
+
+    if (socket && user.publicId) {
+      socket.emit('doctor-join', user.publicId);
+      socket.on('patient-arrived', (p) => {
+        setIncomingPatients(prev => prev.find(x => x.socketId === p.socketId) ? prev : [...prev, p]);
+        toast.success(`${p.nickname || 'A client'} is ready to be seen.`);
+      });
+      socket.on('active-patients', setIncomingPatients);
+      socket.on('patient-left', (sid) => setIncomingPatients(prev => prev.filter(p => p.socketId !== sid)));
+    }
+    return () => {
+      clearInterval(interval);
+      if (socket) { socket.off('patient-arrived'); socket.off('active-patients'); socket.off('patient-left'); }
+    };
+  }, [navigate, user, socket]);
 
   const handleClaim = async (id) => {
     try {
       await api.post(`/doctor/claim/${id}`);
-      toast.success('Patient claimed!');
+      toast.success('Client assigned successfully!');
       navigate(`/chat/${id}`);
     } catch (err) {
-      toast.error(err.response?.data?.msg || 'Could not claim patient.');
+      toast.error(err.response?.data?.msg || 'Could not assign client.');
     }
   };
 
+  const handleAdmit = (socketId) => {
+    const queueItem = queue.find(c => c.patient?.id === selectedPatient?.id);
+    const consultId = queueItem ? queueItem.id : 'demo';
+    socket.emit('admit-patient', { to: socketId, roomId: consultId });
+    navigate(`/consult/${consultId}`);
+  };
+
   const statCards = [
-    { label: 'In Queue', value: queue.filter(c => c.status === 'PENDING').length, color: 'text-amber-400', bg: 'bg-amber-500/10', icon: Icons.queue },
-    { label: 'Active', value: queue.filter(c => c.status === 'ACTIVE').length, color: 'text-cyan-400', bg: 'bg-cyan-500/10', icon: Icons.chat },
-    { label: 'Completed', value: stats.completed, color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: Icons.check },
-    { label: 'Earnings', value: `₦${stats.totalEarnings.toLocaleString()}`, color: 'text-action', bg: 'bg-action/10', icon: Icons.money },
+    { label: 'In Queue',   value: queue.filter(c => c.status === 'PENDING').length, icon: Icons.queue },
+    { label: 'Active',     value: queue.filter(c => c.status === 'ACTIVE').length,  icon: Icons.chat },
+    { label: 'Completed',  value: stats.completed,                                  icon: Icons.check },
+    { label: 'Earnings',   value: `₦${stats.totalEarnings.toLocaleString()}`,       icon: Icons.money },
   ];
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.4 }}
-      className="p-6 lg:p-8 max-w-7xl mx-auto relative z-10"
-    >
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Medical Dashboard</h1>
-          <p className="text-sm text-text-muted mt-1">
-            Status: <span className="text-emerald-400 font-medium">Online & Visible</span>
-          </p>
-        </div>
-        <div className="text-right hidden sm:block">
-          <p className="text-sm font-bold text-text-primary">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {statCards.map((stat, i) => (
-          <div key={i} className={`glass-card p-5 flex items-center gap-4 ${stat.bg} animate-slide-up`} style={{ animationDelay: `${i * 0.05}s` }}>
-             <div className={`p-3 rounded-xl bg-white/5 ${stat.color}`}>
-               {stat.icon}
-             </div>
-             <div>
-               <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-               <p className="text-xs text-text-muted font-medium uppercase tracking-wide">{stat.label}</p>
-             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Queue Column */}
-        <div className="lg:col-span-1 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Patient Queue</h2>
-            <span className="badge bg-white/5 text-text-muted">{queue.length}</span>
-          </div>
-
-          {loading ? (
-             <div className="space-y-3">
-               {[1,2,3].map(i => <div key={i} className="h-20 bg-surface rounded-xl animate-pulse" />)}
-             </div>
-          ) : queue.length === 0 ? (
-             <EmptyState title="Queue Empty" description="Relax, no patients waiting." svgIcon={Icons.empty} />
-          ) : (
-            <div className="space-y-3">
-              {queue.map((consult, i) => (
-                <div key={consult.id} className="glass-card p-4 hover:bg-surface-alt/50 transition duration-300 animate-slide-up" style={{ animationDelay: `${i * 0.05}s` }}>
-                  <div className="flex items-center gap-3">
-                    <AvatarGenerator seed={consult.patient?.publicId} size="md" />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-sm text-action truncate">{consult.patient?.nickname || consult.patient?.publicId}</p>
-                      <p className="text-xs text-text-muted truncate">
-                         {consult.patient?.sex} • {consult.patient?.age}yo
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-[10px] text-text-dim px-2 py-1 rounded bg-white/5">
-                      {new Date(consult.createdAt).toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' })}
-                    </span>
-                    {!consult.doctorId ? (
-                      <RippleButton onClick={() => handleClaim(consult.id)} className="text-xs px-4 py-1.5 justify-center">
-                        Accept
-                      </RippleButton>
-                    ) : (
-                      <RippleButton onClick={() => navigate(`/chat/${consult.id}`)} variant="secondary" className="text-xs px-4 py-1.5 justify-center">
-                        Resume
-                      </RippleButton>
-                    )}
-                  </div>
-                </div>
-              ))}
+    <div className="min-h-dvh pb-28 lg:pb-0 font-sans bg-[#F8F7F6]">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+        className="px-4 pt-6 lg:px-10 lg:pt-10 max-w-[1400px] mx-auto"
+      >
+        {/* ── Header ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-white p-6 rounded-2xl border border-[#E8E6E3] shadow-card-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[#6D28D9] bg-[#F5F3FF]">
+              {Icons.stethoscope}
             </div>
-          )}
+            <div>
+              <p className="text-[11px] font-bold text-[#A1A1AA] uppercase tracking-wider mb-0.5">Clinical Dashboard</p>
+              <h1 className="text-2xl font-black text-[#18181B]" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+                Dr. {user?.nickname || user?.publicId?.slice(0, 8)}
+              </h1>
+              <p className="text-[11px] text-[#059669] font-bold flex items-center gap-1.5 mt-1 uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-[#059669]" /> Online &amp; Ready
+              </p>
+            </div>
+          </div>
+          <div className="text-right hidden sm:block">
+            <p className="section-label mb-1">Authenticated ID</p>
+            <p className="text-sm font-bold text-[#18181B] bg-[#F4F4F5] px-3 py-1.5 rounded-lg">{user?.publicId || 'SYS_PENDING'}</p>
+          </div>
         </div>
 
-        {/* Workspace/Preview Area */}
-        <div className="lg:col-span-2 hidden lg:flex items-center justify-center glass-panel border border-dashed border-white/10 rounded-2xl min-h-[500px] bg-secondary/30">
-           <div className="text-center max-w-xs">
-             <div className="w-20 h-20 rounded-full bg-surface-alt flex items-center justify-center mx-auto mb-6 text-text-dim">
-               {Icons.chat}
-             </div>
-             <h3 className="text-lg font-medium text-text-primary mb-2">Workspace Ready</h3>
-             <p className="text-sm text-text-muted">Select a patient from the queue to view details and start consultation.</p>
-           </div>
+        {/* ── Stats ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {statCards.map((s, i) => (
+            <div key={i} className="p-5 bg-white rounded-2xl border border-[#E8E6E3] shadow-card-sm flex flex-col justify-between">
+              <div className="flex justify-between items-start mb-5">
+                <span className={`p-3 rounded-xl ${STAT_COLOURS[i].icon} ${STAT_COLOURS[i].bg}`}>
+                  {s.icon}
+                </span>
+                <span className="text-3xl font-black text-[#18181B] tracking-tight">
+                  {s.value}
+                </span>
+              </div>
+              <p className="section-label border-t border-[#F0EDED] pt-3">{s.label}</p>
+            </div>
+          ))}
         </div>
-      </div>
-    </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
+          {/* ── Left: Queues ── */}
+          <div className="lg:col-span-4 xl:col-span-4 flex flex-col gap-6">
+
+            {/* Live Waiting Room */}
+            <div className="p-5 bg-white rounded-2xl border border-[#E8E6E3] shadow-card-sm">
+              <h2 className="section-label flex items-center gap-2 mb-4">
+                <span className="w-2 h-2 rounded-full bg-[#6D28D9]" />
+                Waiting Room
+              </h2>
+              <AnimatePresence>
+                {incomingPatients.length === 0 ? (
+                  <p className="text-[12px] font-semibold text-[#A1A1AA] py-6 text-center">No clients currently queued.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {incomingPatients.map((p) => (
+                      <motion.div key={p.socketId} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+                        className="flex items-center justify-between p-4 bg-[#F9F9FB] rounded-xl border border-[#F0EDED]"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center text-[#6D28D9] bg-[#F5F3FF] font-black text-sm uppercase">
+                            {p.nickname?.[0] || 'P'}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-[#18181B]">{p.nickname || 'Unknown Client'}</p>
+                            <p className="text-[10.5px] font-semibold text-[#A1A1AA] uppercase tracking-wider mt-0.5">Ready to connect</p>
+                          </div>
+                        </div>
+                        <RippleButton variant="violet" size="sm" onClick={() => handleAdmit(p.socketId)}>Admit</RippleButton>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* General Queue */}
+            <div className="flex-1 p-5 bg-white rounded-2xl border border-[#E8E6E3] shadow-card-sm flex flex-col">
+              <div className="flex items-center justify-between mb-4 border-b border-[#F0EDED] pb-3">
+                <h2 className="section-label">General Queue</h2>
+                <span className="text-[11px] font-bold text-[#18181B] bg-[#F4F4F5] px-2.5 py-1 rounded-full">
+                  {queue.length} waiting
+                </span>
+              </div>
+
+              {loading ? (
+                <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 rounded-xl bg-[#F4F4F5] animate-pulse" />)}</div>
+              ) : queue.length === 0 ? (
+                <div className="py-12 flex-1 flex flex-col items-center justify-center text-center">
+                  <p className="text-[12px] font-bold text-[#A1A1AA]">No historic queue items.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {queue.map((consult) => {
+                    const isSelected = selectedPatient?.id === consult.patient?.id;
+                    return (
+                      <div key={consult.id} onClick={() => setSelectedPatient(consult.patient)}
+                        className={`p-4 rounded-xl cursor-pointer transition-all border ${
+                          isSelected ? 'bg-[#F9F9FB] border-[#6D28D9] shadow-[0_0_0_1px_rgba(109,40,217,1)]' : 'bg-white border-[#E8E6E3] hover:border-[#D4D4D8]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <AvatarGenerator seed={consult.patient?.publicId} size="md" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[15px] font-bold text-[#18181B] truncate">{consult.patient?.nickname || consult.patient?.publicId}</p>
+                            <p className="text-[11px] font-semibold text-[#A1A1AA] uppercase tracking-wider mt-0.5">
+                              {consult.patient?.sex || 'U'} · {consult.patient?.age || '--'} yrs
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-[#F0EDED] flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-[#71717A]">
+                            {new Date(consult.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {!consult.doctorId ? (
+                            <RippleButton size="sm" onClick={(e) => { e.stopPropagation(); handleClaim(consult.id); }}>
+                              Claim
+                            </RippleButton>
+                          ) : (
+                            <RippleButton variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/chat/${consult.id}`); }}>
+                              Resume
+                            </RippleButton>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Right: 3D Diagnostic Workspace ── */}
+          <div className="lg:col-span-8 xl:col-span-8 flex flex-col" style={{ minHeight: '480px' }}>
+            {selectedPatient ? (
+              <div className="relative flex-1 rounded-2xl overflow-hidden" style={{ minHeight: '480px' }}>
+                <DiagnosticOverview title="Clinical Assessment" patientData={selectedPatient} readOnly />
+                <div className="absolute bottom-6 right-6 z-20 flex gap-3">
+                  <RippleButton
+                    variant="primary"
+                    onClick={() => navigate(`/chat/${queue.find(c => c.patient?.id === selectedPatient.id)?.id}`)}
+                  >
+                    {Icons.chat}
+                    Open Chat
+                  </RippleButton>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center rounded-2xl bg-white border border-[#E8E6E3] shadow-card-sm" style={{ minHeight: '480px' }}>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-5 text-[#A1A1AA] bg-[#F4F4F5]">
+                  {Icons.stethoscope}
+                </div>
+                <p className="text-[16px] font-black text-[#18181B] mb-2" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>Select a Client</p>
+                <p className="text-[13px] text-[#71717A] max-w-xs text-center leading-relaxed">
+                  Choose a client from the queue to load their 3D diagnostic overview and vitals.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 

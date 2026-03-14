@@ -8,7 +8,7 @@ const logger = require('../utils/logger');
 const { createNotification } = require('../utils/notify');
 
 function pharmacyGuard(req, res, next) {
-  if (req.user.role !== 'PHARMACIST') return res.status(403).json({ msg: 'Pharmacy access required' });
+  if (req.user.role !== 'PHARMACY') return res.status(403).json({ msg: 'Pharmacy access required' });
   next();
 }
 

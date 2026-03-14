@@ -1,347 +1,421 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { GoogleLogin } from '@react-oauth/google';
 import AppleLogin from 'react-apple-signin-auth';
 import api from '../api';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const ROLES = [
+  { value: 'PATIENT',       label: 'Patient'       },
+  { value: 'DOCTOR',        label: 'Doctor'        },
+  { value: 'PHARMACY',      label: 'Pharmacist'    },
+  { value: 'RIDER',         label: 'Rider'         },
+  { value: 'LAB_SCIENTIST', label: 'Lab Technician' },
+];
+
+const ROLE_ROUTES = {
+  DOCTOR: '/doctor-dashboard',
+  PHARMACY: '/pharmacy-dashboard',
+  RIDER: '/rider-dashboard',
+  LAB_SCIENTIST: '/lab-dashboard',
+  ADMIN: '/admin',
+};
 
 const Auth = () => {
-  const [step, setStep] = useState(1);
-  const [phone, setPhone] = useState('');
-  const [role, setRole] = useState('PATIENT');
-  const [otp, setOtp] = useState('');
+  const [step, setStep]     = useState(1);
+  const [phone, setPhone]   = useState('');
+  const [role, setRole]     = useState('PATIENT');
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [otp, setOtp]       = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [ghostId, setGhostId] = useState('');
+  const [error, setError]   = useState('');
+  const otpRefs = useRef([]);
+
   const navigate = useNavigate();
   const { login } = useAuth();
   const toast = useToast();
 
+  const otpString = otp.join('');
+
   const handleSignup = async (e) => {
     e.preventDefault();
     if (!phone.trim()) { setError('Enter your phone number to continue.'); return; }
-    setError('');
-    setLoading(true);
+    if (role === 'LAB_SCIENTIST' && !licenseNumber.trim()) { setError('Enter your facility license number.'); return; }
+    setError(''); setLoading(true);
     try {
-      const res = await api.post('/auth/signup', { phone, role });
-      setGhostId(res.data.tempId ? `Your OTP: ${res.data.debugOtp}` : '');
-      toast.info(`Debug OTP: ${res.data.debugOtp}`);
+      const res = await api.post('/auth/signup', { phone, role, licenseNumber: role === 'LAB_SCIENTIST' ? licenseNumber : undefined });
+      toast.info(`OTP sent (Debug: ${res.data.debugOtp})`);
       setStep(2);
     } catch (err) {
-      if (err.response?.data?.msg === "User already registered.") {
-        setStep(2);
-        toast.info('Account found. Enter your OTP to sign in.');
+      if (err.response?.data?.msg === 'User already registered.') {
+        setStep(2); toast.info('Account found. Enter your OTP.');
       } else {
-        setError(err.response?.data?.msg || "Something went wrong. Try again.");
+        setError(err.response?.data?.msg || 'Connection failed. Ensure both servers are running.');
       }
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleVerify = async (e) => {
+    e?.preventDefault();
+    if (otpString.length < 6) { setError('Enter the 6-digit code.'); return; }
+    setError(''); setLoading(true);
+    try {
+      const res = await api.post('/auth/verify', { phone, otp: otpString });
+      const { token, refreshToken: rToken, user } = res.data;
+      login(token, user);
+      if (rToken) localStorage.setItem('refreshToken', rToken);
+      navigate(ROLE_ROUTES[user.role] || '/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.msg || 'Incorrect code. Try again.');
+      setOtp(['', '', '', '', '', '']);
+      otpRefs.current[0]?.focus();
+    } finally { setLoading(false); }
+  };
+
+  const handleOtpChange = (idx, val) => {
+    const digit = val.replace(/\D/g, '').slice(-1);
+    const next = [...otp];
+    next[idx] = digit;
+    setOtp(next);
+    if (digit && idx < 5) otpRefs.current[idx + 1]?.focus();
+    if (digit && idx === 5 && next.every(d => d)) {
+      setTimeout(() => handleVerify(), 100);
+    }
+  };
+
+  const handleOtpKey = (idx, e) => {
+    if (e.key === 'Backspace' && !otp[idx] && idx > 0) otpRefs.current[idx - 1]?.focus();
+  };
+
+  const handleOtpPaste = (e) => {
     e.preventDefault();
-    if (!otp.trim()) { setError('Enter the 6-digit code we sent you.'); return; }
-    setError('');
-    setLoading(true);
-    try {
-      const res = await api.post('/auth/verify', { phone, otp });
-      const { token, refreshToken: rToken, user } = res.data;
-      login(token, user);
-      if (rToken) localStorage.setItem('refreshToken', rToken);
-
-      const routes = {
-        DOCTOR: '/doctor-dashboard',
-        PHARMACIST: '/pharmacy-dashboard',
-        RIDER: '/rider-dashboard',
-        ADMIN: '/admin',
-      };
-      navigate(routes[user.role] || '/dashboard');
-    } catch (err) {
-      setError(err.response?.data?.msg || "That code didn't work. Double-check and try again.");
-    } finally {
-      setLoading(false);
-    }
+    const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6).split('');
+    const next = Array(6).fill('');
+    digits.forEach((d, i) => { next[i] = d; });
+    setOtp(next);
+    otpRefs.current[Math.min(digits.length, 5)]?.focus();
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    setLoading(true);
-    setError('');
+  const handleSocialAuth = async (endpoint, payload) => {
+    setLoading(true); setError('');
     try {
-      const res = await api.post('/auth/google', { 
-        tokenId: credentialResponse.credential, 
-        role 
-      });
-      
+      const res = await api.post(endpoint, { ...payload, role });
       const { token, refreshToken: rToken, user } = res.data;
       login(token, user);
       if (rToken) localStorage.setItem('refreshToken', rToken);
-
-      const routes = {
-        DOCTOR: '/doctor-dashboard',
-        PHARMACIST: '/pharmacy-dashboard',
-        RIDER: '/rider-dashboard',
-        ADMIN: '/admin',
-      };
-      navigate(routes[user.role] || '/dashboard');
-      toast.success('Signed in securely with Google');
+      navigate(ROLE_ROUTES[user.role] || '/dashboard');
+      toast.success('Signed in securely');
     } catch (err) {
-      setError(err.response?.data?.msg || "Google Sign-In failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+      setError(err.response?.data?.msg || 'Sign-in failed. Try again.');
+    } finally { setLoading(false); }
   };
 
-  const handleAppleResponse = async (response) => {
-    if (!response.authorization) {
-        setError('Apple Sign-In was cancelled or failed.');
-        return;
-    }
-    
-    setLoading(true);
-    setError('');
-    try {
-      const res = await api.post('/auth/apple', { 
-        idToken: response.authorization.id_token, 
-        role 
-      });
-      
-      const { token, refreshToken: rToken, user } = res.data;
-      login(token, user);
-      if (rToken) localStorage.setItem('refreshToken', rToken);
-
-      const routes = {
-        DOCTOR: '/doctor-dashboard',
-        PHARMACIST: '/pharmacy-dashboard',
-        RIDER: '/rider-dashboard',
-        ADMIN: '/admin',
-      };
-      navigate(routes[user.role] || '/dashboard');
-      toast.success('Signed in securely with Apple');
-    } catch (err) {
-      setError(err.response?.data?.msg || "Apple Sign-In failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+  const fade = {
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    exit:    { opacity: 0, y: -8 },
   };
 
   return (
-    <div className="min-h-screen flex text-text-primary relative overflow-hidden">
-      {/* Background is handled globally in App.jsx now, but we add localized specific glows */}
-      
-      {/* Left brand panel — desktop only */}
-      <div className="hidden lg:flex w-1/2 flex-col items-center justify-center relative z-10 px-12">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-transparent z-[-1]" />
-        
-        <div className="max-w-xl animate-fade-in space-y-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-action to-action-end p-[1px] shadow-glow">
-            <div className="w-full h-full rounded-2xl bg-white flex items-center justify-center overflow-hidden">
-              <img src="/logo.png" alt="IncorgniHealth Logo" className="w-full h-full object-cover" />
-            </div>
-          </div>
-          
-          <h1 className="text-5xl font-bold tracking-tight leading-tight">
-            Healthcare, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-action to-action-end animate-pulse-soft">
-              without the stigma.
-            </span>
-          </h1>
-          
-          <p className="text-lg text-text-secondary leading-relaxed max-w-md">
-            See a real doctor. Get real prescriptions. Access real support. 
-            <span className="text-white font-medium"> Your identity stays yours</span> — we work with your Ghost ID instead.
-          </p>
+    <div className="min-h-dvh flex flex-col lg:flex-row relative overflow-hidden font-sans bg-[#F8F7F6]">
 
-          <div className="flex gap-6 pt-4">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/5 backdrop-blur-lg">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_currentColor]" />
-              <span className="text-sm font-medium">End-to-end Encrypted</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/5 backdrop-blur-lg">
-              <div className="w-2 h-2 rounded-full bg-action shadow-[0_0_10px_currentColor]" />
-              <span className="text-sm font-medium">Zero PII Storage</span>
-            </div>
+      {/* ── Background Elements (Visible on Mobile too) ── */}
+      <div className="absolute inset-0 z-0 pointer-events-none bg-[#F4F4F5]">
+        {/* Removed blobs for a flat, professional aesthetic */}
+      </div>
+
+      {/* ── Left: Hero panel (desktop only) ─────────────────────────── */}
+      <div className="hidden lg:flex lg:w-[46%] flex-col items-center justify-between bg-[#FFFFFF] p-14 relative z-10 border-r border-[#E4E4E7]">
+        {/* Brand */}
+        <div className="w-full">
+          <span className="text-sm font-bold text-[#18181B] tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+            Incognihealth
+          </span>
+        </div>
+
+        {/* Illustration */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col items-center text-center gap-8 max-w-sm relative"
+        >
+          {/* Decorative rings behind image */}
+          <div className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-[#6D28D9]/10 rounded-full pointer-events-none" />
+          
+          <img
+            src="/hero-illustration.png"
+            alt="Healthcare illustration"
+            className="w-64 h-64 object-contain drop-shadow-xl"
+            draggable={false}
+          />
+          <div>
+            <h1 className="text-4xl font-black text-[#18181B] leading-[1.1] mb-4" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+              Maximum health <br/><span className="text-[#A1A1AA]">Outcome.</span>
+            </h1>
+            <p className="text-base text-[#71717A] leading-relaxed">
+              Minimum social exposure.
+            </p>
           </div>
+        </motion.div>
+
+        {/* Trust indicators */}
+        <div className="flex items-center gap-8">
+          {['Encrypted', 'Anonymous', 'Private'].map(b => (
+            <div key={b} className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#6D28D9]" />
+              <span className="text-xs font-medium text-[#A1A1AA]">{b}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative z-10">
-        <div className="w-full max-w-md animate-slide-up relative">
-          
-          {/* Mobile brand */}
-          <div className="lg:hidden text-center mb-10">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-action to-action-end p-[1px] mx-auto mb-4 shadow-glow">
-              <div className="w-full h-full rounded-xl bg-white flex items-center justify-center overflow-hidden">
-                <img src="/logo.png" alt="IncorgniHealth Logo" className="w-full h-full object-cover" />
-              </div>
-            </div>
-            <h2 className="text-2xl font-bold text-white">IncorgniHealth</h2>
+      {/* ── Right: Auth form ──────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col justify-center items-center min-h-dvh lg:min-h-0 p-6 sm:p-10 relative z-10">
+
+        {/* Mobile brand sequence */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="lg:hidden mb-12 text-center"
+        >
+          <div className="inline-flex items-center gap-2 mb-3">
+            <span className="text-2xl font-black text-[#18181B] tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+              Incognihealth
+            </span>
           </div>
+          <p className="text-[13px] font-medium text-[#A1A1AA]">Secure authentication portal</p>
+        </motion.div>
 
-          {/* Glass Card */}
-          <div className="glass-card p-8 lg:p-10 relative overflow-hidden">
-            {/* Ambient inner glow */}
-            <div className="absolute -top-24 -right-24 w-48 h-48 bg-action/20 rounded-full blur-[80px]" />
-            
-            <div className="relative z-10">
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white mb-2">
-                  {step === 1 ? 'Enter securely' : 'Verify identity'}
-                </h2>
-                <p className="text-sm text-text-secondary">
-                  {step === 1
-                    ? "Your phone number is hashed instantly. We never see the raw digits."
-                    : "Enter the code sent to your device."
-                  }
-                </p>
-              </div>
+        {/* Container for the form to give it a solid, grounded feel */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-[400px] bg-white p-8 border border-[#E4E4E7] rounded-none lg:rounded-[12px] shadow-sm"
+        >
+          <AnimatePresence mode="wait">
 
-              {error && (
-                <div className="bg-emergency/10 border border-emergency/20 rounded-xl px-4 py-3 mb-6 animate-slide-down flex items-start gap-3">
-                  <svg className="w-5 h-5 text-emergency shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <p className="text-sm text-red-200">{error}</p>
+            {/* ── Step 1: Phone + Role ── */}
+            {step === 1 && (
+              <motion.form
+                key="step1"
+                variants={fade} initial="initial" animate="animate" exit="exit"
+                transition={{ duration: 0.25 }}
+                onSubmit={handleSignup}
+                className="space-y-7"
+              >
+                <div>
+                  <h2 className="text-2xl font-bold text-[#18181B] mb-2 tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+                    Welcome back
+                  </h2>
+                  <p className="text-sm font-medium text-[#71717A]">Sign in or create an account to securely access your data.</p>
                 </div>
-              )}
 
-              {step === 1 ? (
-                <form onSubmit={handleSignup} className="space-y-6">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-text-muted ml-1">Joining as</label>
-                    <div className="relative">
-                      <select
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                        className="input-field appearance-none cursor-pointer hover:border-action/30"
-                      >
-                        <option value="PATIENT">Start-up Founder (Patient)</option>
-                        <option value="DOCTOR">Consultant (Doctor)</option>
-                        <option value="PHARMACIST">Logistics Manager (Pharmacist)</option>
-                        <option value="RIDER">Delivery Partner (Rider)</option>
-                      </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                      </div>
-                    </div>
-                  </div>
+                {/* Error */}
+                <AnimatePresence>
+                  {error && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -6, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                      className="text-sm text-[#DC2626] bg-[#FEE2E2] px-4 py-3 rounded-2xl font-medium border border-[#FECACA]"
+                    >
+                      {error}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-text-muted ml-1">Phone Number</label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+234 800 000 0000"
-                      className="input-field font-mono"
-                      required
-                      autoFocus
-                    />
-                  </div>
-
-                  <button type="submit" disabled={loading} className="btn-primary w-full group">
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                        Verifying...
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-2">
-                        Continue
-                        <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                      </span>
-                    )}
-                  </button>
-
-                  <div className="relative py-4 flex items-center justify-center">
-                    <div className="absolute inset-x-0 h-px bg-white/10" />
-                    <span className="relative bg-panel px-4 text-xs font-semibold uppercase tracking-wider text-text-muted">or continue with</span>
-                  </div>
-                  
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-center w-full [&>div]:w-full overflow-hidden rounded-xl bg-white focus-within:ring-2 focus-within:ring-action">
-                      <GoogleLogin
-                        onSuccess={handleGoogleSuccess}
-                        onError={() => setError('Google Sign-In was cancelled or failed.')}
-                        useOneTap
-                        shape="square"
-                        width="100%"
-                        text="continue_with"
-                        theme="outline"
-                        size="large"
-                      />
-                    </div>
-                    
-                    <div className="flex justify-center w-full">
-                      <AppleLogin 
-                        clientId="com.mcnuels.incorgnihealth.client" 
-                        redirectURI="https://incorgnihealth.surge.sh/auth"
-                        usePopup={true}
-                        callback={handleAppleResponse}
-                        scope="email name"
-                        responseMode="query"
-                        render={(renderProps) => (
-                           <button 
-                            type="button" 
-                            onClick={renderProps.onClick}
-                            disabled={renderProps.disabled} 
-                            className="w-full h-[40px] rounded flex items-center justify-center gap-2 bg-white text-black font-semibold text-[14px] hover:bg-gray-100 transition whitespace-nowrap border border-gray-300"
-                            style={{fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'}}
-                        >
-                            <svg className="w-5 h-5 mb-1" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.05 19.34a10.05 10.05 0 01-10.1-10.1A10.05 10.05 0 0117.05-.75a10.05 10.05 0 0110.1 10.1 10.05 10.05 0 01-10.1 10.09zm0-18.4A8.34 8.34 0 008.7 9.24a8.34 8.34 0 008.34 8.34 8.34 8.34 0 008.35-8.34 8.34 8.34 0 00-8.34-8.35z" fill="black" transform="translate(-5.05 5.05)"/>
-                                <path d="M16.98 12.04c-.38-.28-1-.54-1.62-.57-1.12-.06-2.19.46-2.76 1.15-.55.67-.84 1.56-.84 2.5 0 1.95 1.5 3.5 3.48 3.5.76 0 1.55-.32 1.96-.5v-1.18c-.4.2-1.07.45-1.57.45-1.03 0-1.85-.73-2.07-1.7h3.83v-.68c0-.66-.4-1.32-1.03-1.74zm-3.08 1.91c.22-.65.73-1.04 1.35-1.04.57 0 1.02.29 1.15.84h-2.5v.2zM21.9 12.28h-1.1v-1.1h-1.1v1.1h-1.1v1.1h1.1v1.1h1.1v-1.1h1.1v-1.1z" />
-                            </svg>
-                            Continue with Apple
-                          </button>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </form>
-              ) : (
-                <form onSubmit={handleVerify} className="space-y-6">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-text-muted ml-1 text-center block">One-Time Code</label>
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      placeholder="000000"
-                      maxLength={6}
-                      className="input-field text-center text-3xl tracking-[0.5em] font-mono h-16 border-action/30 shadow-glow focus:shadow-glow-lg"
-                      required
-                      autoFocus
-                    />
-                  </div>
-
-                  <button type="submit" disabled={loading} className="btn-primary w-full">
-                    {loading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                        Unlocking...
-                      </span>
-                    ) : 'Verify & Enter'}
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={() => { setStep(1); setError(''); setOtp(''); }}
-                    className="w-full text-xs font-semibold text-text-muted hover:text-white transition text-center uppercase tracking-wider"
+                {/* Role selector — Segmented Pill */}
+                <div>
+                  <label className="block text-[11px] font-bold text-[#A1A1AA] uppercase tracking-widest mb-3 pl-1">I am a</label>
+                  <div
+                    role="group"
+                    aria-label="Select your role"
+                    className="relative flex items-center bg-[#F4F4F5]/80 backdrop-blur-sm rounded-full p-1 gap-0.5 border border-[#E8E6E3]"
                   >
-                    Use a different number
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-          
-          {/* Footer */}
-          <p className="mt-8 text-center text-xs text-text-dim">
-            &copy; 2026 McNuels IncorgniHealth. <br/>
-            <span className="opacity-50">Designed for privacy first.</span>
-          </p>
-        </div>
+                    {/* Sliding active indicator */}
+                    <motion.span
+                      layoutId="role-pill"
+                      className="absolute top-1 bottom-1 rounded-full bg-white shadow-sm border border-[#E8E6E3]/50"
+                      style={{
+                        left: `calc(${ROLES.findIndex(r => r.value === role)} * 20% + 4px)`,
+                        width: 'calc(20% - 4px)',
+                      }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+                    />
+                    {ROLES.map(r => (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => setRole(r.value)}
+                        className={`relative z-10 flex-1 py-2.5 text-[12px] font-bold rounded-full transition-colors duration-150 ${
+                          role === r.value
+                            ? 'text-[#18181B]'
+                            : 'text-[#A1A1AA] hover:text-[#71717A]'
+                        }`}
+                      >
+                        {r.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Phone input */}
+                <div>
+                  <label className="block text-[11px] font-bold text-[#A1A1AA] uppercase tracking-widest mb-2 pl-1">Phone number</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    autoComplete="tel"
+                    onChange={e => setPhone(e.target.value)}
+                    placeholder="e.g. 08140432362"
+                    className="w-full bg-[#FAFAFA] border border-[#D4D4D8] rounded-md px-4 py-3 text-[15px] font-medium text-[#18181B] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-1 focus:ring-[#18181B] focus:border-[#18181B] transition-colors"
+                  />
+                </div>
+
+                {/* License input (only for LAB_SCIENTIST) */}
+                <AnimatePresence>
+                  {role === 'LAB_SCIENTIST' && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <label className="block text-[11px] font-bold text-[#A1A1AA] uppercase tracking-widest mb-2 pl-1 mt-4">Facility License</label>
+                      <input
+                        type="text"
+                        value={licenseNumber}
+                        onChange={e => setLicenseNumber(e.target.value)}
+                        placeholder="e.g. HEFA-123456"
+                        className="w-full bg-[#FAFAFA] border border-[#D4D4D8] rounded-md px-4 py-3 text-[15px] font-medium text-[#18181B] placeholder:text-[#A1A1AA] focus:outline-none focus:ring-1 focus:ring-[#18181B] focus:border-[#18181B] transition-colors"
+                      />
+                      <p className="text-[10px] font-medium text-[#A1A1AA] mt-2 pl-1">Required for lab facility verification.</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full min-h-[54px] mt-2 bg-[#18181B] hover:bg-[#27272A] active:bg-[#3F3F46] text-white font-semibold rounded-md transition-colors disabled:opacity-50 text-[15px]"
+                >
+                  {loading ? 'Connecting…' : 'Continue securely'}
+                </button>
+
+                {/* Social auth divider */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-[#E8E6E3]" />
+                  <span className="text-xs text-[#A1A1AA]">or continue with</span>
+                  <div className="flex-1 h-px bg-[#E8E6E3]" />
+                </div>
+
+                {/* Social logins */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <GoogleLogin
+                      onSuccess={cred => handleSocialAuth('/auth/google', { tokenId: cred.credential })}
+                      onError={() => setError('Google sign-in failed.')}
+                      theme="outline" shape="pill" width="100%"
+                    />
+                  </div>
+                  <AppleLogin
+                    clientId="com.mcnuels.incorgnihealth"
+                    redirectURI={`${window.location.origin}/auth`}
+                    onSuccess={r => handleSocialAuth('/auth/apple', { idToken: r.authorization?.id_token })}
+                    onError={() => setError('Apple sign-in failed.')}
+                    render={({ onClick }) => (
+                      <button type="button" onClick={onClick}
+                        className="w-full min-h-[40px] rounded-full bg-[#18181B] text-white text-xs font-semibold flex items-center justify-center gap-2 hover:bg-[#27272A] transition-colors"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.14-2.18 1.27-2.16 3.8.03 3.02 2.65 4.03 2.67 4.04-.03.07-.42 1.44-1.36 2.78M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                        </svg>
+                        Apple
+                      </button>
+                    )}
+                  />
+                </div>
+
+                <p className="text-center">
+                  <a href="mailto:ajimatimati@gmail.com"
+                    className="text-xs text-[#A1A1AA] hover:text-[#6D28D9] transition-colors"
+                  >
+                    Need help? Contact support
+                  </a>
+                </p>
+              </motion.form>
+            )}
+
+            {/* ── Step 2: OTP ── */}
+            {step === 2 && (
+              <motion.form
+                key="step2"
+                variants={fade} initial="initial" animate="animate" exit="exit"
+                transition={{ duration: 0.25 }}
+                onSubmit={handleVerify}
+                className="space-y-8"
+              >
+                <div>
+                  <h2 className="text-2xl font-bold text-[#18181B] mb-2 tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+                    Verify identity
+                  </h2>
+                  <p className="text-sm font-medium text-[#71717A]">
+                    We sent a secure 6-digit code to <span className="font-bold text-[#18181B]">{phone}</span>
+                  </p>
+                </div>
+
+                <AnimatePresence>
+                  {error && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -6, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                      className="text-sm text-[#DC2626] bg-[#FEE2E2] px-4 py-3 rounded-2xl font-medium border border-[#FECACA]"
+                    >
+                      {error}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+
+                {/* OTP boxes */}
+                <div className="flex gap-2 justify-between" onPaste={handleOtpPaste}>
+                  {otp.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={el => otpRefs.current[idx] = el}
+                      type="text" inputMode="numeric" maxLength={2}
+                      value={digit}
+                      onChange={e => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={e => handleOtpKey(idx, e)}
+                      className={`w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-black rounded-2xl border-2 transition-all outline-none shadow-sm ${
+                        digit
+                          ? 'border-[#6D28D9] bg-[#F5F3FF] text-[#6D28D9]'
+                          : 'border-[#E8E6E3] bg-white text-[#18181B] focus:border-[#6D28D9]/40 focus:bg-[#FAFAFA]'
+                      }`}
+                      style={{ caretColor: '#6D28D9' }}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || otpString.length < 6}
+                  className="w-full min-h-[54px] bg-[#18181B] hover:bg-[#27272A] active:bg-[#3F3F46] text-white font-semibold rounded-md transition-colors disabled:opacity-50 text-[15px]"
+                >
+                  {loading ? 'Confirming…' : 'Access Account'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setStep(1); setError(''); setOtp(['','','','','','']); }}
+                  className="w-full text-[13px] font-bold text-[#A1A1AA] hover:text-[#18181B] transition-colors py-2 uppercase tracking-widest"
+                >
+                  Change number
+                </button>
+              </motion.form>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </div>
     </div>
   );

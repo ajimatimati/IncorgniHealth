@@ -1,131 +1,243 @@
+import { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AvatarGenerator from './AvatarGenerator';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const ROLE_CONFIG = {
+  PATIENT:    { label: 'Client' },
+  DOCTOR:     { label: 'Doctor' },
+  PHARMACY:   { label: 'Pharmacy' },
+  RIDER:      { label: 'Rider' },
+  ADMIN:      { label: 'Admin' },
+};
+
+import { LayoutDashboard, Heart, Brain, Shield, User, Settings, ClipboardList, Truck, ShieldAlert, LogOut, HelpCircle, X, Menu } from 'lucide-react';
+
+const ICONS = {
+  dashboard:  <LayoutDashboard className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  heart:      <Heart className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  brain:      <Brain className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  shield:     <Shield className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  user:       <User className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  cog:        <Settings className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  orders:     <ClipboardList className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  truck:      <Truck className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  admin:      <ShieldAlert className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  logout:     <LogOut className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  support:    <HelpCircle className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  close:      <X className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+  menu:       <Menu className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
+};
+
+const nav = {
+  PATIENT: [
+    { to: '/dashboard',       label: 'Dashboard',      icon: ICONS.dashboard },
+    { to: '/directory',       label: 'Directory',      icon: ICONS.user },
+    { to: '/sexual-health',   label: 'Sexual Health',  icon: ICONS.heart },
+    { to: '/mental-wellness', label: 'Mental Wellness', icon: ICONS.brain },
+    { to: '/safe-haven',      label: 'Safe Haven',     icon: ICONS.shield },
+    { to: '/sarc',            label: 'SARC Centre',    icon: ICONS.shield },
+    { to: '/profile',         label: 'Profile',        icon: ICONS.user },
+    { to: '/settings',        label: 'Settings',       icon: ICONS.cog },
+  ],
+  DOCTOR: [
+    { to: '/doctor-dashboard',  label: 'Doctor Portal', icon: ICONS.dashboard },
+    { to: '/profile',           label: 'Profile',       icon: ICONS.user },
+    { to: '/settings',          label: 'Settings',      icon: ICONS.cog },
+  ],
+  PHARMACY: [
+    { to: '/pharmacy-dashboard', label: 'Pharmacy',      icon: ICONS.orders },
+    { to: '/profile',            label: 'Profile',       icon: ICONS.user },
+    { to: '/settings',           label: 'Settings',      icon: ICONS.cog },
+  ],
+  RIDER: [
+    { to: '/rider-dashboard',  label: 'Deliveries',    icon: ICONS.truck },
+    { to: '/profile',          label: 'Profile',       icon: ICONS.user },
+    { to: '/settings',         label: 'Settings',      icon: ICONS.cog },
+  ],
+  LAB_SCIENTIST: [
+    { to: '/lab-dashboard',    label: 'Lab Dashboard', icon: ICONS.dashboard },
+    { to: '/profile',          label: 'Profile',       icon: ICONS.user },
+    { to: '/settings',         label: 'Settings',      icon: ICONS.cog },
+  ],
+  ADMIN: [
+    { to: '/admin',    label: 'Admin',    icon: ICONS.admin },
+    { to: '/profile',  label: 'Profile',  icon: ICONS.user },
+    { to: '/settings', label: 'Settings', icon: ICONS.cog },
+  ],
+};
+
+function NavItem({ item }) {
+  return (
+    <NavLink
+      to={item.to}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all duration-150 ${
+          isActive
+            ? 'bg-[#EDE9FE] text-[#6D28D9]'
+            : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B]'
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <span className={isActive ? 'text-[#6D28D9]' : 'text-[#A1A1AA]'}>
+            {item.icon}
+          </span>
+          <span>{item.label}</span>
+        </>
+      )}
+    </NavLink>
+  );
+}
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   const role = user?.role;
-  const isChat = location.pathname.startsWith('/chat/');
-
-  const nav = {
-    PATIENT: [
-      { to: '/dashboard', label: 'Dashboard', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg> },
-      { to: '/sexual-health', label: 'Sexual Health', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg> },
-      { to: '/mental-wellness', label: 'Mental Wellness', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" /></svg> },
-      { to: '/safe-haven', label: 'Safe Haven', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg> },
-      { to: '/profile', label: 'Profile', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg> },
-      { to: '/settings', label: 'Settings', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
-    ],
-    DOCTOR: [
-      { to: '/doctor-dashboard', label: 'Dashboard', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg> },
-      { to: '/profile', label: 'Profile', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg> },
-      { to: '/settings', label: 'Settings', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
-    ],
-    PHARMACIST: [
-      { to: '/pharmacy-dashboard', label: 'Orders', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19 14.5" /></svg> },
-      { to: '/profile', label: 'Profile', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg> },
-      { to: '/settings', label: 'Settings', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281" /></svg> },
-    ],
-    RIDER: [
-      { to: '/rider-dashboard', label: 'Deliveries', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg> },
-      { to: '/profile', label: 'Profile', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg> },
-      { to: '/settings', label: 'Settings', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281" /></svg> },
-    ],
-    ADMIN: [
-      { to: '/admin', label: 'Admin', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" /></svg> },
-      { to: '/profile', label: 'Profile', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg> },
-      { to: '/settings', label: 'Settings', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281" /></svg> },
-    ],
-  };
-
+  const roleConf = ROLE_CONFIG[role] || ROLE_CONFIG.PATIENT;
   const items = nav[role] || nav.PATIENT;
 
   const handleLogout = () => {
+    setDrawerOpen(false);
     logout();
     navigate('/auth');
   };
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 flex-col glass-panel border-r border-white/5 z-20">
+      {/* ── Desktop sidebar ────────────────────────────────────────── */}
+      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 flex-col z-20 bg-white border-r border-[#E8E6E3]">
         {/* Brand */}
-        <div className="flex items-center gap-3 p-6 border-b border-white/5">
-          <img src="/logo.png" alt="IncorgniHealth Logo" className="w-8 h-8 rounded-lg shadow-glow" />
-          <div>
-            <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-action to-action-end tracking-tight">
-              IncorgniHealth
-            </h1>
-            <p className="text-xs text-text-dim mt-0.5">Anonymous care</p>
+        <div className="px-5 py-6 border-b border-[#F0EDED]">
+          <span className="text-lg font-black text-[#18181B]" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+            Incognihealth
+          </span>
+          <div className="mt-2">
+            <span className="badge badge-violet text-[11px]">{roleConf.label}</span>
           </div>
         </div>
 
-        {/* Nav items */}
-        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-          {items.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
-                  isActive
-                    ? 'bg-action/10 text-action border border-action/20 shadow-glow/10'
-                    : 'text-text-muted hover:text-text-primary hover:bg-white/5'
-                }`
-              }
-            >
-              <span className="shrink-0">{item.icon}</span>
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+          {items.map(item => <NavItem key={item.to} item={item} />)}
         </nav>
 
         {/* User section */}
-        <div className="p-4 border-t border-white/5 mt-auto">
-          <div className="flex items-center gap-3 mb-3">
-            <AvatarGenerator seed={user?.avatar || user?.publicId} size="sm" showStatus isOnline />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-text-primary truncate">{user?.nickname || 'Ghost'}</p>
-              <p className="text-[10px] text-text-dim font-mono truncate">{user?.publicId}</p>
-            </div>
-          </div>
+        <div className="p-3 border-t border-[#F0EDED] space-y-0.5">
+          <a
+            href="mailto:ajimatimati@gmail.com"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] transition-all"
+          >
+            {ICONS.support}
+            Contact Support
+          </a>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#52525B] hover:bg-[#FEE2E2] hover:text-[#DC2626] transition-all"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-            </svg>
+            {ICONS.logout}
             Sign Out
           </button>
+
+          <div className="flex items-center gap-3 px-3 pt-3 mt-1 border-t border-[#F0EDED]">
+            <div className="shrink-0 rounded-full overflow-hidden ring-2 ring-[#EDE9FE]">
+              <AvatarGenerator seed={user?.avatar || user?.publicId} size="sm" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-[#18181B] truncate">{user?.nickname || 'Anonymous'}</p>
+              <p className="text-xs text-[#A1A1AA] truncate">{user?.publicId}</p>
+            </div>
+          </div>
         </div>
       </aside>
 
-      {/* Mobile bottom nav - hidden in chat to allow full screen input */}
-      {!isChat && (
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 glass-panel border-t border-white/10 backdrop-blur-xl">
-          <div className="flex justify-around items-center py-2 px-2 max-w-md mx-auto">
-            {items.slice(0, 5).map((item) => (
-              <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `flex flex-col items-center py-2 px-3 rounded-xl transition-all duration-200 min-w-[52px] ${
-                  isActive
-                    ? 'text-action'
-                    : 'text-text-dim hover:text-text-muted'
-                }`
-              }
+      {/* ── Mobile: top bar + drawer ────────────────────────────────── */}
+      <div className="lg:hidden fixed top-0 inset-x-0 z-30 bg-white border-b border-[#E8E6E3] flex items-center justify-between px-4 h-14">
+        <span className="text-base font-black text-[#18181B]" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+          Incognihealth
+        </span>
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="w-10 h-10 flex items-center justify-center rounded-xl text-[#71717A] hover:bg-[#F4F4F5] transition-colors"
+          aria-label="Open menu"
+        >
+          {ICONS.menu}
+        </button>
+      </div>
+
+      {/* Spacer so content clears the top bar */}
+      <div className="lg:hidden h-14" />
+
+      {/* Drawer overlay */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
+              onClick={() => setDrawerOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="fixed left-0 top-0 bottom-0 w-72 z-50 bg-white flex flex-col"
             >
-              <span className="shrink-0">{item.icon}</span>
-              <span className="text-[10px] mt-1 font-medium truncate">{item.label}</span>
-            </NavLink>
-          ))}
-        </div>
-        </nav>
-      )}
+              <div className="flex items-center justify-between px-5 py-5 border-b border-[#F0EDED]">
+                <span className="text-lg font-black text-[#18181B]" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+                  Incognihealth
+                </span>
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl text-[#A1A1AA] hover:bg-[#F4F4F5] transition-colors"
+                >
+                  {ICONS.close}
+                </button>
+              </div>
+
+              <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+                {items.map(item => (
+                  <div key={item.to} onClick={() => setDrawerOpen(false)}>
+                    <NavItem item={item} />
+                  </div>
+                ))}
+              </nav>
+
+              <div className="p-3 border-t border-[#F0EDED] space-y-0.5">
+                <a
+                  href="mailto:ajimatimati@gmail.com"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#52525B] hover:bg-[#F4F4F5] transition-all"
+                >
+                  {ICONS.support}
+                  Contact Support
+                </a>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#52525B] hover:bg-[#FEE2E2] hover:text-[#DC2626] transition-all"
+                >
+                  {ICONS.logout}
+                  Sign Out
+                </button>
+
+                <div className="flex items-center gap-3 px-3 pt-3 mt-1 border-t border-[#F0EDED]">
+                  <div className="shrink-0 rounded-full overflow-hidden ring-2 ring-[#EDE9FE]">
+                    <AvatarGenerator seed={user?.avatar || user?.publicId} size="sm" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[#18181B] truncate">{user?.nickname || 'Anonymous'}</p>
+                    <span className="badge badge-violet text-[10px]">{roleConf.label}</span>
+                  </div>
+                </div>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 };

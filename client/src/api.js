@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+const isDev = import.meta.env.DEV;
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://incorgnihealth-api.loca.lt/api/v1',
+  // In dev mode: use relative URL — Vite proxy forwards /api → localhost:3001
+  // In production: use the explicit env var or fall back to Render
+  baseURL: isDev ? '/api/v1' : (import.meta.env.VITE_API_URL || 'https://incorgnihealth.onrender.com/api/v1'),
   headers: {
     'Content-Type': 'application/json',
     'Bypass-Tunnel-Reminder': 'true',

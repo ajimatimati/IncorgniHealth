@@ -127,4 +127,40 @@ router.put('/availability', auth, doctorGuard, validate(availabilitySchema), asy
   }
 });
 
+// @route   POST /api/v1/doctor/investigate/:consultId
+// @desc    Request lab investigation for patient
+router.post('/investigate/:consultId', auth, doctorGuard, async (req, res) => {
+  try {
+    const { tests } = req.body; // e.g. ['FBC', 'Malaria Parasite']
+    if (!tests || tests.length === 0) {
+      return res.status(400).json({ msg: 'No tests specified' });
+    }
+
+    const consult = await prisma.consultation.findUnique({
+      where: { id: req.params.consultId }
+    });
+    
+    if (!consult || consult.doctorId !== req.user.id) {
+      return res.status(403).json({ msg: 'Unauthorized or not found' });
+    }
+
+    const inv = await prisma.investigation.create({
+      data: {
+        publicInvId: `#INV-${Math.floor(1000 + Math.random() * 9000)}`,
+        consultationId: consult.id,
+        doctorId: req.user.id,
+        patientId: consult.patientId,
+        tests: tests
+      }
+    });
+
+    logger.info('Doctor ordered investigation', { invId: inv.publicInvId });
+
+    res.json({ msg: 'Investigation requested successfully', data: inv });
+  } catch (err) {
+    logger.error('Doctor investigate error', { error: err.message });
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 module.exports = router;

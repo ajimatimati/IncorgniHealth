@@ -1,320 +1,222 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import ParallaxCard from '../components/ParallaxCard';
 import RippleButton from '../components/RippleButton';
+import { useToast } from '../components/Toast';
+import { TestTubes, Pill, HeartPulse, Lock, ChevronDown, Calendar, ShieldCheck, MapPin, Truck, Stethoscope } from 'lucide-react';
 
 /* ── SVG Icons ── */
 const Icons = {
-  vial: (
-    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47 2.47a3.375 3.375 0 01-4.769.06l-.311-.31a3.375 3.375 0 00-4.773-.063L5 14.5m14 0V17a3 3 0 01-3 3h-2.25" />
-    </svg>
-  ),
-  pill: (
-    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5h3m-6.75 2.25h10.5a2.25 2.25 0 002.25-2.25v-15a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 4.5v15a2.25 2.25 0 002.25 2.25z" />
-    </svg>
-  ),
-  heart: (
-    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-    </svg>
-  ),
-  lock: (
-    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-    </svg>
-  ),
-  chevronDown: (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-    </svg>
-  ),
-  calendar: (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0h18M5.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-    </svg>
-  ),
+  vial: <TestTubes className="w-8 h-8" strokeWidth={1.5} />,
+  pill: <Pill className="w-8 h-8" strokeWidth={1.5} />,
+  heart: <HeartPulse className="w-8 h-8" strokeWidth={1.5} />,
+  lock: <Lock className="w-8 h-8" strokeWidth={1.5} />,
+  chevronDown: <ChevronDown className="w-4 h-4" strokeWidth={2} />,
+  calendar: <Calendar className="w-5 h-5" strokeWidth={1.5} />,
+  shield: <ShieldCheck className="w-5 h-5 shrink-0" strokeWidth={1.5} />,
+  truck: <Truck className="w-8 h-8 shrink-0" strokeWidth={1.5} />,
+  mapPin: <MapPin className="w-8 h-8 shrink-0" strokeWidth={1.5} />,
+  stethoscope: <Stethoscope className="w-8 h-8 shrink-0" strokeWidth={1.5} />,
 };
 
-const Quiz = ({ onFinish }) => {
-  const [step, setStep] = useState(0);
-  const [score, setScore] = useState(0);
+/* ── Animated tab definitions ── */
+const TABS = [
+  { id: 'testing',    label: 'STI Testing'  },
+  { id: 'education',  label: 'Education'  },
+  { id: 'consult',    label: 'Consultation' },
+];
 
-  const questions = [
-    {
-      q: 'Do you have a new sexual partner?',
-      options: [
-        { label: 'Yes', risk: 2 },
-        { label: 'No', risk: 0 },
-      ],
-    },
-    {
-      q: 'Do you use condoms consistently?',
-      options: [
-        { label: 'Always', risk: 0 },
-        { label: 'Sometimes', risk: 2 },
-        { label: 'Never', risk: 3 },
-      ],
-    },
-    {
-      q: 'Have you been tested in the last 6 months?',
-      options: [
-        { label: 'Yes, all clear', risk: 0 },
-        { label: 'Yes, tested positive', risk: 1 },
-        { label: 'No', risk: 2 },
-      ],
-    },
-    {
-      q: 'Do you have any current symptoms (pain, discharge, bumps)?',
-      options: [
-        { label: 'Yes', risk: 5 }, // Immediate referral
-        { label: 'Not sure', risk: 2 },
-        { label: 'No', risk: 0 },
-      ],
-    },
-  ];
-
-  const handleAnswer = (risk) => {
-    const nextScore = score + risk;
-    if (step < questions.length - 1) {
-      setScore(nextScore);
-      setStep(step + 1);
-    } else {
-      onFinish(nextScore);
-    }
-  };
-
-  const currentQ = questions[step];
-
-  return (
-    <div className="animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold text-text-primary">Risk Assessment</h3>
-        <span className="text-xs font-mono text-text-muted">Question {step + 1}/{questions.length}</span>
-      </div>
-      
-      <div className="w-full bg-surface-alt rounded-full h-1.5 mb-8">
-        <div 
-          className="bg-rose-500 h-1.5 rounded-full transition-all duration-300" 
-          style={{ width: `${((step + 1) / questions.length) * 100}%` }}
-        />
-      </div>
-
-      <h4 className="text-xl font-bold text-white mb-8">{currentQ.q}</h4>
-
-      <div className="space-y-3">
-        {currentQ.options.map((opt, i) => (
-          <RippleButton
-            key={i}
-            onClick={() => handleAnswer(opt.risk)}
-            variant="secondary"
-            className="w-full text-left justify-start bg-surface-alt hover:bg-white/10 border border-white/5 !py-4 transition-all"
-          >
-            <span className="font-medium text-text-primary">{opt.label}</span>
-          </RippleButton>
-        ))}
-      </div>
-    </div>
-  );
-};
-
+/* ── Education Accordion ── */
 const EducationAccordion = () => {
   const [openIndex, setOpenIndex] = useState(null);
-  
   const items = [
-    { title: 'Safe Practices Guide', content: 'Consistency is key. Internal and external condoms, when used correctly, are 98% effective...' },
-    { title: 'Testing Frequency', content: 'Sexually active individuals should get tested at least once a year. If you have new partners, every 3-6 months is recommended...' },
-    { title: 'PrEP & PEP Explained', content: 'PrEP is taken before exposure to prevent HIV (up to 99% effective). PEP is an emergency medication taken within 72 hours after exposure...' },
-    { title: 'Myth Busting', content: 'Myth: You can tell if someone has an STI by looking. Fact: Most STIs have no visible symptoms...' },
+    { title: 'Safe Practices Guide', content: 'Consistency is key. Internal and external condoms, when used correctly, are 98% effective at preventing most STIs and unintended pregnancy. Lubrication reduces breakage risk.' },
+    { title: 'Testing Frequency', content: 'Sexually active individuals should get tested at least once a year. If you have new or multiple partners, testing every 3–6 months is recommended.' },
+    { title: 'PrEP & PEP Explained', content: 'PrEP is taken before exposure to prevent HIV — up to 99% effective when taken daily. PEP is an emergency medication taken within 72 hours after potential exposure.' },
+    { title: 'Myth Busting', content: 'Myth: You can tell if someone has an STI by looking. Fact: Most STIs have no visible symptoms. The only way to know is to get tested.' },
   ];
 
   return (
     <div className="space-y-3">
       {items.map((item, i) => (
-        <div key={i} className="glass-card overflow-hidden">
+        <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} className="bg-white rounded-xl border border-[#E8E6E3] shadow-card-sm overflow-hidden">
           <button
             onClick={() => setOpenIndex(openIndex === i ? null : i)}
-            className="w-full flex items-center justify-between p-4 text-left"
+            className="w-full flex items-center justify-between p-5 text-left hover:bg-[#F9F9FB] transition-colors"
           >
-            <span className="font-semibold text-text-primary text-sm">{item.title}</span>
-            <span className={`transform transition-transform duration-300 ${openIndex === i ? 'rotate-180' : ''} text-text-dim`}>
+            <span className="font-bold text-[#18181B] text-[15px]">{item.title}</span>
+            <motion.span animate={{ rotate: openIndex === i ? 180 : 0 }} transition={{ duration: 0.25 }} className="text-[#A1A1AA]">
               {Icons.chevronDown}
-            </span>
+            </motion.span>
           </button>
-          <div className={`accordion-content ${openIndex === i ? 'open max-h-40' : 'max-h-0'}`}>
-            <div className="px-4 pb-4 text-sm text-text-muted leading-relaxed">
-              {item.content}
-            </div>
-          </div>
-        </div>
+          <AnimatePresence initial={false}>
+            {openIndex === i && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
+                <div className="px-5 pb-5 text-[14px] text-[#71717A] leading-relaxed border-t border-[#F0EDED] pt-4 bg-[#F9F9FB]">
+                  {item.content}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       ))}
     </div>
   );
 };
 
+/* ── Main Page ── */
 const SexualHealth = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('resources');
-  const [quizResult, setQuizResult] = useState(null);
+  const toast = useToast();
+  const [activeTab, setActiveTab] = useState('testing');
 
-  const startConsult = () => navigate('/dashboard'); // Should trigger consult flow
+  const startConsult = () => navigate('/dashboard'); // Initiating consult takes them to dashboard normally, or a specific API call
+
+  const handleTestOption = (type) => {
+    toast.success(`Selected: ${type}. Redirecting to processing...`);
+  };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.4 }}
-      className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto relative z-10"
+    <motion.div
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.4 }}
+      className="p-4 sm:p-8 max-w-4xl mx-auto font-sans pb-28"
     >
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-text-primary">Sexual Health</h1>
-        <p className="text-sm text-text-muted mt-1">
+      {/* Page header */}
+      <div className="mb-10 text-center sm:text-left">
+        <h1 className="text-3xl lg:text-4xl font-black text-[#18181B] mb-2" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+          Sexual Health
+        </h1>
+        <p className="text-[14px] text-[#71717A] font-medium leading-relaxed">
           Confidential screening, education, and care. Zero judgment.
         </p>
       </div>
 
-      <div className="bg-gradient-to-r from-rose-500/10 to-pink-500/10 border border-rose-500/20 rounded-2xl p-5 mb-8 flex items-start gap-4">
-        <div className="p-2 bg-rose-500/20 rounded-lg text-rose-400">
-          {Icons.lock}
+      {/* Privacy banner */}
+      <div className="relative overflow-hidden border border-[#FECDD3] rounded-2xl bg-[#FFF1F2] p-6 mb-10 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 shadow-sm">
+        <div className="w-12 h-12 rounded-xl bg-white border border-[#FDA4AF] text-[#E11D48] flex items-center justify-center shrink-0 shadow-sm">
+          {Icons.shield}
         </div>
-        <div>
-          <h3 className="font-bold text-text-primary text-sm">Your privacy is absolute</h3>
-          <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-            We use zero-knowledge encryption for health data. Consultations are anonymous. No billing descriptions will ever mention sexual health services.
+        <div className="relative z-10 text-center sm:text-left">
+          <h3 className="font-bold text-[16px] text-[#E11D48] flex items-center justify-center sm:justify-start gap-2 mb-1.5">
+            Your privacy is absolute
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48] animate-pulse" />
+          </h3>
+          <p className="text-[13px] text-[#881337] leading-relaxed max-w-xl">
+            Zero-knowledge encryption for all health data. Consultations are anonymous. Billing never mentions sexual health services.
           </p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {['resources', 'assessment', 'education', 'book'].map(tab => (
+      {/* Animated Tab Pills */}
+      <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+        {TABS.map((tab) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-              activeTab === tab
-                ? 'bg-rose-500 text-white shadow-glow'
-                : 'bg-surface hover:bg-white/5 text-text-muted hover:text-white'
+            key={tab.id} onClick={() => setActiveTab(tab.id)}
+            className={`relative px-5 py-2.5 rounded-full text-[12px] font-bold uppercase tracking-wider transition-colors flex-shrink-0 border ${
+              activeTab === tab.id 
+                ? 'bg-[#18181B] text-white border-[#18181B] shadow-card-sm' 
+                : 'bg-white border-[#E8E6E3] text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B]'
             }`}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab.label}
           </button>
         ))}
       </div>
 
+      {/* Tab content */}
       <AnimatePresence mode="wait">
-        {activeTab === 'resources' && (
-          <motion.div 
-            key="resources"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-          >
-          {[
-            { icon: Icons.vial, title: 'STI Testing', desc: 'Home kits or lab referral', grad: 'from-rose-500/20 to-pink-500/20' },
-            { icon: Icons.pill, title: 'PrEP / PEP', desc: 'HIV prevention meds', grad: 'from-blue-500/20 to-cyan-500/20' },
-            { icon: Icons.heart, title: 'Reproductive', desc: 'Fertility & wellness', grad: 'from-emerald-500/20 to-teal-500/20' },
-            { icon: Icons.lock, title: 'Consultation', desc: 'Chat with a specialist', grad: 'from-amber-500/20 to-orange-500/20' },
-          ].map((r, i) => (
-            <ParallaxCard
-              key={i}
-              onClick={startConsult}
-              className={`p-6 text-left transition bg-gradient-to-br ${r.grad}`}
-            >
-              <div className="text-white mb-3">{r.icon}</div>
-              <h3 className="font-bold text-text-primary mb-1">{r.title}</h3>
-              <p className="text-xs text-text-muted">{r.desc}</p>
-            </ParallaxCard>
-          ))}
-        </motion.div>
-      )}
+        {activeTab === 'testing' && (
+          <motion.div key="testing" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="space-y-5">
+            <h2 className="text-xl font-black text-[#18181B] mb-2">Select STI Testing Option</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { icon: Icons.truck,  title: 'Home Kit / Phlebotomist', desc: 'Securely delivered to your home', color: '#E11D48', bg: '#FFF1F2', border: '#FECDD3', action: () => handleTestOption('Home Kit') },
+                { icon: Icons.heart,  title: 'Local Hospital', desc: 'Via an intermediary facility', color: '#6D28D9', bg: '#F5F3FF', border: '#EDE9FE', action: () => handleTestOption('Local Hospital') },
+                { icon: Icons.mapPin, title: 'Go Directly', desc: 'Walk-in directly for testing', color: '#059669', bg: '#F0FDF4', border: '#BBF7D0', action: () => handleTestOption('Direct Visit') },
+              ].map((r, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07, duration: 0.35 }}>
+                  <button
+                    onClick={r.action}
+                    className="flex flex-col items-center text-center w-full p-6 rounded-2xl transition-all hover:-translate-y-1 shadow-sm hover:shadow-card-md bg-white border border-[#E8E6E3]"
+                  >
+                    <div className="w-14 h-14 flex items-center justify-center mb-5 rounded-xl border" style={{ background: r.bg, color: r.color, borderColor: r.border }}>
+                      {r.icon}
+                    </div>
+                    <h3 className="font-bold text-[16px] text-[#18181B] mb-1">{r.title}</h3>
+                    <p className="text-[13px] font-semibold" style={{ color: r.color }}>{r.desc}</p>
+                  </button>
+                </motion.div>
+              ))}
+            </div>
 
-      {activeTab === 'assessment' && (
-        <motion.div 
-          key="assessment"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }}
-          className="glass-card p-6 md:p-8"
-        >
-          {quizResult === null ? (
-            <Quiz onFinish={setQuizResult} />
-          ) : (
-            <div className="text-center animate-scale-in">
-              <div className={`w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-6 text-3xl ${
-                quizResult > 3 ? 'bg-red-500/20 text-red-500' : 'bg-emerald-500/20 text-emerald-500'
-              }`}>
-                {quizResult > 3 ? '!' : '✓'}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.35 }} className="mt-6 flex flex-col md:flex-row items-center justify-between p-6 bg-[#F9F9FB] rounded-2xl border border-[#E8E6E3] gap-4">
+              <div className="text-center md:text-left">
+                <h3 className="font-bold text-[16px] text-[#18181B]">Want to skip testing?</h3>
+                <p className="text-[13px] text-[#71717A] mt-1 line-clamp-2 leading-relaxed max-w-md">Speak directly with a physician now or schedule a consultation for a later time that suits you.</p>
               </div>
-              <h3 className="text-xl font-bold text-text-primary mb-2">Assessment Complete</h3>
-              <p className="text-sm text-text-secondary mb-8 max-w-sm mx-auto">
-                {quizResult > 3
-                  ? 'Based on your answers, we recommend scheduling a consultation or screening soon. Better safe than sorry.'
-                  : 'Your risk profile appears low, but regular check-ups are always a good idea.'}
-              </p>
-              <div className="flex gap-3 justify-center">
-                <RippleButton onClick={() => setQuizResult(null)} variant="secondary" className="text-sm justify-center">Retake</RippleButton>
-                <RippleButton onClick={startConsult} className="text-sm justify-center">Book Consultation</RippleButton>
+              <RippleButton onClick={() => setActiveTab('consult')} variant="primary" className="whitespace-nowrap">Skip to Consultation</RippleButton>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {activeTab === 'education' && (
+          <motion.div key="education" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+            <EducationAccordion />
+          </motion.div>
+        )}
+
+        {activeTab === 'consult' && (
+          <motion.div key="consult" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+             <div className="p-8 bg-white border border-[#E8E6E3] shadow-card-sm rounded-2xl flex flex-col items-center text-center">
+                 <div className="w-16 h-16 bg-[#FFF1F2] border border-[#FECDD3] rounded-full flex items-center justify-center text-[#E11D48] mb-4 shadow-sm">
+                     {Icons.stethoscope}
+                 </div>
+                 <h3 className="text-xl font-black text-[#18181B] mb-2">Immediate Consultation</h3>
+                 <p className="text-[14px] text-[#71717A] mb-8 leading-relaxed">Connect with an available doctor right now for urgent questions, diagnosis or care.</p>
+                 <RippleButton onClick={startConsult} className="w-full justify-center !py-4" size="lg">Speak to Physician Now</RippleButton>
+             </div>
+             
+             <div className="p-8 bg-white border border-[#E8E6E3] shadow-card-sm rounded-2xl flex flex-col items-center text-center">
+                 <div className="w-16 h-16 bg-[#FEF3C7] border border-[#FDE68A] rounded-full flex items-center justify-center text-[#D97706] mb-4 shadow-sm">
+                     {Icons.calendar}
+                 </div>
+                 <h3 className="text-xl font-black text-[#18181B] mb-2">Schedule for Later</h3>
+                 <p className="text-[14px] text-[#71717A] mb-8 leading-relaxed">Book a specific time slot that works best for your privacy and your schedule.</p>
+                 <RippleButton onClick={() => setActiveTab('book')} className="w-full justify-center !py-4 bg-[#D97706] hover:bg-[#B45309]" size="lg">Book Appointment</RippleButton>
+             </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'book' && (
+          <motion.div key="book" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="bg-white rounded-2xl border border-[#E8E6E3] p-6 sm:p-10 shadow-card-sm max-w-2xl mx-auto">
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#F0EDED]">
+              <h3 className="section-label !mb-0 flex items-center gap-3 !text-[#18181B] !text-base">
+                <span className="text-[#D97706]">{Icons.calendar}</span> Schedule Appointment
+              </h3>
+              <button onClick={() => setActiveTab('consult')} className="text-[13px] font-bold text-[#A1A1AA] hover:text-[#18181B] transition-colors">
+                Back
+              </button>
+            </div>
+            <div className="space-y-6">
+              <div>
+                <label className="section-label mb-2 block">Preferred Date</label>
+                <input type="date" className="w-full bg-[#F9F9FB] border border-[#E8E6E3] rounded-xl px-4 py-3 text-[14px] text-[#18181B] focus:outline-none focus:border-[#D97706] focus:bg-white transition-colors" />
+              </div>
+              <div>
+                <label className="section-label mb-2 block">Preferred Time</label>
+                <select className="w-full bg-[#F9F9FB] border border-[#E8E6E3] rounded-xl px-4 py-3 text-[14px] text-[#18181B] focus:outline-none focus:border-[#D97706] focus:bg-white transition-colors appearance-none">
+                  <option value="morning">Morning (9AM – 12PM)</option>
+                  <option value="afternoon">Afternoon (1PM – 4PM)</option>
+                  <option value="evening">Evening (5PM – 8PM)</option>
+                </select>
+              </div>
+              <div className="pt-6 border-t border-[#F0EDED] mt-4">
+                <RippleButton onClick={() => toast.success('Appointment booked successfully.')} className="w-full justify-center !py-4 bg-[#D97706] hover:bg-[#B45309]" size="lg">Confirm Booking</RippleButton>
+                <p className="text-[12px] font-bold text-[#A1A1AA] text-center mt-4">No payment required until doctor confirmation.</p>
               </div>
             </div>
-          )}
-        </motion.div>
-      )}
-
-      {activeTab === 'education' && (
-        <motion.div 
-          key="education"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }}
-        >
-          <EducationAccordion />
-        </motion.div>
-      )}
-
-      {activeTab === 'book' && (
-        <motion.div 
-          key="book"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }}
-          className="glass-card p-6"
-        >
-          <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2">
-            {Icons.calendar} Schedule Appointment
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs text-text-muted mb-2 block">Preferred Date</label>
-              <input type="date" className="input-field w-full" />
-            </div>
-            <div>
-              <label className="text-xs text-text-muted mb-2 block">Preferred Time</label>
-              <select className="input-field w-full text-text-secondary">
-                <option>Morning (9AM - 12PM)</option>
-                <option>Afternoon (1PM - 4PM)</option>
-                <option>Evening (5PM - 8PM)</option>
-              </select>
-            </div>
-            <div className="pt-4">
-              <RippleButton onClick={startConsult} className="w-full justify-center">
-                Book Consultation Now
-              </RippleButton>
-              <p className="text-[10px] text-text-dim text-center mt-3">
-                No payment required until doctor confirmation.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
       </AnimatePresence>
     </motion.div>
   );

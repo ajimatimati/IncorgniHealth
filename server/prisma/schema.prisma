@@ -10,7 +10,7 @@ datasource db {
 enum Role {
   PATIENT
   DOCTOR
-  PHARMACIST
+  PHARMACY
   LAB_SCIENTIST
   RIDER
   ADMIN
@@ -40,6 +40,11 @@ model User {
   isOnline       Boolean  @default(false)
   specialization String?
 
+  // Lab-specific / Admin review
+  licenseNumber  String?
+  isVerified     Boolean  @default(false)
+
+
   // Auth
   refreshToken   String?
 
@@ -57,6 +62,13 @@ model User {
   orders                 Order[]
   transactions           Transaction[]
   notifications          Notification[]
+
+  investigationsAsPatient Investigation[] @relation("PatientInvestigations")
+  investigationsAsDoctor  Investigation[] @relation("DoctorInvestigations")
+  investigationsAsLab     Investigation[] @relation("LabInvestigations")
+
+  reviewsAsPatient       Review[] @relation("PatientReviews")
+  reviewsAsDoctor        Review[] @relation("DoctorReviews")
 
   @@index([dataHash])
   @@index([role])
@@ -91,6 +103,8 @@ model Consultation {
   
   messages  Message[]
   prescriptions Prescription[]
+  investigations Investigation[]
+  review    Review?
 
   // Soft delete
   deletedAt DateTime?
@@ -170,4 +184,50 @@ model Notification {
 
   @@index([userId, read])
   @@index([userId, createdAt])
+}
+
+model Investigation {
+  id             String   @id @default(uuid())
+  publicInvId    String   @unique // e.g. #INV-4921
+  consultationId String
+  patientId      String
+  doctorId       String
+  
+  tests          Json     // Array of tests requested: ['FBC', 'Urinalysis', 'Pelvic Ultrasound']
+  status         String   @default("PENDING") // PENDING, PROCESSING, UPLOADED, REVIEWED
+  labId          String?  // The LAB_SCIENTIST id that claims it
+  pdfReportUrl   String?  // Base64 encoded or path
+  doctorRemarks  String?
+
+  // Soft delete
+  deletedAt      DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  patient        User     @relation("PatientInvestigations", fields: [patientId], references: [id])
+  doctor         User     @relation("DoctorInvestigations", fields: [doctorId], references: [id])
+  lab            User?    @relation("LabInvestigations", fields: [labId], references: [id])
+  
+  @@index([status])
+  @@index([patientId])
+  @@index([labId])
+}
+
+model Review {
+  id             String   @id @default(uuid())
+  consultationId String   @unique
+  patientId      String
+  doctorId       String
+  rating         Int      // 1 to 5
+  comment        String?
+  
+  createdAt      DateTime @default(now())
+
+  consultation   Consultation @relation(fields: [consultationId], references: [id])
+  patient        User         @relation("PatientReviews", fields: [patientId], references: [id])
+  doctor         User         @relation("DoctorReviews", fields: [doctorId], references: [id])
+
+  @@index([doctorId])
 }

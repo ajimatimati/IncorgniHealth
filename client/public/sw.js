@@ -37,8 +37,11 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (request.method !== 'GET') return;
 
-  // API calls: network-first, no cache fallback
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth') || url.pathname.startsWith('/user')) {
+  // NEVER intercept navigation requests — let the SPA router handle them
+  if (request.mode === 'navigate') return;
+
+  // API calls: network-first, graceful offline fallback
+  if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request).catch(() => {
         return new Response(JSON.stringify({ msg: 'You are offline' }), {

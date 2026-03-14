@@ -13,7 +13,8 @@ const auth = require('../middleware/auth');
 // --- Validation schemas ---
 const signupSchema = z.object({
   phone: z.string().min(7, 'Phone number too short').max(20),
-  role: z.enum(['PATIENT', 'DOCTOR', 'PHARMACIST', 'RIDER']).default('PATIENT'),
+  role: z.enum(['PATIENT', 'DOCTOR', 'PHARMACY', 'RIDER', 'LAB_SCIENTIST']).default('PATIENT'),
+  licenseNumber: z.string().optional(),
 });
 
 const verifySchema = z.object({
@@ -40,7 +41,7 @@ function generateTokenPair(userPayload) {
 // @route   POST /api/v1/auth/signup
 router.post('/signup', authLimiter, validate(signupSchema), async (req, res) => {
   try {
-    const { phone, role } = req.body;
+    const { phone, role, licenseNumber } = req.body;
     const phoneHash = hashData(phone);
 
     const existingUser = await prisma.user.findFirst({
@@ -57,7 +58,7 @@ router.post('/signup', authLimiter, validate(signupSchema), async (req, res) => 
     }
 
     const user = await prisma.user.create({
-      data: { publicId: ghostId, role, dataHash: phoneHash },
+      data: { publicId: ghostId, role, dataHash: phoneHash, licenseNumber },
     });
 
     // Mock OTP
@@ -116,7 +117,7 @@ router.post('/verify', authLimiter, validate(verifySchema), async (req, res) => 
 // @route   POST /api/v1/auth/google
 const googleVerifySchema = z.object({
   tokenId: z.string().min(1, 'Token ID required'),
-  role: z.enum(['PATIENT', 'DOCTOR', 'PHARMACIST', 'RIDER']).default('PATIENT')
+  role: z.enum(['PATIENT', 'DOCTOR', 'PHARMACY', 'RIDER', 'LAB_SCIENTIST']).default('PATIENT')
 });
 
 const { OAuth2Client } = require('google-auth-library');
@@ -185,7 +186,7 @@ router.post('/google', authLimiter, validate(googleVerifySchema), async (req, re
 // @route   POST /api/v1/auth/apple
 const appleVerifySchema = z.object({
   idToken: z.string().min(1, 'Token ID required'),
-  role: z.enum(['PATIENT', 'DOCTOR', 'PHARMACIST', 'RIDER']).default('PATIENT')
+  role: z.enum(['PATIENT', 'DOCTOR', 'PHARMACY', 'RIDER', 'LAB_SCIENTIST']).default('PATIENT')
 });
 
 const appleSignin = require('apple-signin-auth');

@@ -4,6 +4,26 @@ import { useAuth } from '../context/AuthContext';
 import Sidebar from './Sidebar';
 import OfflineBanner from './OfflineBanner';
 import NotificationCenter from './NotificationCenter';
+import { motion } from 'framer-motion';
+import { ShieldCheck } from 'lucide-react';
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-dvh flex items-center justify-center bg-[#F8F7F6]">
+      <div className="flex flex-col items-center gap-5">
+        <div className="w-12 h-12 rounded-2xl bg-[#6D28D9] flex items-center justify-center shadow-[0_4px_16px_rgba(109,40,217,0.25)]">
+          <ShieldCheck className="w-6 h-6 text-white" strokeWidth={2} />
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-semibold text-[#18181B]" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+            Incognihealth
+          </p>
+          <p className="text-xs text-[#A1A1AA] mt-1">Loading your session…</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Layout() {
   const { isAuthenticated, loading } = useAuth();
@@ -12,44 +32,33 @@ export default function Layout() {
   const isChat = location.pathname.startsWith('/chat/');
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate('/auth');
-    }
+    if (!loading && !isAuthenticated) navigate('/auth');
   }, [loading, isAuthenticated, navigate]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-primary flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-action/30 border-t-action rounded-full animate-spin" />
-          <p className="text-sm text-text-muted">Loading your session...</p>
-        </div>
-      </div>
-    );
-  }
-
+  if (loading) return <LoadingScreen />;
   if (!isAuthenticated) return null;
 
-  // Determine theme based on route
-  const getThemeClass = () => {
-    if (location.pathname.startsWith('/safe-haven')) return 'theme-amber';
-    if (location.pathname.startsWith('/mental-wellness')) return 'theme-purple';
-    if (isChat) return 'theme-chat';
-    return 'theme-default';
-  };
-
   return (
-    <div className={`min-h-screen bg-primary transition-colors duration-1000 ${getThemeClass()}`}>
+    <div className="min-h-dvh bg-[#F8F7F6]">
       <OfflineBanner />
       <Sidebar />
 
-      {/* Notification bell — top right on desktop */}
-      <div className="hidden lg:block fixed top-6 right-8 z-30">
+      {/* Notification bell — desktop only */}
+      <div className="hidden lg:block fixed top-5 right-7 z-30">
         <NotificationCenter />
       </div>
 
-      <main className={`lg:ml-64 min-h-screen ${isChat ? '' : 'pb-20'} lg:pb-0 relative z-0`}>
-        <Outlet />
+      {/* Page content */}
+      <main className={`lg:ml-64 min-h-dvh ${isChat ? '' : 'pb-24 lg:pb-0'}`}>
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Outlet />
+        </motion.div>
       </main>
     </div>
   );

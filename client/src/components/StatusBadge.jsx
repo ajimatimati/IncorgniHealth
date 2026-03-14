@@ -1,24 +1,28 @@
 const statusMap = {
-  PENDING: { label: 'Pending', color: 'bg-amber-500/15 text-amber-400 border-amber-500/25' },
-  PROCESSING: { label: 'Processing', color: 'bg-blue-500/15 text-blue-400 border-blue-500/25' },
-  ACTIVE: { label: 'Active', color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/25' },
-  READY_FOR_PICKUP: { label: 'Ready', color: 'bg-green-500/15 text-green-400 border-green-500/25' },
-  PICKED_UP: { label: 'Picked Up', color: 'bg-purple-500/15 text-purple-400 border-purple-500/25' },
-  DELIVERED: { label: 'Delivered', color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' },
-  COMPLETED: { label: 'Completed', color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' },
-  ISSUED: { label: 'Issued', color: 'bg-violet-500/15 text-violet-400 border-violet-500/25' },
-  FULFILLED: { label: 'Fulfilled', color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' },
-  SUCCESS: { label: 'Success', color: 'bg-green-500/15 text-green-400 border-green-500/25' },
-  FAILED: { label: 'Failed', color: 'bg-red-500/15 text-red-400 border-red-500/25' },
+  PENDING:          { label: 'Pending',     bg: '#FEF3C7', color: '#92400E' },
+  PROCESSING:       { label: 'Processing',  bg: '#DBEAFE', color: '#1E40AF' },
+  ACTIVE:           { label: 'Active',      bg: '#EDE9FE', color: '#5B21B6' },
+  READY_FOR_PICKUP: { label: 'Ready',       bg: '#D1FAE5', color: '#065F46' },
+  PICKED_UP:        { label: 'Picked up',   bg: '#EDE9FE', color: '#6D28D9' },
+  DELIVERED:        { label: 'Delivered',   bg: '#D1FAE5', color: '#065F46' },
+  COMPLETED:        { label: 'Completed',   bg: '#D1FAE5', color: '#065F46' },
+  ISSUED:           { label: 'Issued',      bg: '#EDE9FE', color: '#6D28D9' },
+  FULFILLED:        { label: 'Fulfilled',   bg: '#D1FAE5', color: '#065F46' },
+  SUCCESS:          { label: 'Success',     bg: '#D1FAE5', color: '#065F46' },
+  FAILED:           { label: 'Failed',      bg: '#FEE2E2', color: '#991B1B' },
+  CANCELLED:        { label: 'Cancelled',   bg: '#F4F4F5', color: '#52525B' },
 };
 
-const fallback = { label: 'Unknown', color: 'bg-gray-500/15 text-gray-400 border-gray-500/25' };
+const fallback = { label: 'Unknown', bg: '#F4F4F5', color: '#71717A' };
 
 export default function StatusBadge({ status, className = '' }) {
-  const config = statusMap[status] || fallback;
+  const cfg = statusMap[status] || fallback;
   return (
-    <span className={`badge border ${config.color} ${className}`}>
-      {config.label}
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${className}`}
+      style={{ background: cfg.bg, color: cfg.color }}
+    >
+      {cfg.label}
     </span>
   );
 }

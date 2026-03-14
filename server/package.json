@@ -15,6 +15,7 @@
   "type": "commonjs",
   "dependencies": {
     "@prisma/client": "^5.10.0",
+    "apple-signin-auth": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "crypto-js": "^4.2.0",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "jest": "^30.2.0",
+    "nodemon": "^3.1.14",
     "supertest": "^7.2.2"
   }
 }

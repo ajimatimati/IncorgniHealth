@@ -1,58 +1,85 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+/* ── Google Fonts ──────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Inter:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Base resets ─── */
+/* ── Base resets ──────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  text-size-adjust: 100%;
 }
 
+/*
+ * Incognito Health — Clean Design System
+ * Warm white canvas. Deep violet accent. Generous space. No noise.
+ */
 body {
   margin: 0;
-  background-color: #02040a;
-  color: #f0f2f5;
+  background-color: #F8F7F6;
+  color: #18181B;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
   line-height: 1.6;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
 
-/* Ambient Themes */
-.theme-default {
-  --theme-bg: #02040a;
-}
-
-.theme-amber {
-  --theme-bg: #1a0f00;
-  /* Deep amber/red */
-}
-
-.theme-purple {
-  --theme-bg: #0d0614;
-  /* Deep purple */
-}
-
-.theme-chat {
-  --theme-bg: #040812;
-  /* Slightly focused blue */
-}
-
+/* ── Typography ──────────────────────────────────────────────────────────── */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: #18181B;
+  margin: 0;
 }
 
-/* ─── Scrollbar ─── */
+h1 {
+  font-size: clamp(1.875rem, 6vw, 2.75rem);
+  font-weight: 800;
+}
+
+h2 {
+  font-size: clamp(1.375rem, 4vw, 1.875rem);
+}
+
+h3 {
+  font-size: clamp(1.0625rem, 2.5vw, 1.25rem);
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+}
+
+.font-display {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.font-heading {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -60,286 +87,438 @@ h6 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-}
-
-/* ─── Focus styles ─── */
-:focus-visible {
-  outline: 2px solid #00f2fe;
-  outline-offset: 2px;
+  background: #E8E6E3;
   border-radius: 4px;
 }
 
-/* ─── Selection ─── */
+::-webkit-scrollbar-thumb:hover {
+  background: #D1CFD0;
+}
+
+/* ── Focus ──────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #6D28D9;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ── Selection ──────────────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(0, 242, 254, 0.25);
-  color: #ffffff;
+  background: rgba(109, 40, 217, 0.12);
+  color: #18181B;
 }
 
-/* ─── Utility layers ─── */
-@layer utilities {
-  .text-glow {
-    text-shadow: 0 0 20px rgba(0, 242, 254, 0.5);
-  }
-
-  .text-gradient {
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #00f2fe 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .micro-text {
-    @apply text-[10px] font-mono uppercase tracking-[0.2em] opacity-30;
-  }
-}
-
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENT LAYER
+   ═══════════════════════════════════════════════════════════════════════════ */
 @layer components {
 
-  /* High-end Glassmorphism */
-  .glass-card {
+  /* ── Cards ─────────────────────────────────────────────────────────────── */
+  .card {
+    background: #FFFFFF;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .card-hover:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.09), 0 12px 32px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+  }
+
+  .card-p {
+    padding: 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .card-p {
+      padding: 1.75rem;
+    }
+  }
+
+  /* Glass panel as an alias — renders as a clean white card now */
+  .glass-panel {
+    background: #FFFFFF;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+    border: 1px solid #F0EDED;
+  }
+
+  /* ── Section label ──────────────────────────────────────────────────────── */
+  .section-label {
+    font-size: 0.6875rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #A1A1AA;
+  }
+
+  /* ── Buttons ────────────────────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 52px;
+    padding: 0 1.75rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+    letter-spacing: -0.01em;
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* Black pill — primary action */
+  .btn-primary {
+    background: #18181B;
+    color: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  }
+
+  .btn-primary:hover {
+    background: #27272A;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  }
+
+  /* White outline — secondary */
+  .btn-secondary {
+    background: #FFFFFF;
+    color: #18181B;
+    border: 1.5px solid #E8E6E3;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .btn-secondary:hover {
+    background: #F8F7F6;
+    border-color: #D1CFD0;
+  }
+
+  /* Violet — accent / CTA */
+  .btn-violet {
+    background: #6D28D9;
+    color: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(109, 40, 217, 0.2);
+  }
+
+  .btn-violet:hover {
+    background: #5B21B6;
+    box-shadow: 0 4px 12px rgba(109, 40, 217, 0.25);
+  }
+
+  /* Danger */
+  .btn-danger {
+    background: #DC2626;
+    color: #FFFFFF;
+  }
+
+  .btn-danger:hover {
+    background: #B91C1C;
+  }
+
+  /* Ghost */
+  .btn-ghost {
+    background: transparent;
+    color: #71717A;
+  }
+
+  .btn-ghost:hover {
+    background: #F4F4F5;
+    color: #18181B;
+  }
+
+  /* ── Inputs ─────────────────────────────────────────────────────────────── */
+  .input-field {
+    width: 100%;
+    min-height: 52px;
+    background: #FFFFFF;
+    border: 1.5px solid #E8E6E3;
+    border-radius: 14px;
+    padding: 0 1rem;
+    color: #18181B;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9375rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+  }
+
+  .input-field::placeholder {
+    color: #A1A1AA;
+  }
+
+  .input-field:focus {
+    border-color: #6D28D9;
+    box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+  }
+
+  /* ── Skeleton loader ────────────────────────────────────────────────────── */
+  .skeleton {
+    background: linear-gradient(90deg,
+        #F4F4F5 0%,
+        #FAFAFA 50%,
+        #F4F4F5 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s linear infinite;
+    border-radius: 10px;
+  }
+
+  /* ── Divider ────────────────────────────────────────────────────────────── */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: #E8E6E3;
+    margin: 1.25rem 0;
+  }
+
+  /* ── Badge ──────────────────────────────────────────────────────────────── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    letter-spacing: 0.03em;
+  }
+
+  .badge-violet {
+    background: #EDE9FE;
+    color: #6D28D9;
+  }
+
+  .badge-success {
+    background: #D1FAE5;
+    color: #065F46;
+  }
+
+  .badge-warning {
+    background: #FEF3C7;
+    color: #92400E;
+  }
+
+  .badge-danger {
+    background: #FEE2E2;
+    color: #991B1B;
+  }
+
+  .badge-neutral {
+    background: #F4F4F5;
+    color: #3F3F46;
+  }
+
+  /* ── Role Badges ────────────────────────────────────────────────────────── */
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    border-radius: 9999px;
+    letter-spacing: 0em;
+  }
+
+  .role-badge.patient {
+    background: #EDE9FE;
+    color: #6D28D9;
+  }
+
+  .role-badge.doctor {
+    background: #D1FAE5;
+    color: #065F46;
+  }
+
+  .role-badge.pharmacist {
+    background: #FEF3C7;
+    color: #92400E;
+  }
+
+  .role-badge.rider {
+    background: #FFEDD5;
+    color: #9A3412;
+  }
+
+  .role-badge.admin {
+    background: #F4F4F5;
+    color: #3F3F46;
+  }
+
+  /* ── Status indicator ──────────────────────────────────────────────────── */
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+  }
+
+  .status-dot.online {
+    background: #10B981;
+  }
+
+  .status-dot.away {
+    background: #F59E0B;
+  }
+
+  .status-dot.offline {
+    background: #D1D5DB;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY LAYER
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer utilities {
+
+  /* ── Mobile safe area padding ───────────────────────────────────────────── */
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* ── Smooth tap / click ─────────────────────────────────────────────────── */
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Text truncation ────────────────────────────────────────────────────── */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ── Interaction states ─────────────────────────────────────────────────── */
+  .interactive {
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+
+  .interactive:active {
+    opacity: 0.7;
+  }
+
+  /* Nav item underline indicator */
+  .nav-active {
+    position: relative;
+  }
+
+  .nav-active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: 1px;
+    background: #6D28D9;
+  }
+
+  /* ── Fix for old dark text utilities that might leak ───────────────────── */
+  .text-glow-blue {
+    color: #6D28D9;
+  }
+
+  .text-glow-orange {
+    color: #D97706;
+  }
+
+  .text-glow-emerald {
+    color: #059669;
+  }
+
+  .bg-health-map {
+    background: none;
+  }
+
+  .bg-grid-pattern {
+    background: none;
+  }
+
+  .bg-holographic {
+    background: none;
+  }
+
+  .shadow-neon-blue {
+    box-shadow: none;
+  }
+
+  .shadow-neon-orange {
+    box-shadow: none;
+  }
+
+  .animate-scanline {
+    display: none;
+  }
+
+  .animate-scan-line {
+    display: none;
+  }
+
+  /* ── Depth & Sophistication ────────────────────────────────────────── */
+  .bento-glass {
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 1.5rem;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   }
 
-  .glass-panel {
-    background: rgba(2, 4, 10, 0.6);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
+  .bg-dots {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
-  /* Buttons */
-  .btn-primary {
-    @apply relative overflow-hidden bg-primary-gradient text-primary font-bold py-3 px-8 rounded-xl shadow-glow hover:shadow-glow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none;
-  }
-
-  .btn-secondary {
-    @apply bg-white/5 border border-white/10 text-white font-medium py-3 px-6 rounded-xl hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none;
-  }
-
-  .btn-danger {
-    @apply bg-emergency text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-emergency-dim active:scale-[0.98] transition-all duration-200;
-  }
-
-  /* Inputs */
-  .input-field {
-    @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-text-muted transition-all duration-300 focus:border-action/50 focus:bg-white/10 focus:ring-1 focus:ring-action/50 focus:shadow-glow outline-none;
-  }
-
-  /* Cards */
-  .card {
-    @apply glass-card p-6 transition-all duration-300 hover:bg-white/[0.04];
-  }
-
-  .card-hover {
-    @apply card hover:-translate-y-1 hover:border-white/20 hover:shadow-glow-lg cursor-pointer;
-  }
-
-  .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide;
-  }
-
-  .section-title {
-    @apply text-xs font-bold uppercase tracking-[0.15em] text-text-muted mb-6 flex items-center gap-3;
-  }
-
-  .section-title::after {
-    content: '';
-    @apply h-px flex-1 bg-gradient-to-r from-white/10 to-transparent;
+  .glow-point {
+    background: radial-gradient(circle at center, var(--glow-color, rgba(109, 40, 217, 0.15)) 0%, transparent 70%);
   }
 }
 
-/* ─── Animation stagger utility ─── */
-.stagger-1 {
-  animation-delay: 0.05s;
-}
-
-.stagger-2 {
-  animation-delay: 0.1s;
-}
-
-.stagger-3 {
-  animation-delay: 0.15s;
-}
-
-.stagger-4 {
-  animation-delay: 0.2s;
-}
-
-.stagger-5 {
-  animation-delay: 0.25s;
-}
-
-/* ─── Shimmer gradient ─── */
-.shimmer-bg {
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
-  background-size: 200% 100%;
-}
-
-/* ─── Health Score Ring ─── */
-.health-ring {
-  transform: rotate(-90deg);
-}
-
-.health-ring-track {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.06);
-}
-
-.health-ring-fill {
-  fill: none;
-  stroke-linecap: round;
-  stroke-dasharray: 283;
-  animation: ring-spin 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-@keyframes ring-spin {
-  from {
-    stroke-dashoffset: 283;
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
   }
 
-  to {
-    stroke-dashoffset: var(--ring-target, 0);
+  100% {
+    background-position: 200% 0;
   }
 }
 
-/* ─── Mood Chips ─── */
-.mood-chip {
-  @apply inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-all duration-200 cursor-pointer select-none;
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.mood-chip:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.mood-chip.active {
-  border-color: rgba(0, 242, 254, 0.4);
-  background: rgba(0, 242, 254, 0.08);
-  color: #00f2fe;
-  box-shadow: 0 0 12px rgba(0, 242, 254, 0.15);
-}
-
-/* ─── Quiz Option ─── */
-.quiz-option {
-  @apply w-full text-left rounded-xl px-5 py-4 border transition-all duration-200 cursor-pointer;
-  background: rgba(255, 255, 255, 0.02);
-  border-color: rgba(255, 255, 255, 0.06);
-}
-
-.quiz-option:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.15);
-  transform: translateX(4px);
-}
-
-.quiz-option.selected {
-  border-color: rgba(0, 242, 254, 0.5);
-  background: rgba(0, 242, 254, 0.06);
-}
-
-/* ─── Stat Pill ─── */
-.stat-pill {
-  @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* ─── Typing Dots ─── */
-.typing-dots {
-  @apply inline-flex items-center gap-1;
-}
-
-.typing-dots span {
-  @apply w-1.5 h-1.5 rounded-full bg-current;
-  animation: dot-bounce 1.4s ease-in-out infinite;
-}
-
-.typing-dots span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-dots span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes dot-bounce {
+@keyframes float {
 
   0%,
-  80%,
   100% {
-    transform: scale(0.6);
-    opacity: 0.4;
+    transform: translateY(0);
   }
 
-  40% {
-    transform: scale(1);
-    opacity: 1;
+  50% {
+    transform: translateY(-4px);
   }
-}
-
-/* ─── Glass Card Glow ─── */
-@layer components {
-  .glass-card-glow {
-    @apply glass-card relative overflow-hidden;
-  }
-
-  .glass-card-glow::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    background: radial-gradient(circle at 30% 30%, rgba(0, 242, 254, 0.06) 0%, transparent 60%);
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    pointer-events: none;
-  }
-
-  .glass-card-glow>* {
-    position: relative;
-    z-index: 10;
-  }
-
-  .glass-card-glow:hover::before {
-    opacity: 1;
-  }
-}
-
-/* ─── Progress Bar ─── */
-.progress-bar {
-  @apply h-2 rounded-full overflow-hidden;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.progress-bar-fill {
-  @apply h-full rounded-full transition-all duration-700 ease-out;
-  background: linear-gradient(90deg, #3b82f6, #00f2fe);
-}
-
-/* ─── Accordion ─── */
-.accordion-content {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
-  opacity: 0;
-}
-
-.accordion-content.open {
-  opacity: 1;
 }
