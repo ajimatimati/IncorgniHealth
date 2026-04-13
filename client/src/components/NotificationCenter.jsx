@@ -101,7 +101,7 @@ export default function NotificationCenter() {
         <div className="absolute right-0 top-full mt-2 w-80 max-h-96 bg-surface border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-            <h3 className="text-sm font-semibold text-text-primary">Notifications</h3>
+            <h3 className="text-sm font-semibold text-on-surface">Notifications</h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
@@ -115,11 +115,11 @@ export default function NotificationCenter() {
           {/* List */}
           <div className="overflow-y-auto max-h-[320px]">
             {loading && notifications.length === 0 ? (
-              <div className="p-6 text-center text-text-muted text-sm">Loading...</div>
+              <div className="p-6 text-center text-on-surface-variant text-sm">Loading...</div>
             ) : notifications.length === 0 ? (
               <div className="p-6 text-center">
                 <p className="text-2xl mb-2">🔕</p>
-                <p className="text-text-muted text-sm">No notifications yet</p>
+                <p className="text-on-surface-variant text-sm">No notifications yet</p>
               </div>
             ) : (
               notifications.map((n) => (
@@ -132,11 +132,11 @@ export default function NotificationCenter() {
                 >
                   <span className="text-lg mt-0.5">{typeIcons[n.type] || '🔔'}</span>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${!n.read ? 'font-semibold text-text-primary' : 'text-text-muted'}`}>
+                    <p className={`text-sm ${!n.read ? 'font-semibold text-on-surface' : 'text-on-surface-variant'}`}>
                       {n.title}
                     </p>
-                    <p className="text-xs text-text-muted mt-0.5 truncate">{n.body}</p>
-                    <p className="text-[10px] text-text-muted/60 mt-1">{timeAgo(n.createdAt)}</p>
+                    <p className="text-xs text-on-surface-variant mt-0.5 truncate">{n.body}</p>
+                    <p className="text-[10px] text-on-surface-variant/60 mt-1">{timeAgo(n.createdAt)}</p>
                   </div>
                   {!n.read && (
                     <div className="w-2 h-2 rounded-full bg-action mt-1.5 flex-shrink-0" />

@@ -1,11 +1,20 @@
 import axios from 'axios';
 
 const isDev = import.meta.env.DEV;
+const apiUrl = import.meta.env.VITE_API_URL || 'https://incorgnihealth.onrender.com/api/v1';
+
+if (!isDev && apiUrl.startsWith('http://') && !apiUrl.includes('localhost')) {
+  console.error(
+    '%c[CRITICAL SECURITY WARNING]', 
+    'color: red; font-size: 20px; font-weight: bold;',
+    '\nMixed Content Exception: You are attempting to connect a secure production frontend (HTTPS) to an insecure backend (HTTP). Modern browsers will permanently block these requests. Please update your VITE_API_URL to use an HTTPS provider or ensure AutoSSL is active on your shared host.'
+  );
+}
 
 const api = axios.create({
   // In dev mode: use relative URL — Vite proxy forwards /api → localhost:3001
   // In production: use the explicit env var or fall back to Render
-  baseURL: isDev ? '/api/v1' : (import.meta.env.VITE_API_URL || 'https://incorgnihealth.onrender.com/api/v1'),
+  baseURL: isDev ? '/api/v1' : apiUrl,
   headers: {
     'Content-Type': 'application/json',
     'Bypass-Tunnel-Reminder': 'true',

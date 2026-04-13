@@ -26,8 +26,9 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token required'),
 });
 
-// MOCK OTP STORE (In production, use Redis + Twilio)
+// MOCK OTP STORE (In production, replace with Redis + Twilio/Termii)
 const otpStore = new Map();
+const IS_DEV = process.env.NODE_ENV !== 'production';
 
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '30d';
@@ -61,17 +62,29 @@ router.post('/signup', authLimiter, validate(signupSchema), async (req, res) => 
       data: { publicId: ghostId, role, dataHash: phoneHash, licenseNumber },
     });
 
-    // Mock OTP
-    const otp = '123456';
-    otpStore.set(phone, otp);
+    // OTP Generation
+    let otp;
+    if (IS_DEV) {
+      // Mock OTP for development/testing only
+      otp = '123456';
+    } else {
+      // In production, generate a real 6-digit OTP
+      otp = String(Math.floor(100000 + Math.random() * 900000));
+      // TODO: Send via Twilio/Termii: await sendSMS(phone, `Your IncorgniHealth OTP is: ${otp}`);
+      logger.info('OTP generated (production)', { phoneHash });
+    }
+    otpStore.set(phone, { otp, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10-min TTL
 
     logger.info('User registered', { publicId: ghostId, role });
 
-    res.status(201).json({
+    const response = {
       msg: 'Account created. Verify OTP.',
       tempId: user.id,
-      debugOtp: otp,
-    });
+    };
+    // Only include debugOtp in development
+    if (IS_DEV) response.debugOtp = otp;
+
+    res.status(201).json(response);
   } catch (err) {
     logger.error('Signup error', { error: err.message });
     res.status(500).json({ msg: 'Server Error' });
@@ -82,9 +95,24 @@ router.post('/signup', authLimiter, validate(signupSchema), async (req, res) => 
 router.post('/verify', authLimiter, validate(verifySchema), async (req, res) => {
   const { phone, otp } = req.body;
 
-  if (otp !== '123456') {
+  // Validate OTP against store
+  const storedEntry = otpStore.get(phone);
+
+  if (!storedEntry) {
+    return res.status(400).json({ msg: 'No OTP found. Please request a new one.' });
+  }
+
+  if (Date.now() > storedEntry.expiresAt) {
+    otpStore.delete(phone);
+    return res.status(400).json({ msg: 'OTP expired. Please request a new one.' });
+  }
+
+  if (otp !== storedEntry.otp) {
     return res.status(400).json({ msg: 'Invalid OTP' });
   }
+
+  // OTP is correct — consume it
+  otpStore.delete(phone);
 
   try {
     const phoneHash = hashData(phone);
@@ -122,7 +150,10 @@ const googleVerifySchema = z.object({
 
 const { OAuth2Client } = require('google-auth-library');
 // Production Client ID
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '417772465462-2jgn7jc1bsf6bve3p9t97tgn6ob7n0ub.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+if (!GOOGLE_CLIENT_ID) {
+  logger.warn('[AUTH] GOOGLE_CLIENT_ID env var is not set. Google OAuth will be unavailable.');
+}
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 router.post('/google', authLimiter, validate(googleVerifySchema), async (req, res) => {

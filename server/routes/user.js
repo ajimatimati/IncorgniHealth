@@ -176,7 +176,7 @@ router.post('/order/:id/source', auth, validate(sourceSchema), async (req, res) 
 
     if (source === 'IN_HOUSE') {
       const pharmacists = await prisma.user.findMany({
-        where: { role: 'PHARMACIST', deletedAt: null },
+        where: { role: 'PHARMACY', deletedAt: null },
         select: { id: true },
       });
       for (const p of pharmacists) {

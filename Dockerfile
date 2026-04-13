@@ -1,29 +1,29 @@
-FROM node:22-bullseye
+FROM node:22-bookworm-slim
 
 # Set up working directories
 WORKDIR /app
 
-# Copy the entire backend
-COPY . /app
+# Copy only server files (.dockerignore excludes client/, .git, etc.)
+COPY server/ /app/server/
 
-# The backend dependencies are in the server/ directory
+# Install server dependencies with deterministic lockfile
 WORKDIR /app/server
-RUN npm install
+RUN npm ci --omit=dev
 
-# Generate Prisma client and Push the schema to the Database
-# Note: Since this requires the DATABASE_URL to be present during build (depending on schema),
-# it's usually better to run Prisma commands in the start script if the DATABASE_URL is only available at runtime.
-# However, Hugging Face Spaces gives secrets at build time as well if configured correctly.
-# To be perfectly safe, we'll run prisma commands on container start.
+# Generate Prisma client at build time (does not require DB connection)
+RUN npx prisma generate
 
 # Expose huggingface default port
 EXPOSE 7860
 
-# Give permissions to the standard huggingface user
+# Create non-root user for security
 RUN useradd -m -u 1000 user
 RUN chown -R user:user /app
 USER user
 
-# Start the application. We use npx prisma db push here to ensure the latest 
-# Supabase tables are created, then start the Node.js server.
-CMD npx prisma generate && npx prisma db push && node index.js
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:7860/health || exit 1
+
+# Start the application: deploy migrations then start the server
+CMD npx prisma migrate deploy && node index.js

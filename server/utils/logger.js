@@ -18,9 +18,11 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console(),
-    // In production, add file transports or external log services:
-    // new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    // new winston.transports.File({ filename: 'logs/combined.log' }),
+    // In production, persist logs to files for post-mortem debugging
+    ...(!isDev ? [
+      new winston.transports.File({ filename: 'logs/error.log', level: 'error', maxsize: 5242880, maxFiles: 5 }),
+      new winston.transports.File({ filename: 'logs/combined.log', maxsize: 5242880, maxFiles: 5 }),
+    ] : []),
   ],
   defaultMeta: { service: 'incorgnihealth-api' },
 });

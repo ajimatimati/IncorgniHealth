@@ -47,38 +47,38 @@ const PaymentModal = ({ amount: initialAmount = 0, type = 'Wallet Top-up', payer
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-[#0f1219]/90 backdrop-blur-md flex items-center justify-center p-4 z-50 rounded-lg"
+        className="fixed inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center p-4 z-50"
       >
         <motion.div 
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
-          className="bg-surface border border-white/10 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden relative"
+          className="bg-surface-container-low border border-outline-variant/10 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden relative"
         >
           {/* Mock Paystack Header */}
-          <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-b border-white/5 p-6 text-center relative overflow-hidden">
-             <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/20 rounded-full blur-3xl"></div>
-             <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-2 flex items-center justify-center gap-1">
+          <div className="bg-gradient-to-r from-tertiary/10 to-primary/10 border-b border-outline-variant/10 p-6 text-center relative overflow-hidden">
+             <div className="absolute -top-10 -right-10 w-32 h-32 bg-tertiary/20 rounded-full blur-3xl"></div>
+             <p className="text-tertiary text-xs font-bold uppercase tracking-widest mb-2 flex items-center justify-center gap-1">
                <CheckCircle2 className="w-4 h-4" strokeWidth={2} />
                Secured by PayMock
              </p>
-             <h3 className="text-text-muted text-sm">{type}</h3>
-             <div className="text-3xl font-mono font-bold text-white mt-2">
+             <h3 className="text-on-surface-variant text-sm">{type}</h3>
+             <div className="text-3xl font-mono font-bold text-on-surface mt-2">
                {'\u20A6'}{total.toLocaleString()}
              </div>
-             <p className="text-text-dim text-xs mt-1">{payerId || 'user@example.com'}</p>
+             <p className="text-on-surface-variant/50 text-xs mt-1">{payerId || 'user@example.com'}</p>
           </div>
 
           <div className="p-6 space-y-5">
             {/* Input Amount if initial was 0 */}
             {!initialAmount && (
               <div>
-                <label className="text-xs text-text-muted mb-2 block uppercase tracking-wider">Top-up Amount ({'\u20A6'})</label>
+                <label className="text-xs text-on-surface-variant mb-2 block uppercase tracking-wider">Top-up Amount ({'\u20A6'})</label>
                 <input 
                   type="number" 
                   value={amount} 
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white font-mono text-lg focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 outline-none transition"
+                  className="w-full bg-surface-container border border-outline-variant/10 rounded-xl px-4 py-3 text-on-surface font-mono text-lg focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition"
                   placeholder="5000"
                   min="100"
                 />
@@ -86,18 +86,18 @@ const PaymentModal = ({ amount: initialAmount = 0, type = 'Wallet Top-up', payer
             )}
 
             {/* Receipt Details */}
-            <div className="bg-white/5 rounded-xl p-4 space-y-3">
+            <div className="bg-surface-container/50 rounded-xl p-4 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-text-muted">Amount</span>
-                <span className="text-text-secondary font-mono">₦{subtotal.toLocaleString()}</span>
+                <span className="text-on-surface-variant">Amount</span>
+                <span className="text-on-surface font-mono">₦{subtotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-text-muted">Processing Fee (5%)</span>
-                <span className="text-text-secondary font-mono">₦{platformFee.toLocaleString()}</span>
+                <span className="text-on-surface-variant">Processing Fee (5%)</span>
+                <span className="text-on-surface font-mono">₦{platformFee.toLocaleString()}</span>
               </div>
-              <div className="border-t border-dashed border-white/10 pt-3 flex justify-between items-center">
-                <span className="font-semibold text-text-primary text-sm">Charge me</span>
-                <span className="font-bold text-lg text-emerald-400 font-mono">₦{total.toLocaleString()}</span>
+              <div className="border-t border-dashed border-outline-variant/10 pt-3 flex justify-between items-center">
+                <span className="font-semibold text-on-surface text-sm">Charge me</span>
+                <span className="font-bold text-lg text-tertiary font-mono">₦{total.toLocaleString()}</span>
               </div>
             </div>
 
@@ -113,7 +113,6 @@ const PaymentModal = ({ amount: initialAmount = 0, type = 'Wallet Top-up', payer
                 onClick={handlePayment}
                 disabled={loading || success || Number(amount) < 100}
                 className="w-full justify-center py-3.5"
-                style={{ backgroundColor: success ? '#10b981' : '#0ea5e9', color: 'white' }}
               >
                 {success ? (
                    <span className="flex items-center gap-2">
@@ -122,7 +121,7 @@ const PaymentModal = ({ amount: initialAmount = 0, type = 'Wallet Top-up', payer
                    </span>
                 ) : loading ? (
                   <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" />
                     Authenticating...
                   </span>
                 ) : (
@@ -132,7 +131,7 @@ const PaymentModal = ({ amount: initialAmount = 0, type = 'Wallet Top-up', payer
               <button 
                 onClick={onClose} 
                 disabled={loading || success} 
-                className="text-xs text-text-muted hover:text-white transition py-2"
+                className="text-xs text-on-surface-variant hover:text-on-surface transition py-2"
               >
                 Cancel Payment
               </button>

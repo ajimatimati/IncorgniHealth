@@ -13,8 +13,8 @@ const app = express();
 const server = http.createServer(app);
 const IS_DEV = process.env.NODE_ENV !== 'production';
 
-// In development: allow any localhost origin (Vite auto-increments ports 5173–517x)
-// In production: require CORS_ORIGIN env var to be explicitly set
+// In development: allow any localhost origin (Vite auto-increments ports)
+// In production: require CORS_ORIGIN env var to be explicitly set (comma separated for multiple)
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow requests with no origin (curl, Postman, mobile apps)
@@ -24,20 +24,20 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    const allowed = process.env.CORS_ORIGIN;
-    if (allowed && origin === allowed) {
+    const allowedOrigins = (process.env.CORS_ORIGIN || '').split(',').map(url => url.trim());
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    callback(new Error(`CORS: origin '${origin}' not allowed.`));
+    callback(new Error(`CORS: Multi-Origin security blocked request from '${origin}'.`));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token', 'x-requested-with'],
   credentials: true,
 };
 
 if (!IS_DEV && !process.env.CORS_ORIGIN) {
-  console.error('[SECURITY] CORS_ORIGIN env var is not set. API will block all production cross-origin requests.');
+  logger.warn('[SECURITY WARNING] CORS_ORIGIN env var is not set. API will block ALL production cross-origin requests from Netlify.');
 }
 
 const io = new Server(server, {
@@ -48,8 +48,24 @@ const io = new Server(server, {
 app.set('io', io);
 
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(apiLimiter);
+
+// ─── Request Logging Middleware ───
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.info('HTTP Request', {
+      method: req.method,
+      url: req.originalUrl || req.url,
+      status: res.statusCode,
+      durationMs: duration,
+      ip: req.ip || req.connection?.remoteAddress
+    });
+  });
+  next();
+});
 
 // ─── API v1 Routes ───
 app.use('/api/v1/auth', require('./routes/auth'));
@@ -64,7 +80,7 @@ app.use('/api/v1/notifications', require('./routes/notification'));
 app.use('/api/v1/lab', require('./routes/lab'));
 app.use('/api/v1/admin', require('./routes/admin'));
 
-// Health check
+// Health check (basic)
 app.get('/', (req, res) => {
   res.json({
     status: 'ok',
@@ -72,6 +88,17 @@ app.get('/', (req, res) => {
     version: '2.0.0',
     timestamp: new Date().toISOString(),
   });
+});
+
+// Deep health check — verifies database connectivity
+app.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'healthy', db: 'connected', uptime: process.uptime() });
+  } catch (err) {
+    logger.error('Health check failed', { error: err.message });
+    res.status(503).json({ status: 'unhealthy', db: 'disconnected' });
+  }
 });
 
 const prisma = require('./db');
@@ -93,6 +120,18 @@ io.use((socket, next) => {
 
 // Server-side active patients store for the virtual waiting room
 const activeWaitingPatients = new Map();
+
+// TTL cleanup: remove waiting patients older than 2 hours to prevent memory leaks
+const WAITING_PATIENT_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+setInterval(() => {
+  const now = Date.now();
+  for (const [socketId, info] of activeWaitingPatients.entries()) {
+    if (now - new Date(info.joinedAt).getTime() > WAITING_PATIENT_TTL_MS) {
+      activeWaitingPatients.delete(socketId);
+      logger.debug('Evicted stale waiting patient', { socketId });
+    }
+  }
+}, 10 * 60 * 1000); // Run every 10 minutes
 
 io.on('connection', (socket) => {
   logger.info('Socket connected', { publicId: socket.user?.publicId, socketId: socket.id });
@@ -146,10 +185,31 @@ io.on('connection', (socket) => {
   });
 
   socket.on('send_message', async (data) => {
-    // data should contain { consultationId, senderId, content }
+    // data should contain { consultationId, content }
+    // senderId is derived from socket.user (server-authoritative) — never trust client
     try {
-      const { consultationId, senderId, content } = data;
-      
+      const { consultationId, content } = data;
+      const senderId = socket.user.id;
+
+      if (!consultationId || !content) {
+        return socket.emit('error', { msg: 'consultationId and content are required' });
+      }
+
+      // Verify the sender is a participant of this consultation
+      const consultation = await prisma.consultation.findUnique({
+        where: { id: consultationId },
+        select: { patientId: true, doctorId: true, deletedAt: true },
+      });
+
+      if (!consultation || consultation.deletedAt) {
+        return socket.emit('error', { msg: 'Consultation not found' });
+      }
+
+      if (consultation.patientId !== senderId && consultation.doctorId !== senderId) {
+        logger.warn('Unauthorized message attempt', { senderId, consultationId });
+        return socket.emit('error', { msg: 'Access denied: not a participant' });
+      }
+
       // Save to database
       const newMessage = await prisma.message.create({
         data: {
@@ -194,6 +254,35 @@ app.use((err, req, res, next) => {
   logger.error('Unhandled error', { error: err.message, stack: err.stack });
   res.status(500).json({ msg: 'Internal server error' });
 });
+
+// ─── Process-level error handlers ────────────────────────────────────────────
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Promise Rejection', { reason: reason?.message || reason });
+});
+
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception — shutting down', { error: err.message, stack: err.stack });
+  process.exit(1);
+});
+
+// ─── Graceful Shutdown ───────────────────────────────────────────────────────
+function gracefulShutdown(signal) {
+  logger.info(`${signal} received — shutting down gracefully`);
+  server.close(async () => {
+    logger.info('HTTP server closed');
+    await prisma.$disconnect();
+    logger.info('Database disconnected');
+    process.exit(0);
+  });
+  // Force shutdown after 10 seconds
+  setTimeout(() => {
+    logger.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 const PORT = process.env.PORT || 3001;
 

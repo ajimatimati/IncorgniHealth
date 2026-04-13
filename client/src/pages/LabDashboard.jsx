@@ -1,216 +1,215 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../components/Toast';
-import StatusBadge from '../components/StatusBadge';
+import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import api from '../api';
-import { motion, AnimatePresence } from 'framer-motion';
-import RippleButton from '../components/RippleButton';
-import { FlaskConical, Clock, CheckCircle, UploadCloud, Microscope } from 'lucide-react';
 
-const Icons = {
-  flask:     <FlaskConical className="w-5 h-5" strokeWidth={1.5} />,
-  time:      <Clock className="w-5 h-5" strokeWidth={1.5} />,
-  check:     <CheckCircle className="w-5 h-5" strokeWidth={1.5} />,
-  microscope:<Microscope className="w-6 h-6" strokeWidth={1.5} />,
-  upload:    <UploadCloud className="w-4 h-4 ml-2" strokeWidth={1.5} />,
-};
-
-const COL_CONFIG = [
-  { title: 'Inbound Requests',   status: 'PENDING',    emptyText: 'NETWORK IDLE',      color: 'violet' },
-  { title: 'Currently Analyzing',status: 'PROCESSING', emptyText: 'NO ACTIVE TESTS',   color: 'amber' },
-  { title: 'Results Uploaded',   status: 'UPLOADED',   emptyText: 'QUEUE CLEARED',     color: 'green' },
+const STATUS_COLS = [
+  { key: 'PENDING',    label: 'Inbound',    icon: 'inbox',        color: 'text-outline'  },
+  { key: 'PROCESSING', label: 'Analysing', icon: 'biotech',      color: 'text-tertiary' },
+  { key: 'UPLOADED',   label: 'Reports Ready', icon: 'assignment_turned_in', color: 'text-primary' },
 ];
 
-const COLORS = {
-  violet: { text: 'text-[#6D28D9]', bg: 'bg-[#F5F3FF]', border: 'border-[#EDE9FE]' },
-  amber:  { text: 'text-[#D97706]', bg: 'bg-[#FEF3C7]', border: 'border-[#FEF08A]' },
-  green:  { text: 'text-[#059669]', bg: 'bg-[#D1FAE5]', border: 'border-[#A7F3D0]' },
-};
-
-const LabDashboard = () => {
-  const [investigations, setInvestigations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const toast = useToast();
-
-  useEffect(() => {
-    fetchInvestigations();
-    const interval = setInterval(fetchInvestigations, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchInvestigations = async () => {
-    try {
-      const res = await api.get('/lab/feed');
-      setInvestigations(res.data.data || []);
-    } catch { /* silent */ } finally { setLoading(false); }
-  };
-
-  const handleAccept = async (invId) => {
-    try {
-      await api.post(`/lab/accept/${invId}`);
-      toast.success('Investigation accepted.');
-      fetchInvestigations();
-    } catch { toast.error('Could not accept investigation.'); }
-  };
-
-  const handleUploadReport = async (invId) => {
-    try {
-      // Stub to simulate PDF / report upload
-      await api.post(`/lab/upload/${invId}`, { pdfReportUrl: 'https://placeholder.report/dummy.pdf' });
-      toast.success('Report uploaded successfully.');
-      fetchInvestigations();
-    } catch { toast.error('Update failed.'); }
-  };
-
-  const pending    = investigations.filter(i => i.status === 'PENDING');
-  const processing = investigations.filter(i => i.status === 'PROCESSING');
-  const uploaded   = investigations.filter(i => i.status === 'UPLOADED' || i.status === 'REVIEWED');
-
-  const statCards = [
-    { label: 'Inbound',    value: pending.length,    icon: Icons.time,  color: 'violet' },
-    { label: 'Analyzing',  value: processing.length, icon: Icons.flask, color: 'amber' },
-    { label: 'Completed',  value: uploaded.length,   icon: Icons.check, color: 'green' },
-  ];
-
-  const colItems = [pending, processing, uploaded];
+function InvCard({ inv, onAccept, onUpload }) {
+  const date = new Date(inv.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const tests = Array.isArray(inv.tests) ? inv.tests : [];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="min-h-dvh bg-[#F8F7F6] pb-28 lg:pb-12 px-4 pt-6 lg:px-8 lg:pt-10 max-w-6xl mx-auto"
-    >
-        {/* ── Header ── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-white p-6 rounded-2xl border border-[#E8E6E3] shadow-card-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[#6D28D9] bg-[#F5F3FF]">
-              {Icons.microscope}
-            </div>
-            <div>
-              <p className="section-label mb-0.5">Imaging & Lab Center</p>
-              <h1 className="text-2xl font-black text-[#18181B]" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
-                {user?.nickname || 'Lab Scientist'}
-              </h1>
-              <p className="text-[11px] text-[#059669] font-bold flex items-center gap-1.5 mt-1 uppercase tracking-wider">
-                <span className="w-2 h-2 rounded-full bg-[#059669]" /> Lab Active
-              </p>
-            </div>
-          </div>
-          <div className="text-right hidden sm:block">
-            <p className="section-label mb-1">Authenticated Node</p>
-            <p className="text-sm font-bold text-[#18181B] bg-[#F4F4F5] px-3 py-1.5 rounded-lg uppercase">{user?.publicId || 'SYS_PENDING'}</p>
-          </div>
+    <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-2xl p-4 space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="font-headline text-sm font-semibold text-on-surface">{inv.publicInvId || `INV-${inv.id?.slice(-6).toUpperCase()}`}</p>
+          <p className="font-label text-[10px] text-outline uppercase tracking-wide mt-0.5">
+            Pt. {inv.patient?.publicId || '—'} · {date}
+          </p>
         </div>
+      </div>
+      {tests.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {tests.slice(0, 4).map((t, i) => (
+            <span key={i} className="font-label text-[9px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
+      {inv.status === 'PENDING' && (
+        <button
+          onClick={() => onAccept(inv.id)}
+          className="w-full py-2 rounded-xl bg-primary text-on-primary font-label text-[11px] uppercase tracking-widest hover:brightness-110 transition-all"
+        >
+          Accept Investigation
+        </button>
+      )}
+      {inv.status === 'PROCESSING' && (
+        <button
+          onClick={() => onUpload(inv.id)}
+          className="w-full py-2 rounded-xl bg-tertiary/10 text-tertiary border border-tertiary/20 font-label text-[11px] uppercase tracking-widest hover:bg-tertiary hover:text-background transition-all"
+        >
+          Upload Report
+        </button>
+      )}
+      {inv.status === 'UPLOADED' && inv.pdfReportUrl && (
+        <a
+          href={inv.pdfReportUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-surface-container-high text-on-surface font-label text-[11px] uppercase tracking-widest hover:bg-surface-container-highest transition-all"
+        >
+          <span className="material-symbols-outlined text-base">open_in_new</span>
+          View Report
+        </a>
+      )}
+    </div>
+  );
+}
 
-        {/* ── Stats ── */}
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          {statCards.map((s, i) => (
-            <div key={i} className="p-5 bg-white rounded-2xl border border-[#E8E6E3] shadow-card-sm flex flex-col justify-between">
-              <div className="flex justify-between items-start mb-5">
-                <span className={`p-3 rounded-xl ${COLORS[s.color].bg} ${COLORS[s.color].text}`}>
-                  {s.icon}
-                </span>
-                <span className="text-3xl font-black text-[#18181B] tracking-tight">
-                  {String(s.value).padStart(2, '0')}
-                </span>
-              </div>
-              <p className="section-label border-t border-[#F0EDED] pt-3">{s.label}</p>
+export default function LabDashboard() {
+  const [investigations, setInvestigations] = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [reportUrl, setReportUrl]           = useState('');
+  const [uploadingId, setUploadingId]       = useState(null);
+  const [visibleCounts, setVisibleCounts] = useState({
+    PENDING: 10,
+    PROCESSING: 10,
+    UPLOADED: 10
+  });
+
+  const fetchFeed = useCallback(async () => {
+    try {
+      const res = await api.get('/lab/feed');
+      setInvestigations(res.data?.data || res.data || []);
+    } catch (err) {
+      console.error('Lab feed error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFeed();
+    const iv = setInterval(fetchFeed, 30_000);
+    return () => clearInterval(iv);
+  }, [fetchFeed]);
+
+  const handleAccept = async (id) => {
+    try {
+      await api.post(`/lab/accept/${id}`);
+      fetchFeed();
+    } catch (err) { console.error(err); }
+  };
+
+  const handleUpload = (id) => setUploadingId(id);
+
+  const submitReport = async () => {
+    if (!uploadingId || !reportUrl.trim()) return;
+    try {
+      await api.post(`/lab/upload/${uploadingId}`, { pdfReportUrl: reportUrl.trim() });
+      setUploadingId(null);
+      setReportUrl('');
+      fetchFeed();
+    } catch (err) { console.error(err); }
+  };
+
+  const byStatus = (status) => investigations.filter(i => i.status === status);
+
+  return (
+    <div className="bg-background min-h-full text-on-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 lg:py-10">
+
+        <header className="mb-8">
+          <p className="font-label text-[11px] text-primary uppercase tracking-[0.2em]">Lab & Imaging</p>
+          <h1 className="font-headline text-3xl lg:text-4xl font-bold text-on-surface mt-1">Investigation Pipeline</h1>
+          <p className="font-body text-sm text-on-surface-variant mt-1 opacity-70">Real-time feed — refreshes every 30 seconds.</p>
+        </header>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          {STATUS_COLS.map(col => (
+            <div key={col.key} className="bg-surface-container-low border border-outline-variant/10 rounded-2xl p-5">
+              <span className={`material-symbols-outlined text-xl ${col.color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{col.icon}</span>
+              <p className="font-headline text-2xl font-bold text-on-surface mt-3">
+                {loading ? '—' : byStatus(col.key).length}
+              </p>
+              <p className="font-label text-[10px] text-outline uppercase tracking-widest mt-0.5">{col.label}</p>
             </div>
           ))}
         </div>
 
-        {/* ── Kanban Columns ── */}
-        {loading ? (
-          <div className="py-20 text-center">
-            <p className="section-label animate-pulse">Syncing diagnostic network…</p>
-          </div>
-        ) : investigations.length === 0 ? (
-          <div className="py-20 bg-white border border-[#E8E6E3] rounded-2xl flex flex-col items-center justify-center text-center shadow-card-sm">
-            <p className="section-label">No active investigations detected</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 pb-12">
-            {COL_CONFIG.map((col, ci) => {
-              const cStyles = COLORS[col.color];
-              return (
-                <div key={ci} className="flex flex-col bg-white rounded-2xl overflow-hidden border border-[#E8E6E3] shadow-card h-[600px]">
-                  {/* Column header */}
-                  <div className={`flex items-center justify-between px-5 py-4 border-b border-[#F0EDED] bg-[#F9F9FB]`}>
-                    <h2 className={`text-[11px] font-bold uppercase tracking-wider text-[#18181B]`}>{col.title}</h2>
-                    <span className={`text-[11.5px] font-bold px-2.5 py-0.5 rounded-full ${cStyles.bg} ${cStyles.text}`}>
-                      {String(colItems[ci].length).padStart(2, '0')}
-                    </span>
+        {/* Kanban */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {STATUS_COLS.map(col => {
+            const items = byStatus(col.key);
+            return (
+              <div key={col.key} className="bg-surface-container-low border border-outline-variant/10 rounded-3xl p-5">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <span className={`material-symbols-outlined text-base ${col.color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{col.icon}</span>
+                    <h2 className="font-headline text-sm font-bold text-on-surface">{col.label}</h2>
                   </div>
-
-                  {/* Cards */}
-                  <div className="p-4 space-y-4 flex-1 overflow-y-auto">
-                    {colItems[ci].length === 0 ? (
-                      <div className="py-12 text-center rounded-xl bg-[#F9F9FB] border border-dashed border-[#E8E6E3]">
-                        <p className="section-label">{col.emptyText}</p>
+                  <span className={`font-label text-[10px] px-2 py-0.5 rounded-full bg-surface-container-high ${col.color}`}>{items.length}</span>
+                </div>
+                <div className="flex flex-col flex-1 min-h-0">
+                  <div className="space-y-3 min-h-[200px] flex-1 overflow-y-auto max-h-[50vh] lg:max-h-[calc(100vh-25rem)] pr-2 custom-scrollbar">
+                    {loading ? (
+                      <div className="h-24 rounded-2xl bg-surface-container-high animate-pulse" />
+                    ) : items.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-10 text-center">
+                        <span className="material-symbols-outlined text-3xl text-outline opacity-30">{col.icon}</span>
+                        <p className="font-body text-xs text-on-surface-variant mt-2 opacity-50">Nothing here</p>
                       </div>
                     ) : (
-                      <AnimatePresence>
-                        {colItems[ci].map((inv) => (
-                          <motion.div key={inv.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-                            className="p-5 rounded-xl bg-white border border-[#E8E6E3] shadow-sm flex flex-col gap-4"
-                          >
-                            <div className="flex justify-between items-start border-b border-[#F0EDED] pb-3">
-                              <div>
-                                <p className="section-label mb-0.5">Inv ID</p>
-                                <p className="font-bold text-[#18181B] text-sm uppercase">{inv.publicInvId}</p>
-                              </div>
-                              <StatusBadge status={inv.status} />
-                            </div>
-
-                            <div className="p-4 rounded-xl bg-[#F9F9FB] border border-[#F0EDED] space-y-3">
-                              <p className="section-label border-b border-[#E8E6E3] pb-2">Requested Tests</p>
-                              {inv.tests?.length > 0 ? inv.tests.map((test, idx) => (
-                                <div key={idx} className="flex items-center gap-2 pt-1 text-[13px] font-bold text-[#18181B]">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-[#6D28D9]" />
-                                  {typeof test === 'string' ? test : test?.name}
-                                </div>
-                              )) : (
-                                <p className="section-label !text-[#DC2626]">No test data</p>
-                              )}
-                            </div>
-
-                            {inv.status === 'PENDING' && (
-                              <RippleButton onClick={() => handleAccept(inv.id)} size="sm" className="w-full justify-center">
-                                Accept Request
-                              </RippleButton>
-                            )}
-                            {inv.status === 'PROCESSING' && (
-                              <RippleButton variant="amber" onClick={() => handleUploadReport(inv.id)} size="sm" className="w-full justify-center">
-                                Generate & Upload Report {Icons.upload}
-                              </RippleButton>
-                            )}
-                            {inv.status === 'UPLOADED' && (
-                              <div className={`flex items-center justify-between p-4 rounded-xl ${cStyles.bg} ${cStyles.border} border`}>
-                                <span className={`section-label !text-[#059669]`}>Report Sent</span>
-                                <span className="text-[10px] font-bold text-[#059669] tabular-nums tracking-widest pt-1">
-                                  SUCCESS
-                                </span>
-                              </div>
-                            )}
-                            {inv.status === 'REVIEWED' && (
-                              <div className={`p-4 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0]`}>
-                                <p className="section-label !text-[#059669] mb-1">Doctor Remarks</p>
-                                <p className="text-[13px] text-[#065F46] font-medium leading-relaxed">{inv.doctorRemarks || 'Reviewed successfully.'}</p>
-                              </div>
-                            )}
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
+                      items.slice(0, visibleCounts[col.key]).map(inv => (
+                        <motion.div key={inv.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
+                          <InvCard inv={inv} onAccept={handleAccept} onUpload={handleUpload} />
+                        </motion.div>
+                      ))
                     )}
                   </div>
+                  {!loading && items.length > visibleCounts[col.key] && (
+                    <button 
+                      onClick={() => setVisibleCounts(prev => ({ ...prev, [col.key]: prev[col.key] + 10 }))}
+                      className="w-full h-10 mt-3 rounded-xl border border-outline-variant/20 bg-surface-container-highest text-on-surface hover:bg-surface-container-high font-label text-[9px] uppercase tracking-widest transition-colors"
+                    >
+                      Load More
+                    </button>
+                  )}
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Upload modal */}
+        {uploadingId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-surface-container-low border border-outline-variant/10 rounded-3xl p-8 w-full max-w-md space-y-5">
+              <h3 className="font-headline text-xl font-bold text-on-surface">Upload Report</h3>
+              <p className="font-body text-sm text-on-surface-variant opacity-70">Enter the URL of the completed PDF report.</p>
+              <input
+                type="url"
+                value={reportUrl}
+                onChange={e => setReportUrl(e.target.value)}
+                placeholder="https://storage.example.com/report.pdf"
+                className="w-full bg-surface-container-high border border-outline-variant/10 rounded-xl px-4 py-3 text-on-surface font-body text-sm outline-none focus:border-primary transition-all"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setUploadingId(null); setReportUrl(''); }}
+                  className="flex-1 py-3 rounded-xl bg-surface-container-high text-on-surface-variant font-label text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitReport}
+                  disabled={!reportUrl.trim()}
+                  className="flex-1 py-3 rounded-xl bg-primary text-on-primary font-label text-xs uppercase tracking-widest hover:brightness-110 disabled:opacity-50 transition-all"
+                >
+                  Submit Report
+                </button>
+              </div>
+            </div>
           </div>
         )}
-      </motion.div>
+      </div>
+    </div>
   );
-};
-
-export default LabDashboard;
+}

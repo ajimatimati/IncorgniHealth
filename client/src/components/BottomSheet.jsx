@@ -81,10 +81,10 @@ export default function BottomSheet({ isOpen, onClose, title, children, snapPoin
         {/* Header */}
         {title && (
           <div className="flex items-center justify-between px-5 pb-3">
-            <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
+            <h3 className="text-lg font-semibold text-on-surface">{title}</h3>
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-text-muted"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-on-surface-variant"
               aria-label="Close"
             >
               ✕

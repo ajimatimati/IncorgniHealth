@@ -1,43 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
-import { motion } from 'framer-motion';
-import { JitsiMeeting } from '@jitsi/react-sdk';
-import { Pill, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
+import { io } from 'socket.io-client';
 
-const Icons = {
-  pill:   <Pill className="w-5 h-5 shrink-0 text-[#00D4B8]" strokeWidth={1.5} />,
-  check:  <Check className="w-4 h-4" strokeWidth={2} />,
-};
-
-const JITSI_CONFIG = {
-  startWithAudioMuted: false,
-  disableModeratorIndicator: true,
-  startScreenSharing: false,
-  enableEmailInStats: false,
-  prejoinPageEnabled: false, // Jump straight in
-  disableDeepLinking: true,
-  defaultLanguage: 'en',
-};
-
-const JITSI_INTERFACE_CONFIG = {
-  DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-  SHOW_JITSI_WATERMARK: false,
-  SHOW_BRAND_WATERMARK: false,
-  SHOW_POWERED_BY: false,
-  DEFAULT_LOGO_URL: '',
-  DEFAULT_WELCOME_PAGE_LOGO_URL: '',
-  HIDE_DEEP_LINKING_LOGO: true,
-  TOOLBAR_BUTTONS: [
-    'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
-    'fodeviceselection', 'hangup', 'profile', 'chat', 'settings',
-    'videoquality', 'filmstrip', 'shortcuts', 'tileview'
-  ],
-};
-
-const VideoConsultation = () => {
+export default function VideoConsultation() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -49,20 +18,100 @@ const VideoConsultation = () => {
   const [rxLoading, setRxLoading] = useState(false);
   const [rxSent, setRxSent]       = useState(false);
 
-  // Investigation State
   const [testName, setTestName]   = useState('');
   const [invLoading, setInvLoading] = useState(false);
   const [invSent, setInvSent]     = useState(false);
 
-  // AI State
   const [aiSymptoms, setAiSymptoms] = useState('');
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [showAi, setShowAi] = useState(false);
 
-  // Derive a unique, secure room name based on the consultation ID
-  // e.g., "IncorgniHealth-Consult-abc123xyz"
-  const roomName = `IncorgniHealth-Consult-${id || 'demo'}`;
+  // WebRTC Native Implementation Refs
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const peerConnectionRef = useRef(null);
+  const socketRef = useRef(null);
+  const [cameraActive, setCameraActive] = useState(false);
+
+  useEffect(() => {
+    // 1. Initialize Signaling Socket
+    socketRef.current = io(import.meta.env.VITE_API_URL);
+    socketRef.current.emit('join_room', id);
+
+    const sendSignal = (signalType, payload) => {
+      const content = JSON.stringify({ type: 'SIGNAL', signalType, payload });
+      socketRef.current.emit('send_message', { consultationId: id, content });
+    };
+
+    // 2. Setup RTCPeerConnection
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
+    peerConnectionRef.current = pc;
+
+    pc.ontrack = (event) => {
+      if (remoteVideoRef.current && event.streams[0]) {
+        remoteVideoRef.current.srcObject = event.streams[0];
+      }
+    };
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) sendSignal('ICE', event.candidate);
+    };
+
+    // 3. Acquire Local Media
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(stream => {
+        setCameraActive(true);
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+        stream.getTracks().forEach(track => pc.addTrack(track, stream));
+        
+        // Broadcast presence
+        sendSignal('READY', {});
+      })
+      .catch(err => {
+        console.error("Camera access denied:", err);
+        toast.error("Camera/Microphone permission required for P2P video.");
+      });
+
+    // 4. Handle Incoming Signals via Chat Pipeline
+    socketRef.current.on('receive_message', async (msg) => {
+      if (msg.senderId === user.id) return;
+      try {
+        const data = JSON.parse(msg.content);
+        if (data.type !== 'SIGNAL') return;
+
+        if (data.signalType === 'READY') {
+          // Whoever is the DOCTOR initiates the offer upon hearing of peer's arrival
+          if (user.role === 'DOCTOR') {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            sendSignal('OFFER', offer);
+          }
+        } else if (data.signalType === 'OFFER') {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.payload));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          sendSignal('ANSWER', answer);
+        } else if (data.signalType === 'ANSWER') {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.payload));
+        } else if (data.signalType === 'ICE') {
+          await pc.addIceCandidate(new RTCIceCandidate(data.payload));
+        }
+      } catch (e) {
+        // Not a JSON signal payload (normal chat string), safe to ignore here
+      }
+    });
+
+    return () => {
+      if (localVideoRef.current?.srcObject) {
+        localVideoRef.current.srcObject.getTracks().forEach(t => t.stop());
+      }
+      pc.close();
+      socketRef.current?.disconnect();
+    };
+  }, [id, user.id, user.role, toast]);
 
   const endSession = async () => {
     try {
@@ -73,7 +122,7 @@ const VideoConsultation = () => {
     if (user?.role === 'PATIENT') {
       navigate(`/review/${id}`);
     } else {
-      navigate('/doctor-dashboard');
+      navigate('/doctor/dashboard');
     }
   };
 
@@ -88,13 +137,12 @@ const VideoConsultation = () => {
         instructions:   'Take as directed by physician',
       });
       setRxSent(true);
-      toast.success(`Prescription for "${rxName}" sent to pharmacy.`);
+      toast.success(`Prescription for ${rxName} requested.`);
       setRxName('');
       setRxDosage('');
       setTimeout(() => setRxSent(false), 3000);
     } catch (err) {
-      const msg = err.response?.data?.msg || 'Failed to send prescription. Try again.';
-      toast.error(msg);
+      toast.error('Unable to transmit prescription.');
     } finally {
       setRxLoading(false);
     }
@@ -104,15 +152,13 @@ const VideoConsultation = () => {
     if (!testName.trim()) return;
     setInvLoading(true);
     try {
-      await api.post(`/doctor/investigate/${id}`, {
-        tests: [testName.trim()]
-      });
+      await api.post(`/doctor/investigate/${id}`, { tests: [testName.trim()] });
       setInvSent(true);
-      toast.success(`Investigation for "${testName}" requested.`);
+      toast.success(`Investigation for ${testName} requested.`);
       setTestName('');
       setTimeout(() => setInvSent(false), 3000);
     } catch (err) {
-      toast.error('Failed to request investigation.');
+      toast.error('Unable to send clinical request.');
     } finally {
       setInvLoading(false);
     }
@@ -126,223 +172,221 @@ const VideoConsultation = () => {
       const res = await api.post('/ai/analyze', { symptoms: aiSymptoms });
       setAiResult(res.data);
     } catch (err) {
-      toast.error('AI analysis failed. Please try again.');
+      toast.error('Diagnostic synthesis interrupted.');
     } finally {
       setAiLoading(false);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="h-[100dvh] w-full bg-[#040B14] flex flex-col md:flex-row overflow-hidden font-sans"
-    >
-      {/* ── Jitsi Video Area ── */}
-        <div className="absolute inset-0 z-0 bg-dots opacity-20 pointer-events-none" />
-        <JitsiMeeting
-          domain="meet.jit.si"
-          roomName={roomName}
-          configOverwrite={JITSI_CONFIG}
-          interfaceConfigOverwrite={JITSI_INTERFACE_CONFIG}
-          userInfo={{
-            displayName: user?.nickname || user?.publicId || (user?.role === 'DOCTOR' ? 'Doctor' : 'Client'),
-            email: ''
-          }}
-          onApiReady={(externalApi) => {
-            externalApi.addListener('videoConferenceLeft', () => {
-              endSession();
-            });
-          }}
-          getIFrameRef={(iframeRef) => {
-            iframeRef.style.height = 'calc(100% - 24px)';
-            iframeRef.style.width = 'calc(100% - 24px)';
-            iframeRef.style.margin = '12px';
-            iframeRef.style.borderRadius = '24px';
-            iframeRef.style.border = '1px solid rgba(255,255,255,0.1)';
-            iframeRef.style.overflow = 'hidden';
-          }}
-        />
+    <div className="h-screen w-full bg-background flex flex-col md:flex-row overflow-hidden relative">
+      {/* Immersive HUD Overlay Items */}
+      <div className="absolute top-6 left-6 z-50 flex items-center gap-3">
+        <div className="bg-surface-container-low/60 backdrop-blur-md border border-outline-variant/10 px-4 py-2 rounded-full flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+          <span className="font-label text-[10px] text-on-surface uppercase tracking-[0.2em]">P2P Secure Stream</span>
+        </div>
       </div>
 
-      {/* ── Doctor Sidebar ── */}
-      {user?.role === 'DOCTOR' && (
-        <div className="w-full md:w-[400px] bg-[#0A0A0A] border-l border-white/5 flex flex-col h-[50vh] md:h-full shrink-0 z-10 font-sans">
-        <div className="p-5 bento-glass !bg-white/5 border-b border-white/5 mb-4">
-          <h2 className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-            Clinical Command
-          </h2>
-          <p className="text-[9px] text-gray-500 mt-1 uppercase tracking-widest font-mono">Session_ID: {id?.slice(0,8)}</p>
+      <div className="absolute top-6 right-6 md:right-[420px] z-50">
+        <button 
+          onClick={endSession}
+          className="bg-error/10 hover:bg-error text-error hover:text-white border border-error/20 px-6 py-2 rounded-full font-label text-[10px] uppercase tracking-widest transition-all shadow-lg"
+        >
+          End Consult
+        </button>
+      </div>
+
+      {/* Main Video Stage (Native WebRTC) */}
+      <main className="flex-1 relative bg-surface-container-lowest flex items-center justify-center p-4 lg:p-12 overflow-hidden">
+        
+        {/* Remote Video Container */}
+        <div className="relative w-full h-full max-w-6xl mx-auto rounded-[32px] overflow-hidden bg-black shadow-2xl shadow-primary/5 flex items-center justify-center border border-outline-variant/10">
+          <video 
+            ref={remoteVideoRef} 
+            autoPlay 
+            playsInline 
+            className="w-full h-full object-cover opacity-90"
+          />
+          {!remoteVideoRef.current?.srcObject && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="material-symbols-outlined text-outline text-6xl opacity-30 animate-pulse">videocam_off</span>
+              <p className="font-label text-xs text-outline uppercase tracking-[0.3em] mt-4 opacity-70">Awaiting Peer Connection</p>
+            </div>
+          )}
         </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-            {/* Notes Section */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 border-b border-white/5 pb-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Observation Notes
-              </label>
+        {/* Local Picture-in-Picture */}
+        <div className="absolute bottom-8 right-8 lg:right-16 lg:bottom-12 w-32 h-48 md:w-48 md:h-72 bg-surface-container-low rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl z-30">
+          <video 
+            ref={localVideoRef} 
+            autoPlay 
+            playsInline 
+            muted 
+            className="w-full h-full object-cover transform scale-x-[-1]" 
+          />
+          {!cameraActive && (
+             <div className="absolute inset-0 bg-surface-container-highest flex items-center justify-center">
+               <span className="material-symbols-outlined text-outline text-2xl animate-spin">sync</span>
+             </div>
+          )}
+        </div>
+      </main>
+
+      {/* Doctor Workspace Sidebar */}
+      {user?.role === 'DOCTOR' && (
+        <aside className="w-full md:w-[400px] bg-surface-container-low border-l border-outline-variant/10 flex flex-col h-[60vh] md:h-full shrink-0 z-40 relative">
+          <header className="p-6 border-b border-outline-variant/5">
+            <h2 className="font-label text-[10px] text-primary uppercase tracking-[0.2em] mb-1">Clinical Workspace</h2>
+            <p className="font-headline text-lg font-bold text-on-surface">Case Management</p>
+          </header>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
+            {/* Notes */}
+            <section className="space-y-3">
+              <label className="font-label text-[9px] text-outline uppercase tracking-widest pl-1">Consultation Notes</label>
               <textarea
-                className="w-full h-32 bg-[#111] border border-white/10 text-white p-3 rounded-lg text-sm resize-none focus:outline-none focus:border-blue-500/50 focus:bg-blue-900/10 transition-all font-mono leading-relaxed"
-                placeholder="Client presents with..."
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
+                placeholder="Brief clinical observations..."
+                className="w-full h-32 bg-surface-container border border-outline-variant/10 rounded-2xl p-4 text-sm text-on-surface focus:border-primary/40 focus:outline-none transition-all resize-none shadow-inner"
               />
-            </div>
+            </section>
 
-            {/* Auto-Prescribe System */}
-            <div className="bento-glass p-5 rounded-3xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 glow-point opacity-10 translate-x-10 translate-y-[-10px]" style={{ '--glow-color': '#00D4B8' }} />
+            {/* Prescriptions */}
+            <section className="bg-surface-container p-5 rounded-2xl border border-outline-variant/10 space-y-5">
+              <div className="flex items-center gap-3 border-b border-outline-variant/5 pb-3">
+                <span className="material-symbols-outlined text-tertiary">pill</span>
+                <h3 className="font-label text-[10px] text-tertiary uppercase tracking-widest font-black">Issue Medication</h3>
+              </div>
               
-              <h3 className="text-[10px] font-black text-[#00D4B8] uppercase tracking-widest mb-4 flex items-center gap-2 pb-3 border-b border-white/5">
-                {Icons.pill} Prescription Protocol
-              </h3>
-
-              <div className="space-y-4 relative z-10">
-                <div>
-                  <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-2">Medication</label>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="font-label text-[8px] text-outline uppercase tracking-widest">Medication</label>
                   <input
                     type="text"
                     value={rxName}
                     onChange={e => setRxName(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-white p-3 rounded-xl text-xs focus:outline-none focus:border-[#00D4B8]/50 transition-all"
-                    placeholder="e.g. Doxycycline"
+                    placeholder="e.g. Amoxicillin"
+                    className="w-full bg-surface-container-low border border-outline-variant/10 rounded-xl px-4 py-2.5 text-xs text-on-surface focus:border-tertiary/40"
                   />
                 </div>
-                <div>
-                  <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-2">Dosage Pattern</label>
+                <div className="space-y-2">
+                  <label className="font-label text-[8px] text-outline uppercase tracking-widest">Dosage Protocol</label>
                   <input
                     type="text"
                     value={rxDosage}
                     onChange={e => setRxDosage(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-[#00D4B8] font-mono font-bold p-3 rounded-xl text-xs focus:outline-none focus:border-[#00D4B8]/50 transition-all"
-                    placeholder="e.g. 100mg BID x 7"
+                    placeholder="e.g. 500mg BID x 7"
+                    className="w-full bg-surface-container-low border border-outline-variant/10 rounded-xl px-4 py-2.5 text-xs text-on-surface focus:border-tertiary/40 font-mono"
                   />
                 </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={handleSendRx}
-                    disabled={rxLoading || rxSent || !rxName.trim() || !rxDosage.trim()}
-                    className={`w-full py-3 px-4 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-2 ${
-                      rxSent 
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
-                        : 'bg-[#00D4B8] hover:bg-[#00E5C8] border border-[#00D4B8] text-[#040B14] shadow-[0_0_20px_rgba(0,212,184,0.2)]'
-                    }`}
-                  >
-                    {rxSent ? 'Dispatched' : 'Issue Rx'}
-                  </button>
-                </div>
+                <button
+                  onClick={handleSendRx}
+                  disabled={rxLoading || rxSent || !rxName.trim()}
+                  className={`w-full h-11 rounded-xl font-label text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2
+                    ${rxSent ? 'bg-primary/20 text-primary' : 'bg-tertiary text-on-tertiary'}`}
+                >
+                  {rxSent ? 'Transmitted' : 'Authorize Rx'}
+                </button>
               </div>
-            </div>
+            </section>
 
-            {/* AI Clinical Decision Support */}
-            <div className={`bento-glass p-5 rounded-3xl relative overflow-hidden transition-all duration-300 ${showAi ? ' ring-1 ring-blue-500/30' : ''}`}>
-              <div className="absolute top-0 right-0 w-24 h-24 glow-point opacity-10" style={{ '--glow-color': '#3B82F6' }} />
+            {/* Lab Investigations */}
+            <section className="bg-surface-container p-5 rounded-2xl border border-outline-variant/10 space-y-5">
+              <div className="flex items-center gap-3 border-b border-outline-variant/5 pb-3">
+                <span className="material-symbols-outlined text-info text-[#4fd1c5]">biotech</span>
+                <h3 className="font-label text-[10px] text-[#4fd1c5] uppercase tracking-widest font-black">Order Diagnostics</h3>
+              </div>
               
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-                <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> Diagnostic Copilot
-                </h3>
-                <button onClick={() => setShowAi(!showAi)} className="text-[9px] font-black text-gray-500 hover:text-white uppercase">
-                  {showAi ? 'Minimize' : 'Expand'}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="font-label text-[8px] text-outline uppercase tracking-widest">Test / Panel Name</label>
+                  <input
+                    type="text"
+                    value={testName}
+                    onChange={e => setTestName(e.target.value)}
+                    placeholder="e.g. Comprehensive Metabolic Panel"
+                    className="w-full bg-surface-container-low border border-outline-variant/10 rounded-xl px-4 py-2.5 text-xs text-on-surface focus:border-[#4fd1c5]/40"
+                  />
+                </div>
+                <button
+                  onClick={handleSendInv}
+                  disabled={invLoading || invSent || !testName.trim()}
+                  className={`w-full h-11 rounded-xl font-label text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2
+                    ${invSent ? 'bg-primary/20 text-primary' : 'bg-[#4fd1c5] text-background'}`}
+                >
+                  {invSent ? 'Ordered' : 'Send to Lab'}
+                </button>
+              </div>
+            </section>
+
+            {/* AI Assistant */}
+            <section className={`bg-surface-container-highest/20 p-5 rounded-2xl border transition-all ${showAi ? 'border-primary/30' : 'border-outline-variant/10'}`}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-lg">auto_awesome</span>
+                  <p className="font-label text-[10px] text-primary uppercase tracking-widest font-black">Clinical Synthesis</p>
+                </div>
+                <button onClick={() => setShowAi(!showAi)} className="font-label text-[8px] text-outline uppercase hover:text-on-surface transition-colors">
+                  {showAi ? 'Hide' : 'Reveal'}
                 </button>
               </div>
 
               {showAi ? (
-                <div className="space-y-4 relative z-10">
+                <div className="space-y-4">
                   <textarea
                     value={aiSymptoms}
                     onChange={e => setAiSymptoms(e.target.value)}
-                    className="w-full h-24 bg-white/5 border border-white/10 text-white p-3 rounded-xl text-xs focus:outline-none focus:border-blue-500/50 transition-all font-mono resize-none"
-                    placeholder="Enter clinical observations..."
+                    className="w-full h-24 bg-surface-container-low border border-outline-variant/10 rounded-xl p-3 text-xs text-on-surface focus:border-primary/40 focus:outline-none resize-none"
+                    placeholder="Enter observations..."
                   />
                   <button
                     onClick={handleAiAnalyze}
                     disabled={aiLoading || !aiSymptoms.trim()}
-                    className="w-full py-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
+                    className="w-full h-11 bg-primary text-on-primary rounded-xl text-[10px] font-label uppercase tracking-widest"
                   >
-                    {aiLoading ? 'Synthesizing...' : 'Run Analysis'}
+                    {aiLoading ? 'Synthesizing...' : 'Run Synthesis'}
                   </button>
 
                   <AnimatePresence>
                     {aiResult && (
-                      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-4 mt-4 border-t border-outline-variant/5 space-y-4">
                         <div className="flex justify-between items-start">
-                          <p className="text-[13px] font-black text-white leading-tight">{aiResult.diagnosis}</p>
-                          <span className="text-[9px] font-mono bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full border border-blue-500/20">
-                            CONF: {(aiResult.confidence * 100).toFixed(0)}%
+                          <p className="text-sm font-bold text-on-surface leading-tight">{aiResult.diagnosis}</p>
+                          <span className="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">
+                            {(aiResult.confidence * 100).toFixed(0)}% Match
                           </span>
                         </div>
-                        <div className="space-y-2">
-                          <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Protocol Path</p>
-                          <ul className="space-y-2">
-                            {aiResult.suggestions?.map((s, idx) => (
-                              <li key={idx} className="text-[11px] text-gray-300 flex items-start gap-2 leading-relaxed">
-                                <span className="w-1 h-1 rounded-full bg-blue-500 mt-1.5 shrink-0" /> {s}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                        <ul className="space-y-2">
+                          {aiResult.suggestions?.map((s, idx) => (
+                            <li key={idx} className="text-[11px] text-on-surface-variant flex items-start gap-2 leading-relaxed italic">
+                              <span className="text-primary mt-1">•</span> {s}
+                            </li>
+                          ))}
+                        </ul>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               ) : (
-                <button onClick={() => setShowAi(true)} className="w-full py-3 text-[10px] font-black text-gray-500 border border-dashed border-white/10 rounded-xl hover:bg-white/5 transition-all uppercase tracking-widest">
-                  Initialize Copilot
+                <button onClick={() => setShowAi(true)} className="w-full py-4 border border-dashed border-outline-variant/20 rounded-xl font-label text-[9px] text-outline uppercase tracking-widest hover:bg-surface-container transition-all">
+                  Initialize Synthesis
                 </button>
               )}
-            </div>
-
-            {/* Lab/Imaging Request System */}
-            <div className="bg-[#111] border border-white/10 p-5 rounded-xl shadow-2xl relative overflow-hidden group">
-              <h3 className="text-[10px] font-bold text-[#D97706] uppercase tracking-widest mb-4 flex items-center gap-2 pb-3 border-b border-white/5">
-                <span className="text-[#D97706]">●</span> Diagnostic Intel — Lab/Imaging Request
-              </h3>
-
-              <div className="space-y-4 relative z-10">
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Required Investigation</label>
-                  <input
-                    type="text"
-                    value={testName}
-                    onChange={e => setTestName(e.target.value)}
-                    className="w-full bg-[#0a0a0a] border border-white/10 text-white p-3 rounded text-sm focus:outline-none focus:border-[#D97706]/50 focus:ring-1 focus:ring-[#D97706]/30 transition-all font-mono"
-                    placeholder="e.g. Pelvic Ultrasound"
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={handleSendInv}
-                    disabled={invLoading || invSent || !testName.trim()}
-                    className={`w-full py-3 px-4 rounded font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-2 ${
-                      invSent 
-                        ? 'bg-[#D97706]/20 text-[#D97706] border border-[#D97706]/50'
-                        : 'bg-[#D97706] hover:bg-[#B45309] border border-[#D97706] text-white shadow-[0_0_16px_rgba(217,119,6,0.3)]'
-                    } disabled:opacity-40`}
-                  >
-                    {invLoading ? 'Transmitting...' : invSent ? 'Requested' : 'Send Request'}
-                  </button>
-                </div>
-              </div>
-            </div>
+            </section>
           </div>
-          
-          <div className="p-4 border-t border-white/5">
+
+          <footer className="p-6 border-t border-outline-variant/5">
             <button
                onClick={endSession}
-               className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded transition-colors"
+               className="w-full h-12 bg-surface-container-highest text-on-surface font-label text-[9px] uppercase tracking-[0.2em] rounded-xl hover:bg-error/10 hover:text-error transition-all"
             >
-               Return to Command
+               Conclude Consult
             </button>
-          </div>
-        </div>
+          </footer>
+        </aside>
       )}
-    </motion.div>
+    </div>
   );
-};
-
-export default VideoConsultation;
+}

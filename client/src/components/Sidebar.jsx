@@ -1,245 +1,234 @@
 import { useState } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AvatarGenerator from './AvatarGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ROLE_CONFIG = {
-  PATIENT:    { label: 'Client' },
-  DOCTOR:     { label: 'Doctor' },
-  PHARMACY:   { label: 'Pharmacy' },
-  RIDER:      { label: 'Rider' },
-  ADMIN:      { label: 'Admin' },
+/* ── Role labels ──────────────────────────────────────────────────────────── */
+const ROLE_LABELS = {
+  PATIENT:       'Patient',
+  DOCTOR:        'Doctor',
+  PHARMACY:      'Pharmacy',
+  RIDER:         'Rider',
+  LAB_SCIENTIST: 'Lab Scientist',
+  SARC_OFFICER:  'SARC Officer',
+  ADMIN:         'Admin',
 };
 
-import { LayoutDashboard, Heart, Brain, Shield, User, Settings, ClipboardList, Truck, ShieldAlert, LogOut, HelpCircle, X, Menu } from 'lucide-react';
-
-const ICONS = {
-  dashboard:  <LayoutDashboard className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  heart:      <Heart className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  brain:      <Brain className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  shield:     <Shield className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  user:       <User className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  cog:        <Settings className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  orders:     <ClipboardList className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  truck:      <Truck className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  admin:      <ShieldAlert className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  logout:     <LogOut className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  support:    <HelpCircle className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  close:      <X className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-  menu:       <Menu className="w-[18px] h-[18px] shrink-0" strokeWidth={1.75} />,
-};
-
-const nav = {
+/* ── Navigation config per role ───────────────────────────────────────────── */
+const NAV = {
   PATIENT: [
-    { to: '/dashboard',       label: 'Dashboard',      icon: ICONS.dashboard },
-    { to: '/directory',       label: 'Directory',      icon: ICONS.user },
-    { to: '/sexual-health',   label: 'Sexual Health',  icon: ICONS.heart },
-    { to: '/mental-wellness', label: 'Mental Wellness', icon: ICONS.brain },
-    { to: '/safe-haven',      label: 'Safe Haven',     icon: ICONS.shield },
-    { to: '/sarc',            label: 'SARC Centre',    icon: ICONS.shield },
-    { to: '/profile',         label: 'Profile',        icon: ICONS.user },
-    { to: '/settings',        label: 'Settings',       icon: ICONS.cog },
+    { to: '/dashboard',       label: 'Home',            icon: 'home_health'      },
+    { to: '/directory',       label: 'Find a Doctor',   icon: 'stethoscope'      },
+    { to: '/mental-wellness', label: 'Mental Wellness', icon: 'self_improvement' },
+    { to: '/sexual-health',   label: 'Sexual Health',   icon: 'health_and_safety'},
+    { to: '/safe-haven',      label: 'Safe Haven',      icon: 'shield_with_heart'},
+    { to: '/profile',         label: 'My Profile',      icon: 'person'           },
+    { to: '/settings',        label: 'Settings',        icon: 'settings'         },
   ],
   DOCTOR: [
-    { to: '/doctor-dashboard',  label: 'Doctor Portal', icon: ICONS.dashboard },
-    { to: '/profile',           label: 'Profile',       icon: ICONS.user },
-    { to: '/settings',          label: 'Settings',      icon: ICONS.cog },
+    { to: '/doctor-dashboard', label: 'Doctor Portal',    icon: 'medical_services' },
+    { to: '/profile',          label: 'My Profile',       icon: 'person'           },
+    { to: '/settings',         label: 'Settings',         icon: 'settings'         },
   ],
   PHARMACY: [
-    { to: '/pharmacy-dashboard', label: 'Pharmacy',      icon: ICONS.orders },
-    { to: '/profile',            label: 'Profile',       icon: ICONS.user },
-    { to: '/settings',           label: 'Settings',      icon: ICONS.cog },
+    { to: '/pharmacy-dashboard', label: 'Order Pipeline', icon: 'medication'     },
+    { to: '/profile',            label: 'My Profile',     icon: 'person'         },
+    { to: '/settings',           label: 'Settings',       icon: 'settings'       },
   ],
   RIDER: [
-    { to: '/rider-dashboard',  label: 'Deliveries',    icon: ICONS.truck },
-    { to: '/profile',          label: 'Profile',       icon: ICONS.user },
-    { to: '/settings',         label: 'Settings',      icon: ICONS.cog },
+    { to: '/rider-dashboard', label: 'Deliveries',   icon: 'delivery_truck'   },
+    { to: '/profile',         label: 'My Profile',   icon: 'person'           },
+    { to: '/settings',        label: 'Settings',     icon: 'settings'         },
   ],
   LAB_SCIENTIST: [
-    { to: '/lab-dashboard',    label: 'Lab Dashboard', icon: ICONS.dashboard },
-    { to: '/profile',          label: 'Profile',       icon: ICONS.user },
-    { to: '/settings',         label: 'Settings',      icon: ICONS.cog },
+    { to: '/lab-dashboard', label: 'Lab Pipeline', icon: 'biotech'        },
+    { to: '/profile',       label: 'My Profile',   icon: 'person'         },
+    { to: '/settings',      label: 'Settings',     icon: 'settings'       },
+  ],
+  SARC_OFFICER: [
+    { to: '/sarc-dashboard', label: 'SARC Portal', icon: 'shield_with_heart' },
+    { to: '/profile',        label: 'My Profile',  icon: 'person'            },
+    { to: '/settings',       label: 'Settings',    icon: 'settings'          },
   ],
   ADMIN: [
-    { to: '/admin',    label: 'Admin',    icon: ICONS.admin },
-    { to: '/profile',  label: 'Profile',  icon: ICONS.user },
-    { to: '/settings', label: 'Settings', icon: ICONS.cog },
+    { to: '/admin',    label: 'Admin Panel', icon: 'admin_panel_settings' },
+    { to: '/profile',  label: 'My Profile',  icon: 'person'               },
+    { to: '/settings', label: 'Settings',    icon: 'settings'             },
   ],
 };
 
-function NavItem({ item }) {
+/* ── Single nav item ──────────────────────────────────────────────────────── */
+function NavItem({ item, onClick }) {
   return (
     <NavLink
       to={item.to}
+      onClick={onClick}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-all duration-150 ${
-          isActive
-            ? 'bg-[#EDE9FE] text-[#6D28D9]'
-            : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B]'
-        }`
+        `group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 relative
+         ${isActive
+           ? 'bg-primary/10 text-primary border-l-2 border-primary ml-0 pl-[10px]'
+           : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface border-l-2 border-transparent'
+         }`
       }
     >
       {({ isActive }) => (
         <>
-          <span className={isActive ? 'text-[#6D28D9]' : 'text-[#A1A1AA]'}>
+          <span
+            className={`material-symbols-outlined text-[18px] shrink-0 transition-all
+              ${isActive ? 'text-primary' : 'text-on-surface-variant group-hover:text-on-surface'}`}
+            style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+          >
             {item.icon}
           </span>
-          <span>{item.label}</span>
+          <span className="font-label text-[13px] tracking-wide truncate">{item.label}</span>
         </>
       )}
     </NavLink>
   );
 }
 
-const Sidebar = () => {
+/* ── Sidebar content (shared between desktop & drawer) ──────────────────── */
+function SidebarContent({ onClose }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const role = user?.role;
-  const roleConf = ROLE_CONFIG[role] || ROLE_CONFIG.PATIENT;
-  const items = nav[role] || nav.PATIENT;
+  const role = user?.role || 'PATIENT';
+  const items = NAV[role] || NAV.PATIENT;
+  const roleLabel = ROLE_LABELS[role] || role;
 
   const handleLogout = () => {
-    setDrawerOpen(false);
+    onClose?.();
     logout();
-    navigate('/auth');
+    navigate('/auth', { replace: true });
   };
 
   return (
+    <div className="flex flex-col h-full bg-background border-r border-outline-variant/10">
+      {/* Brand */}
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-outline-variant/10 shrink-0">
+        <span
+          className="material-symbols-outlined text-primary text-2xl"
+          style={{ fontVariationSettings: "'FILL' 1" }}
+        >
+          shield_with_heart
+        </span>
+        <div className="min-w-0">
+          <h1 className="font-headline text-base font-bold text-on-surface tracking-wide truncate">
+            IncogniHealth
+          </h1>
+          <p className="font-label text-[9px] text-primary uppercase tracking-[0.2em]">
+            {roleLabel} Portal
+          </p>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto no-scrollbar">
+        {items.map(item => (
+          <NavItem key={item.to} item={item} onClick={onClose} />
+        ))}
+      </nav>
+
+      {/* Footer: support + logout + user chip */}
+      <div className="px-3 pb-4 pt-3 border-t border-outline-variant/10 space-y-1 shrink-0">
+        <button
+          onClick={() => {
+            onClose?.();
+            window.dispatchEvent(new Event('open-support'));
+          }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+        >
+          <span className="material-symbols-outlined text-[18px] shrink-0">help</span>
+          <span className="font-label text-[13px]">Contact Support</span>
+        </button>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-on-surface-variant hover:bg-error/10 hover:text-error transition-all"
+        >
+          <span className="material-symbols-outlined text-[18px] shrink-0">logout</span>
+          <span className="font-label text-[13px]">Sign Out</span>
+        </button>
+
+        {/* User chip */}
+        <div className="flex items-center gap-3 px-3 pt-3 mt-1 border-t border-outline-variant/10">
+          <div className="shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
+            <AvatarGenerator seed={user?.avatar || user?.publicId} size="sm" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-headline text-sm font-semibold text-on-surface truncate">
+              {user?.nickname || 'Anonymous'}
+            </p>
+            <p className="font-label text-[10px] text-outline truncate">{user?.publicId}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main Sidebar component ───────────────────────────────────────────────── */
+export default function Sidebar() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  return (
     <>
-      {/* ── Desktop sidebar ────────────────────────────────────────── */}
-      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 flex-col z-20 bg-white border-r border-[#E8E6E3]">
-        {/* Brand */}
-        <div className="px-5 py-6 border-b border-[#F0EDED]">
-          <span className="text-lg font-black text-[#18181B]" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
-            Incognihealth
-          </span>
-          <div className="mt-2">
-            <span className="badge badge-violet text-[11px]">{roleConf.label}</span>
-          </div>
-        </div>
-
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {items.map(item => <NavItem key={item.to} item={item} />)}
-        </nav>
-
-        {/* User section */}
-        <div className="p-3 border-t border-[#F0EDED] space-y-0.5">
-          <a
-            href="mailto:ajimatimati@gmail.com"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] transition-all"
-          >
-            {ICONS.support}
-            Contact Support
-          </a>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#52525B] hover:bg-[#FEE2E2] hover:text-[#DC2626] transition-all"
-          >
-            {ICONS.logout}
-            Sign Out
-          </button>
-
-          <div className="flex items-center gap-3 px-3 pt-3 mt-1 border-t border-[#F0EDED]">
-            <div className="shrink-0 rounded-full overflow-hidden ring-2 ring-[#EDE9FE]">
-              <AvatarGenerator seed={user?.avatar || user?.publicId} size="sm" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-[#18181B] truncate">{user?.nickname || 'Anonymous'}</p>
-              <p className="text-xs text-[#A1A1AA] truncate">{user?.publicId}</p>
-            </div>
-          </div>
-        </div>
+      {/* ── Desktop: fixed left sidebar ── */}
+      <aside className="hidden lg:flex w-56 shrink-0 h-screen sticky top-0">
+        <SidebarContent />
       </aside>
 
-      {/* ── Mobile: top bar + drawer ────────────────────────────────── */}
-      <div className="lg:hidden fixed top-0 inset-x-0 z-30 bg-white border-b border-[#E8E6E3] flex items-center justify-between px-4 h-14">
-        <span className="text-base font-black text-[#18181B]" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
-          Incognihealth
-        </span>
+      {/* ── Mobile: top bar ── */}
+      <div className="lg:hidden fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-4 bg-background/90 backdrop-blur-md border-b border-outline-variant/10">
+        <div className="flex items-center gap-2">
+          <span
+            className="material-symbols-outlined text-primary text-xl"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            shield_with_heart
+          </span>
+          <span className="font-headline text-sm font-bold text-on-surface tracking-wide">IncogniHealth</span>
+        </div>
         <button
           onClick={() => setDrawerOpen(true)}
-          className="w-10 h-10 flex items-center justify-center rounded-xl text-[#71717A] hover:bg-[#F4F4F5] transition-colors"
+          className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-low border border-outline-variant/10 text-on-surface-variant hover:text-on-surface transition-colors"
           aria-label="Open menu"
         >
-          {ICONS.menu}
+          <span className="material-symbols-outlined text-xl">menu</span>
         </button>
       </div>
 
-      {/* Spacer so content clears the top bar */}
-      <div className="lg:hidden h-14" />
+      {/* Mobile spacer */}
+      <div className="lg:hidden h-14 shrink-0" />
 
-      {/* Drawer overlay */}
+      {/* ── Mobile: slide-in drawer ── */}
       <AnimatePresence>
         {drawerOpen && (
           <>
+            {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
               onClick={() => setDrawerOpen(false)}
             />
+            {/* Drawer */}
             <motion.aside
-              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed left-0 top-0 bottom-0 w-72 z-50 bg-white flex flex-col"
+              key="drawer"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+              className="fixed left-0 top-0 bottom-0 w-72 z-50"
             >
-              <div className="flex items-center justify-between px-5 py-5 border-b border-[#F0EDED]">
-                <span className="text-lg font-black text-[#18181B]" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
-                  Incognihealth
-                </span>
-                <button
-                  onClick={() => setDrawerOpen(false)}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl text-[#A1A1AA] hover:bg-[#F4F4F5] transition-colors"
-                >
-                  {ICONS.close}
-                </button>
-              </div>
-
-              <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-                {items.map(item => (
-                  <div key={item.to} onClick={() => setDrawerOpen(false)}>
-                    <NavItem item={item} />
-                  </div>
-                ))}
-              </nav>
-
-              <div className="p-3 border-t border-[#F0EDED] space-y-0.5">
-                <a
-                  href="mailto:ajimatimati@gmail.com"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#52525B] hover:bg-[#F4F4F5] transition-all"
-                >
-                  {ICONS.support}
-                  Contact Support
-                </a>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium text-[#52525B] hover:bg-[#FEE2E2] hover:text-[#DC2626] transition-all"
-                >
-                  {ICONS.logout}
-                  Sign Out
-                </button>
-
-                <div className="flex items-center gap-3 px-3 pt-3 mt-1 border-t border-[#F0EDED]">
-                  <div className="shrink-0 rounded-full overflow-hidden ring-2 ring-[#EDE9FE]">
-                    <AvatarGenerator seed={user?.avatar || user?.publicId} size="sm" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[#18181B] truncate">{user?.nickname || 'Anonymous'}</p>
-                    <span className="badge badge-violet text-[10px]">{roleConf.label}</span>
-                  </div>
-                </div>
-              </div>
+              <SidebarContent onClose={() => setDrawerOpen(false)} />
             </motion.aside>
           </>
         )}
       </AnimatePresence>
     </>
   );
-};
-
-export default Sidebar;
+}

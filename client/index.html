@@ -6,8 +6,14 @@
     <meta name="description" content="Incognihealth — Maximum health Outcome, minimum social exposure." />
     <meta name="theme-color" content="#7c3aed" />
 
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json" />
+    <!-- Prevent ALL caching of this page -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org; connect-src 'self' wss://incorgnihealth.onrender.com https://incorgnihealth.onrender.com https://accounts.google.com http://localhost:*; media-src 'self' blob:; frame-src 'self' https://accounts.google.com;" />
+
     <link rel="icon" type="image/png" href="/favicon.png" />
 
     <!-- Apple PWA meta -->
@@ -19,17 +25,39 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <!-- Material Symbols icons (used throughout the app) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Register service worker
+      // ═══ NUCLEAR CACHE PURGE ═══
+      // 1. Unregister ALL service workers
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (let registration of registrations) {
+            registration.unregister();
+            console.log('[CachePurge] Unregistered service worker:', registration.scope);
+          }
+        });
+        // Register the self-destructing sw.js to clean up any remaining caches
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      }
+
+      // 2. Nuke ALL CacheStorage entries
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          for (const name of names) {
+            caches.delete(name);
+            console.log('[CachePurge] Deleted cache:', name);
+          }
         });
       }
+
+      // 3. Clear stale session artifacts
+      try { sessionStorage.clear(); } catch(e) {}
+      console.log('[CachePurge] All caches, service workers, and session artifacts cleared.');
     </script>
   </body>
 </html>

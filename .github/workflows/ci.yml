@@ -7,26 +7,101 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
+  server-tests:
     runs-on: ubuntu-latest
-
+    
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [22.x]
+
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test_db?schema=public"
+      JWT_SECRET: "ci-test-secret-do-not-use-in-production-64chars-aaaaaaaaaaaaaaa"
+      NODE_ENV: "test"
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+        cache-dependency-path: server/package-lock.json
     
-    - name: Install Dependencies
+    - name: Install Server Dependencies
       run: npm ci
+      working-directory: ./server
+    
+    - name: Generate Prisma Client
+      run: npx prisma generate
+      working-directory: ./server
+
+    - name: Push Schema to Test DB
+      run: npx prisma db push --skip-generate
       working-directory: ./server
       
     - name: Run Tests
       run: npm test
       working-directory: ./server
+
+  client-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 22.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+        cache-dependency-path: client/package-lock.json
+    
+    - name: Install Client Dependencies
+      run: npm ci
+      working-directory: ./client
+    
+    - name: Lint
+      run: npm run lint
+      working-directory: ./client
+      continue-on-error: true
+    
+    - name: Build
+      run: npm run build
+      working-directory: ./client
+      env:
+        VITE_API_URL: "https://placeholder.example.com/api/v1"
+        VITE_GOOGLE_CLIENT_ID: "placeholder"
+
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 22.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+
+    - name: Audit Server Dependencies
+      run: npm audit --audit-level=high
+      working-directory: ./server
+      continue-on-error: true
+    
+    - name: Audit Client Dependencies
+      run: npm audit --audit-level=high
+      working-directory: ./client
+      continue-on-error: true

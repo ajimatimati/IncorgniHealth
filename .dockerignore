@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+.github
+
+# Client (not needed in server Docker image)
+client/
+
+# Documentation
+docReadMe/
+*.md
+
+# Debug / temp files
+diff.txt
+staged_diff.txt
+status.txt
+help*.txt
+*.log
+
+# Root test scripts
+check.js
+download_anatomy.js
+download_model.js
+test_auth.js
+test_doctor.js
+test_profile.js
+test_telemedicine.js
+verify_anonymity.js
+stitch_welcome_screen*/
+
+# Dependencies (will be installed in Docker)
+node_modules/
+server/node_modules/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# Coverage
+server/coverage/

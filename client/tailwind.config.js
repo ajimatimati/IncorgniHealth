@@ -4,100 +4,133 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // ── Incognito Health — Clean Light System ──────────────────
-        canvas:  '#F8F7F6',        // warm off-white page background
-        surface: '#FFFFFF',        // card / panel background
-        border:  '#E8E6E3',        // subtle dividers
-
-        ink: {
-          DEFAULT: '#18181B',      // primary text
-          secondary: '#71717A',    // body / descriptions
-          muted: '#A1A1AA',        // placeholders, metadata
-        },
-
-        violet: {
-          DEFAULT: '#6D28D9',      // primary accent
-          light:   '#EDE9FE',      // soft tint backgrounds
-          dark:    '#4C1D95',      // pressed states
-        },
-
-        success: { DEFAULT: '#059669', light: '#D1FAE5' },
-        warning: { DEFAULT: '#D97706', light: '#FEF3C7' },
-        danger:  { DEFAULT: '#DC2626', light: '#FEE2E2' },
-
-        // Legacy aliases — keep so existing code doesn't break completely
-        brand:   { DEFAULT: '#6D28D9', light: '#EDE9FE' },
-        primary: '#F8F7F6',
-        action:  '#6D28D9',
-        emergency: '#DC2626',
+        // ── IncogniHealth — Dark Cinema Design System (Stitch) ──────────
+        'background':               '#131313',
+        'on-background':            '#e5e2e1',
+        'surface':                  '#131313',
+        'surface-dim':              '#131313',
+        'surface-bright':           '#393939',
+        'surface-container-lowest': '#0e0e0e',
+        'surface-container-low':    '#1c1b1b',
+        'surface-container':        '#201f1f',
+        'surface-container-high':   '#2a2a2a',
+        'surface-container-highest':'#353534',
+        'surface-variant':          '#353534',
+        'on-surface':               '#e5e2e1',
+        'on-surface-variant':       '#cbc3d7',
+        'inverse-surface':          '#e5e2e1',
+        'inverse-on-surface':       '#313030',
+        'primary':                  '#d0bcff',
+        'primary-container':        '#a078ff',
+        'primary-fixed':            '#e9ddff',
+        'primary-fixed-dim':        '#d0bcff',
+        'on-primary':               '#3c0091',
+        'on-primary-container':     '#340080',
+        'on-primary-fixed':         '#23005c',
+        'on-primary-fixed-variant': '#5516be',
+        'inverse-primary':          '#6d3bd7',
+        'surface-tint':             '#d0bcff',
+        'secondary':                '#bac8dc',
+        'secondary-container':      '#3a4859',
+        'secondary-fixed':          '#d6e4f9',
+        'secondary-fixed-dim':      '#bac8dc',
+        'on-secondary':             '#243141',
+        'on-secondary-container':   '#a8b6ca',
+        'on-secondary-fixed':       '#0f1c2c',
+        'on-secondary-fixed-variant': '#3a4859',
+        'tertiary':                 '#8ccdff',
+        'tertiary-container':       '#2899d8',
+        'tertiary-fixed':           '#cae6ff',
+        'tertiary-fixed-dim':       '#8ccdff',
+        'on-tertiary':              '#00344e',
+        'on-tertiary-container':    '#002d44',
+        'on-tertiary-fixed':        '#001e2f',
+        'on-tertiary-fixed-variant':'#004b6f',
+        'error':                    '#ffb4ab',
+        'error-container':          '#93000a',
+        'on-error':                 '#690005',
+        'on-error-container':       '#ffdad6',
+        'outline':                  '#958ea0',
+        'outline-variant':          '#494454',
+        // legacy aliases  kept so old references don't break
+        canvas:    '#131313',
+        brand:     { DEFAULT: '#d0bcff', light: '#e9ddff' },
+        action:    '#d0bcff',
+        emergency: '#ffb4ab',
+        violet:    { DEFAULT: '#d0bcff', light: '#e9ddff', dark: '#a078ff' },
+        success:   { DEFAULT: '#4caf7d', light: '#1e3a2f' },
+        warning:   { DEFAULT: '#f0b429', light: '#3a2a00' },
+        danger:    { DEFAULT: '#ffb4ab', light: '#93000a' },
+        ink: { DEFAULT: '#e5e2e1', secondary: '#cbc3d7', muted: '#958ea0' },
       },
-
       fontFamily: {
-        display: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
-        sans:    ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        heading: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
-        mono:    ['"JetBrains Mono"', 'Consolas', 'monospace'],
+        headline: ['Manrope', 'sans-serif'],
+        body:     ['Inter', 'system-ui', 'sans-serif'],
+        label:    ['Space Grotesk', 'monospace'],
+        // legacy
+        sans:     ['Inter', 'system-ui', 'sans-serif'],
+        display:  ['Manrope', 'sans-serif'],
+        heading:  ['Manrope', 'sans-serif'],
+        mono:     ['Space Grotesk', 'Consolas', 'monospace'],
       },
-
+      borderRadius: {
+        DEFAULT: '1rem',
+        lg:      '2rem',
+        xl:      '3rem',
+        full:    '9999px',
+        pill:    '9999px',
+        '2xl':   '1rem',
+        '3xl':   '2rem',
+        '4xl':   '3rem',
+      },
       fontSize: {
         '2xs': ['0.6875rem', { lineHeight: '1rem' }],
       },
-
       boxShadow: {
-        // Clean, layered shadows — no glow, no neon
-        'card':      '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-        'card-md':   '0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.05)',
-        'card-lg':   '0 4px 16px rgba(0,0,0,0.10), 0 16px 40px rgba(0,0,0,0.06)',
-        'modal':     '0 20px 60px rgba(0,0,0,0.18)',
-        'btn':       '0 1px 2px rgba(0,0,0,0.12)',
-        'btn-hover': '0 2px 8px rgba(0,0,0,0.16)',
-        // Keep legacy name so old code that references it doesn't blow up
-        'editorial': '0 1px 3px rgba(0,0,0,0.06)',
-        'neon-blue': '0 1px 3px rgba(0,0,0,0.06)',
-        'glass':     '0 4px 16px rgba(0,0,0,0.08)',
+        'card':         '0 4px 24px rgba(0,0,0,0.4)',
+        'card-md':      '0 8px 32px rgba(0,0,0,0.5)',
+        'card-lg':      '0 16px 48px rgba(0,0,0,0.6)',
+        'modal':        '0 20px 60px rgba(0,0,0,0.7)',
+        'btn':          '0 1px 2px rgba(0,0,0,0.3)',
+        'btn-hover':    '0 4px 16px rgba(208,188,255,0.2)',
+        'editorial':    '0 4px 24px rgba(0,0,0,0.4)',
+        'neon-blue':    '0 0 20px rgba(140,205,255,0.2)',
+        'glass':        '0 8px 32px rgba(0,0,0,0.4)',
+        'primary-glow': '0 0 24px rgba(208,188,255,0.25)',
+        'nav':          '0 -10px 40px rgba(0,0,0,0.4)',
       },
-
-      borderRadius: {
-        'pill':  '9999px',
-        '2xl':   '16px',
-        '3xl':   '24px',
-        '4xl':   '32px',
-      },
-
-      spacing: {
-        'safe-bottom': 'env(safe-area-inset-bottom)',
-        'safe-top':    'env(safe-area-inset-top)',
-      },
-
       animation: {
         'fade-in':    'fadeIn 0.35s cubic-bezier(0.16,1,0.3,1) both',
         'slide-up':   'slideUp 0.35s cubic-bezier(0.16,1,0.3,1) both',
         'slide-down': 'slideDown 0.3s cubic-bezier(0.16,1,0.3,1) both',
         'scale-in':   'scaleIn 0.25s cubic-bezier(0.16,1,0.3,1) both',
         'shimmer':    'shimmer 1.8s linear infinite',
-        // Keep old names for components not yet updated
-        'pulse-glow': 'fadeIn 2s ease-in-out infinite alternate',
-        'scanline':   'fadeIn 0.01s linear',
-        'ticker':     'shimmer 40s linear infinite',
+        'pulse-glow': 'pulseGlow 2s ease-in-out infinite alternate',
         'float':      'float 3s ease-in-out infinite',
+        'ticker':     'ticker 40s linear infinite',
+        'breathing':  'breathing 4s ease-in-out infinite',
+        // legacy names
+        'scanline':   'fadeIn 0.01s linear',
+        'scan-line':  'fadeIn 0.01s linear',
       },
-
+      spacing: {
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-top':    'env(safe-area-inset-top)',
+      },
       keyframes: {
         fadeIn:    { from: { opacity: 0 }, to: { opacity: 1 } },
         slideUp:   { from: { opacity: 0, transform: 'translateY(12px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
         slideDown: { from: { opacity: 0, transform: 'translateY(-8px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
         scaleIn:   { from: { opacity: 0, transform: 'scale(0.97)' }, to: { opacity: 1, transform: 'scale(1)' } },
-        shimmer: {
-          '0%':   { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
-        },
-        float: {
-          '0%,100%': { transform: 'translateY(0)' },
-          '50%':     { transform: 'translateY(-4px)' },
-        },
+        shimmer:   { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
+        pulseGlow: { '0%': { opacity: 0.4 }, '100%': { opacity: 0.9 } },
+        float:     { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-4px)' } },
+        ticker:    { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
+        breathing: { '0%,100%': { transform: 'scale(1)', opacity: 0.3 }, '50%': { transform: 'scale(1.1)', opacity: 0.7 } },
       },
     },
   },

@@ -3,11 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { useToast } from '../components/Toast';
-import { motion } from 'framer-motion';
-import { MapPin, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const WaitingRoom = () => {
-  const { doctorId } = useParams(); // Using the doctor's public ID to join their queue
+export default function WaitingRoom() {
+  const { doctorId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { socket } = useSocket();
@@ -16,27 +15,19 @@ const WaitingRoom = () => {
   const [joined, setJoined] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
+    if (!user) navigate('/auth');
   }, [user, navigate]);
 
   useEffect(() => {
     if (!socket) return;
-
     const handleAdmit = (data) => {
-      // Doctor has admitted the patient to a Jitsi room
       if (data.roomId) {
-        toast.success('Your doctor is ready.');
+        toast.success('Your physician is ready to see you.');
         navigate(`/consult/${data.roomId}`);
       }
     };
-
     socket.on('admit-patient', handleAdmit);
-
-    return () => {
-      socket.off('admit-patient', handleAdmit);
-    };
+    return () => socket.off('admit-patient', handleAdmit);
   }, [socket, navigate, toast]);
 
   const joinQueue = () => {
@@ -49,115 +40,115 @@ const WaitingRoom = () => {
         }
       });
       setJoined(true);
-      toast.success('Successfully joined the waiting room. The doctor has been notified.');
+      toast.success('You have been securely added to the queue.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] bg-dots flex items-center justify-center p-4 sm:p-8 font-sans overflow-hidden">
-      {/* Background Orbs */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] glow-point opacity-40" style={{ '--glow-color': 'rgba(30, 64, 175, 0.3)' }} />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] glow-point opacity-40" style={{ '--glow-color': 'rgba(109, 40, 217, 0.2)' }} />
-      </div>
-
+    <div className="min-h-screen bg-background text-on-background flex items-center justify-center p-6 overflow-hidden relative">
+      {/* Immersive background elements */}
+      <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-tertiary/5 blur-[100px] rounded-full pointer-events-none" />
+      
       <motion.div 
-        initial="hidden"
-        animate="visible"
-        variants={{
-          visible: { transition: { staggerChildren: 0.15 } }
-        }}
-        className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-12 gap-4 relative z-10"
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-12 gap-6 relative z-10"
       >
         {!joined ? (
-          <>
-            <motion.div 
-              variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-              className="md:col-span-12 bento-glass p-10 rounded-3xl text-center relative overflow-hidden"
-            >
-              <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-2xl" 
-                style={{ background: 'linear-gradient(135deg, #1E40AF 0%, #6D28D9 100%)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                <MapPin className="w-10 h-10 text-white" strokeWidth={1.5} />
-              </div>
-              <h1 className="text-4xl font-black text-white mb-4 tracking-tight" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
-                Secure Admission
-              </h1>
-              <p className="text-base text-slate-400 max-w-xl mx-auto mb-10 leading-relaxed">
-                You are entering the IncorgniHealth secure perimeter. Your consultation is end-to-end encrypted and isolated for maximum privacy.
+          <section className="md:col-span-12 bg-surface-container-low p-12 rounded-[32px] text-center border border-outline-variant/10 shadow-2xl space-y-8 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            
+            <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto border border-primary/20 shadow-lg shadow-primary/5">
+              <span className="material-symbols-outlined text-5xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>shield_with_heart</span>
+            </div>
+            
+            <div className="space-y-4">
+              <h1 className="font-headline text-4xl font-extrabold text-on-surface">Secure Admission</h1>
+              <p className="text-on-surface-variant max-w-lg mx-auto text-sm leading-relaxed">
+                You are entering a private clinical area. Your identity and data are protected by end-to-end encryption. A physician will admit you shortly.
               </p>
-              <button 
-                onClick={joinQueue}
-                className="px-10 py-5 bg-white text-slate-950 font-black rounded-2xl uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_40px_rgba(255,255,255,0.1)]"
-              >
-                Enter Virtual Clinic
-              </button>
-            </motion.div>
-          </>
+            </div>
+
+            <button 
+              onClick={joinQueue}
+              className="px-12 py-5 bg-primary text-on-primary font-headline rounded-full uppercase tracking-widest text-sm shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+            >
+              Enter Private Clinic
+            </button>
+          </section>
         ) : (
           <>
-            {/* Header Status */}
-            <motion.div 
-              variants={{ hidden: { opacity: 0, scale: 0.9 }, visible: { opacity: 1, scale: 1 } }}
-              className="md:col-span-8 bento-glass p-8 rounded-3xl flex flex-col items-center justify-center text-center space-y-6"
+            {/* Status Section */}
+            <motion.section 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="md:col-span-8 bg-surface-container-low p-10 rounded-[32px] border border-outline-variant/10 flex flex-col items-center justify-center text-center space-y-8 relative overflow-hidden h-[400px]"
             >
-              <div className="relative w-32 h-32">
-                 <div className="absolute inset-0 rounded-full animate-ping opacity-20 bg-blue-500"></div>
-                 <div className="relative w-full h-full border-2 border-blue-500/30 rounded-full flex items-center justify-center bg-blue-500/10 backdrop-blur-md">
-                   <Clock className="w-12 h-12 text-blue-400" strokeWidth={1.5} />
+              {/* Pulsing indicator */}
+              <div className="relative">
+                 <div className="absolute inset-[-10px] rounded-full animate-ping opacity-10 bg-primary"></div>
+                 <div className="w-32 h-32 rounded-full border-4 border-primary/10 flex items-center justify-center bg-surface-container-high/50 backdrop-blur-md relative z-10 shadow-inner">
+                   <span className="material-symbols-outlined text-5xl text-primary animate-pulse">hourglass_top</span>
                  </div>
               </div>
-              <div className="space-y-2">
-                <h2 className="text-2xl font-black text-white tracking-tight">Physician Notified</h2>
-                <div className="flex items-center justify-center gap-2">
-                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                   <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Secure Line Established</p>
+              
+              <div className="space-y-4">
+                <h2 className="font-headline text-3xl font-bold text-on-surface">Physician Notified</h2>
+                <div className="flex items-center justify-center gap-3">
+                   <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse" />
+                   <p className="font-label text-[10px] text-tertiary uppercase tracking-[0.2em] font-black">Encrypted Line Active</p>
                 </div>
               </div>
-            </motion.div>
+            </motion.section>
 
             {/* Sidebar Details */}
-            <div className="md:col-span-4 flex flex-col gap-4">
-              <motion.div 
-                variants={{ hidden: { opacity: 0, x: 20 }, visible: { opacity: 1, x: 0 } }}
-                className="bento-glass p-6 rounded-3xl flex-1 flex flex-col justify-between"
+            <div className="md:col-span-4 flex flex-col gap-6">
+              <motion.section 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-surface-container-low p-8 rounded-[32px] border border-outline-variant/10 flex-1 flex flex-col justify-between"
               >
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Clinic ID</p>
-                  <p className="text-xs font-mono text-blue-400 font-bold break-all">{doctorId}</p>
+                <div className="space-y-2">
+                  <p className="font-label text-[10px] text-outline uppercase tracking-widest">Protocol ID</p>
+                  <p className="font-body text-xs font-mono text-primary font-bold break-all opacity-60">{doctorId?.slice(0, 24)}...</p>
                 </div>
-                <div className="pt-4 mt-4 border-t border-white/5">
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Connection</p>
-                  <p className="text-white font-bold text-sm">Waiting for admission...</p>
+                <div className="pt-6 mt-6 border-t border-outline-variant/5">
+                  <p className="font-label text-[10px] text-outline uppercase tracking-widest mb-3">Status</p>
+                  <p className="font-body text-sm text-on-surface font-bold">Waiting for clinical admission...</p>
                 </div>
-              </motion.div>
+              </motion.section>
 
-              <motion.div 
-                variants={{ hidden: { opacity: 0, x: 20 }, visible: { opacity: 1, x: 0 } }}
-                className="bg-indigo-600/20 border border-indigo-500/30 p-6 rounded-3xl"
+              <motion.section 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-tertiary/10 border border-tertiary/20 p-8 rounded-[32px] relative overflow-hidden"
               >
-                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Clinical Tip</p>
-                <p className="text-xs text-indigo-100 font-medium leading-relaxed">
-                  Have your identification and any current medication containers ready for the physician to review.
-                </p>
-              </motion.div>
+                <div className="relative z-10">
+                  <p className="font-label text-[10px] text-tertiary uppercase tracking-widest mb-3 font-black">Clinical Tip</p>
+                  <p className="font-body text-xs text-on-surface-variant leading-relaxed opacity-80 italic">
+                    "Have your recent symptoms or medical history details ready. Your physician will review them during the session."
+                  </p>
+                </div>
+              </motion.section>
             </div>
 
             {/* Bottom Status Ticker */}
-            <motion.div 
-              variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-              className="md:col-span-12 bento-glass px-6 py-4 rounded-2xl flex items-center justify-between"
+            <motion.footer 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="md:col-span-12 bg-surface-container-high/40 border border-outline-variant/10 px-8 py-4 rounded-2xl flex items-center justify-between backdrop-blur-md"
             >
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Network Status: Operational</span>
+                <span className="w-2 h-2 rounded-full bg-primary" />
+                <span className="font-label text-[9px] text-on-surface-variant uppercase tracking-[0.2em]">Network: Peer-to-Peer Secured</span>
               </div>
-              <span className="text-[10px] font-mono text-slate-600">INC-HEALTH // NODE_{user?.publicId?.slice(0,6)}</span>
-            </motion.div>
+              <span className="font-label text-[9px] text-outline uppercase tracking-widest tabular-nums">NODE // {user?.publicId?.slice(0, 12)}</span>
+            </motion.footer>
           </>
         )}
       </motion.div>
     </div>
   );
-};
-
-export default WaitingRoom;
+}

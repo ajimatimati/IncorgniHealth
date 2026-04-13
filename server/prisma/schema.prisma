@@ -49,7 +49,7 @@ model User {
   refreshToken   String?
 
   // Wallet
-  walletBalance  Float    @default(0.0)
+  walletBalance  Decimal  @default(0.00) @db.Decimal(12, 2)
 
   // Soft delete
   deletedAt      DateTime?

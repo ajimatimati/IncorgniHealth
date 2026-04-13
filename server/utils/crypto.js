@@ -1,6 +1,9 @@
 const CryptoJS = require("crypto-js");
 
-const SECRET_KEY = process.env.JWT_SECRET || "mcnuels-super-secret-key-2026";
+const SECRET_KEY = process.env.JWT_SECRET;
+if (!SECRET_KEY) {
+  throw new Error('FATAL: JWT_SECRET environment variable is required. Server cannot start without it.');
+}
 
 // Deterministic Hash for uniqueness checks (e.g. Phone Number)
 const hashData = (data) => {
@@ -17,10 +20,14 @@ const decryptData = (ciphertext) => {
   return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
 };
 
-// Generate ID like #GH-9921-LAG
+// Generate ID like #GH-A3X9K2-LAG
 const generateGhostId = () => {
-  const randomNum = Math.floor(1000 + Math.random() * 9000); // 4 digit random
-  return `#GH-${randomNum}-LAG`;
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed ambiguous 0/O, 1/I
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `#GH-${code}-LAG`;
 };
 
 module.exports = {

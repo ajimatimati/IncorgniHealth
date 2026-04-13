@@ -1,5 +1,4 @@
 import { Component } from 'react';
-import { AlertCircle } from 'lucide-react';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -13,6 +12,7 @@ class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
+    // Future telemetry: api.post('/telemetry/crash', { error, errorInfo })
   }
 
   handleReset = () => {
@@ -22,37 +22,30 @@ class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-primary flex items-center justify-center p-6">
-          <div className="text-center max-w-md">
-            <div className="w-20 h-20 rounded-3xl bg-red-500/10 flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="w-10 h-10 text-red-400" strokeWidth={1.5} />
+        <div className="min-h-screen bg-background flex items-center justify-center p-6 text-on-background">
+          <div className="text-center w-full max-w-md bg-surface-container-low border border-outline-variant/10 rounded-[32px] p-8">
+            <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-6 text-error">
+              <span className="material-symbols-outlined text-4xl">warning</span>
             </div>
-            <h1 className="text-2xl font-bold text-text-primary mb-2">Something went wrong</h1>
-            <p className="text-sm text-text-muted mb-6">
-              An unexpected error occurred. Your data is safe — try refreshing the page.
+            <h1 className="font-headline text-2xl font-bold text-on-surface mb-2">Something went wrong</h1>
+            <p className="font-body text-sm text-on-surface-variant opacity-80 mb-8">
+              An unexpected error occurred. Your encrypted session is preserved — try refreshing the application.
             </p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={this.handleReset}
-                className="btn-secondary text-sm px-5"
-              >
-                Try Again
-              </button>
-              <button
-                onClick={() => window.location.reload()}
-                className="btn-primary text-sm px-5"
-              >
-                Refresh Page
-              </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+              <button onClick={this.handleReset} className="py-3 px-6 rounded-xl bg-surface-container-high text-on-surface font-label text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all">Try Again</button>
+              <button onClick={() => window.location.reload()} className="py-3 px-6 rounded-xl bg-error text-onError font-label text-xs uppercase tracking-widest hover:brightness-110 transition-all">Refresh Page</button>
             </div>
             {this.state.error && (
-              <details className="mt-8 text-left">
-                <summary className="text-xs text-text-dim cursor-pointer hover:text-text-muted transition">
-                  Error details
+              <details className="text-left group">
+                <summary className="font-label text-xs text-on-surface-variant cursor-pointer hover:text-on-surface uppercase tracking-widest transition-colors outline-none list-none flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-180">expand_more</span>
+                  Diagnostic Logs
                 </summary>
-                <pre className="mt-2 text-xs text-red-400/80 bg-red-500/5 p-3 rounded-xl overflow-x-auto border border-red-500/10 whitespace-pre-wrap">
-                  {this.state.error.stack || this.state.error.toString()}
-                </pre>
+                <div className="mt-4 p-4 rounded-2xl bg-surface-container-highest border border-outline-variant/5 overflow-x-auto max-h-[300px] custom-scrollbar">
+                  <pre className="font-body text-[10px] text-error/80 whitespace-pre-wrap leading-relaxed">
+                    {this.state.error.stack || this.state.error.toString()}
+                  </pre>
+                </div>
               </details>
             )}
           </div>
