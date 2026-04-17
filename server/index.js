@@ -3,11 +3,14 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const jwt = require('jsonwebtoken');
 
 dotenv.config();
 
 const logger = require('./utils/logger');
 const { apiLimiter } = require('./middleware/rateLimit');
+const prisma = require('./db');
+const { SECRET_KEY } = require('./utils/crypto');
 
 const app = express();
 const server = http.createServer(app);
@@ -50,6 +53,18 @@ app.set('io', io);
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
 app.use(apiLimiter);
+
+// ─── HTTPS Enforcement (production only) ─────────────────────────────────────
+// Handles deployments behind a TLS-terminating proxy (Render, Railway, Heroku)
+// that sets the X-Forwarded-Proto header. No effect in development.
+if (!IS_DEV) {
+  app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
+}
 
 // ─── Request Logging Middleware ───
 app.use((req, res, next) => {
@@ -100,10 +115,6 @@ app.get('/health', async (req, res) => {
     res.status(503).json({ status: 'unhealthy', db: 'disconnected' });
   }
 });
-
-const prisma = require('./db');
-const jwt = require('jsonwebtoken');
-const { SECRET_KEY } = require('./utils/crypto');
 
 // Socket.IO auth middleware
 io.use((socket, next) => {

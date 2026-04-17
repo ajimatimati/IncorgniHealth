@@ -1,5 +1,23 @@
-node_modules
-# Keep environment variables out of version control
-.env
+# Dependencies
+node_modules/
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Generated Prisma client
 /generated/prisma
+
+# Production log files (created by Winston file transports)
+logs/
+*.log
+
+# Coverage reports
+coverage/
+
+# Ad-hoc scripts that should never be committed
+_fix_*.js
+test_*.js
+check.js
+seed_*.js
