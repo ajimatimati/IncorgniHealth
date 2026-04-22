@@ -16,6 +16,7 @@ jobs:
 
     env:
       DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/test_db?schema=public"
+      DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/test_db?schema=public"
       JWT_SECRET: "ci-test-secret-do-not-use-in-production-64chars-aaaaaaaaaaaaaaa"
       NODE_ENV: "test"
 
@@ -86,6 +87,8 @@ jobs:
       env:
         VITE_API_URL: "https://placeholder.example.com/api/v1"
         VITE_GOOGLE_CLIENT_ID: "placeholder"
+        VITE_SUPABASE_URL: "https://placeholder.supabase.co"
+        VITE_SUPABASE_ANON_KEY: "placeholder"
 
   security-audit:
     runs-on: ubuntu-latest
