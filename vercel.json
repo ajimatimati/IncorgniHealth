@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "installCommand": "cd server && npm ci --omit=dev",
+  "builds": [
+    {
+      "src": "server/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/v1/(.*)",
+      "dest": "server/index.js"
+    },
+    {
+      "src": "/health",
+      "dest": "server/index.js"
+    },
+    {
+      "src": "^/$",
+      "dest": "server/index.js"
+    }
+  ],
+  "env": {
+    "IS_VERCEL": "true",
+    "NODE_ENV": "production"
+  }
+}

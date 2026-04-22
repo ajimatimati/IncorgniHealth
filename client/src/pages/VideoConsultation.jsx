@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
-import { io } from 'socket.io-client';
+import { supabase } from '../supabase';
 
 export default function VideoConsultation() {
   const { id } = useParams();
@@ -35,13 +35,12 @@ export default function VideoConsultation() {
   const [cameraActive, setCameraActive] = useState(false);
 
   useEffect(() => {
-    // 1. Initialize Signaling Socket
-    socketRef.current = io(import.meta.env.VITE_API_URL);
-    socketRef.current.emit('join_room', id);
+    // 1. Initialize WebRTC Signaling Channel via Supabase Realtime
+    const channel = supabase.channel(`webrtc-${id}`);
 
     const sendSignal = (signalType, payload) => {
-      const content = JSON.stringify({ type: 'SIGNAL', signalType, payload });
-      socketRef.current.emit('send_message', { consultationId: id, content });
+      // Send message via Supabase Broadcast
+      channel.send({ type: 'broadcast', event: 'SIGNAL', payload: { signalType, payload, senderId: user.id } });
     };
 
     // 2. Setup RTCPeerConnection
@@ -75,13 +74,12 @@ export default function VideoConsultation() {
         toast.error("Camera/Microphone permission required for P2P video.");
       });
 
-    // 4. Handle Incoming Signals via Chat Pipeline
-    socketRef.current.on('receive_message', async (msg) => {
-      if (msg.senderId === user.id) return;
-      try {
-        const data = JSON.parse(msg.content);
-        if (data.type !== 'SIGNAL') return;
+    // 4. Handle Incoming Signals via Supabase Channel
+    channel.on('broadcast', { event: 'SIGNAL' }, async (payload) => {
+      const data = payload.payload;
+      if (data.senderId === user.id) return; // Ignore our own signals
 
+      try {
         if (data.signalType === 'READY') {
           // Whoever is the DOCTOR initiates the offer upon hearing of peer's arrival
           if (user.role === 'DOCTOR') {
@@ -100,16 +98,19 @@ export default function VideoConsultation() {
           await pc.addIceCandidate(new RTCIceCandidate(data.payload));
         }
       } catch (e) {
-        // Not a JSON signal payload (normal chat string), safe to ignore here
+        console.error('WebRTC error parsing signal', e);
       }
     });
+
+    channel.subscribe();
+    socketRef.current = channel;
 
     return () => {
       if (localVideoRef.current?.srcObject) {
         localVideoRef.current.srcObject.getTracks().forEach(t => t.stop());
       }
       pc.close();
-      socketRef.current?.disconnect();
+      supabase.removeChannel(channel);
     };
   }, [id, user.id, user.role, toast]);
 

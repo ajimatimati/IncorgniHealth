@@ -1,13 +1,21 @@
 import axios from 'axios';
 
 const isDev = import.meta.env.DEV;
-const apiUrl = import.meta.env.VITE_API_URL || 'https://incorgnihealth.onrender.com/api/v1';
+const apiUrl = import.meta.env.VITE_API_URL || '';
+
+if (!isDev && !apiUrl) {
+  console.error(
+    '%c[CONFIGURATION ERROR]',
+    'color: red; font-size: 20px; font-weight: bold;',
+    '\nVITE_API_URL is not set. The app cannot connect to the backend. Please set VITE_API_URL in your .env file to your Vercel backend URL (e.g. https://your-app-name.vercel.app/api/v1).'
+  );
+}
 
 if (!isDev && apiUrl.startsWith('http://') && !apiUrl.includes('localhost')) {
   console.error(
     '%c[CRITICAL SECURITY WARNING]', 
     'color: red; font-size: 20px; font-weight: bold;',
-    '\nMixed Content Exception: You are attempting to connect a secure production frontend (HTTPS) to an insecure backend (HTTP). Modern browsers will permanently block these requests. Please update your VITE_API_URL to use an HTTPS provider or ensure AutoSSL is active on your shared host.'
+    '\nMixed Content Exception: You are attempting to connect a secure production frontend (HTTPS) to an insecure backend (HTTP). Modern browsers will permanently block these requests. Please update your VITE_API_URL to use an HTTPS provider.'
   );
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import io from 'socket.io-client';
+import { supabase } from '../supabase';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import AvatarGenerator from '../components/AvatarGenerator';
@@ -50,19 +50,19 @@ export default function ChatRoom() {
     };
     fetchDetails();
 
-    const serverUrl = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:3001';
-    const authToken = localStorage.getItem('token');
-    socketRef.current = io(serverUrl, { auth: { token: authToken } });
-    socketRef.current.emit('join_room', consultationId);
-
-    socketRef.current.on('receive_message', (message) => {
-      setMessages((prev) => [...prev, message]);
+    const channel = supabase.channel(`chat-${consultationId}`);
+    
+    channel.on('broadcast', { event: 'receive_message' }, (payload) => {
+      setMessages((prev) => [...prev, payload.payload]);
     });
 
-    socketRef.current.on('typing', () => setTyping(true));
-    socketRef.current.on('stop_typing', () => setTyping(false));
+    channel.on('broadcast', { event: 'typing' }, () => setTyping(true));
+    channel.on('broadcast', { event: 'stop_typing' }, () => setTyping(false));
 
-    return () => socketRef.current.disconnect();
+    channel.subscribe();
+    socketRef.current = channel;
+
+    return () => { supabase.removeChannel(channel); };
   }, [consultationId, user, navigate, toast]);
 
   useEffect(() => {
@@ -80,15 +80,25 @@ export default function ChatRoom() {
     // We use the consultationId as the shared symmetric key for the "room".
     const encryptedContent = CryptoJS.AES.encrypt(text, consultationId).toString();
 
-    socketRef.current.emit('send_message', { consultationId, content: encryptedContent });
-    socketRef.current.emit('stop_typing', consultationId);
+    // 1. Save message to database
+    api.post(`/consultation/${consultationId}/message`, { content: encryptedContent })
+      .then(res => {
+         const dbMessage = res.data;
+         // 2. Broadcast to other party
+         socketRef.current.send({ type: 'broadcast', event: 'receive_message', payload: dbMessage });
+         // 3. Add to local state manually (Supabase broadcast doesn't reflect back to sender)
+         setMessages(prev => [...prev, dbMessage]);
+      })
+      .catch(() => toast.error('Failed to send message.'));
+
+    socketRef.current.send({ type: 'broadcast', event: 'stop_typing', payload: {} });
     setNewMessage('');
   };
 
   const handleInputChange = (e) => {
     setNewMessage(e.target.value);
-    if (e.target.value.trim()) socketRef.current.emit('typing', consultationId);
-    else socketRef.current.emit('stop_typing', consultationId);
+    if (e.target.value.trim()) socketRef.current.send({ type: 'broadcast', event: 'typing', payload: {} });
+    else socketRef.current.send({ type: 'broadcast', event: 'stop_typing', payload: {} });
   };
 
   const handleScroll = () => {

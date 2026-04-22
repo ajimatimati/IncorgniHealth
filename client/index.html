@@ -12,7 +12,8 @@
     <meta http-equiv="Expires" content="0" />
 
     <!-- Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org; connect-src 'self' wss://incorgnihealth.onrender.com https://incorgnihealth.onrender.com https://accounts.google.com http://localhost:*; media-src 'self' blob:; frame-src 'self' https://accounts.google.com;" />
+    <!-- NOTE: Update connect-src with your actual Koyeb backend URL after deployment -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org; connect-src 'self' wss://*.koyeb.app https://*.koyeb.app https://accounts.google.com http://localhost:*; media-src 'self' blob:; frame-src 'self' https://accounts.google.com;" />
 
     <link rel="icon" type="image/png" href="/favicon.png" />
 

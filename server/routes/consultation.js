@@ -160,4 +160,47 @@ router.post('/:id/review', auth, validate(reviewSchema), async (req, res) => {
   }
 });
 
+// @route   POST /api/v1/consultation/:id/message
+const messageSchema = z.object({
+  content: z.string().min(1).max(2000)
+});
+
+router.post('/:id/message', auth, validate(messageSchema), async (req, res) => {
+  try {
+    const consultationId = req.params.id;
+    const { content } = req.body;
+    const senderId = req.user.id;
+
+    const consultation = await prisma.consultation.findUnique({
+      where: { id: consultationId },
+      select: { patientId: true, doctorId: true, deletedAt: true },
+    });
+
+    if (!consultation || consultation.deletedAt) {
+      return res.status(404).json({ msg: 'Consultation not found' });
+    }
+
+    if (consultation.patientId !== senderId && consultation.doctorId !== senderId) {
+      return res.status(403).json({ msg: 'Access denied: not a participant' });
+    }
+
+    const newMessage = await prisma.message.create({
+      data: {
+        consultationId,
+        senderId,
+        content,
+        isSystem: false,
+      }
+    });
+    
+    // Note: Broadcasting this message to the receiver is now handled
+    // purely on the client side using Supabase Realtime 'broadcast' or 'postgres_changes' channels.
+    
+    res.status(201).json(newMessage);
+  } catch (err) {
+    logger.error('Message save error', { error: err.message });
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 module.exports = router;

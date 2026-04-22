@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const PROMPTS = [
-  'What's on your mind right now?',
+  'What\'s on your mind right now?',
   'What felt heavy or light today?',
-  'Describe one thing you're grateful for.',
-  'What do you need most in this moment?',
-  'What felt safe or comforting today?',
+  'Describe one thing you\'re grateful for.',
+  'Write a letter to your future self.',
+  'What do you need to forgive yourself for?'
 ];
 
 /**

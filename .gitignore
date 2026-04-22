@@ -37,3 +37,7 @@ coverage/
 # Lint artifacts
 lint_output.txt
 lint_report.json
+
+# Firebase
+.firebase/
+.firebaserc
