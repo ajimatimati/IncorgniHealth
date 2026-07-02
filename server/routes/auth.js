@@ -265,9 +265,9 @@ const googleVerifySchema = z.object({
 
 const { OAuth2Client } = require('google-auth-library');
 // Production Client ID
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-if (!GOOGLE_CLIENT_ID) {
-  logger.warn('[AUTH] GOOGLE_CLIENT_ID env var is not set. Google OAuth will be unavailable.');
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '45568084301-vl3oje51oclpr32do85e6m77bo2mor71.apps.googleusercontent.com';
+if (!process.env.GOOGLE_CLIENT_ID) {
+  logger.warn('[AUTH] GOOGLE_CLIENT_ID env var is not set. Falling back to default client ID.');
 }
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 

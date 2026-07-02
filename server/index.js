@@ -26,7 +26,8 @@ const corsOptions = {
     }
 
     const allowedOrigins = (process.env.CORS_ORIGIN || '').split(',').map(url => url.trim());
-    if (allowedOrigins.includes(origin)) {
+    const defaults = ['https://incognicare-app.web.app', 'https://incognicare-app.firebaseapp.com'];
+    if (allowedOrigins.includes(origin) || defaults.includes(origin)) {
       return callback(null, true);
     }
 
