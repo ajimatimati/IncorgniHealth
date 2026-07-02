@@ -239,7 +239,7 @@ export default function PartnerRegistrationModal({ isOpen, onClose, initialRole 
       </div>
       <h2 className="font-headline text-2xl font-bold text-on-surface">Application Submitted</h2>
       <p className="text-sm text-on-surface-variant max-w-sm leading-relaxed">
-        Thank you for applying to join the IncogniHealth Network. Our security and compliance team is reviewing your verified credentials.
+        Thank you for applying to join the IncogniCare Network. Our security and compliance team is reviewing your verified credentials.
       </p>
       <p className="text-sm text-on-surface-variant opacity-80 max-w-sm border-t border-outline-variant/20 pt-4 mt-2">
         You will receive an email at <span className="font-bold">{baseProfile.email || 'your email'}</span> once your account securely unlocks.
@@ -299,12 +299,12 @@ export default function PartnerRegistrationModal({ isOpen, onClose, initialRole 
                     Cancel
                   </button>
                   {step < 4 ? (
-                    <button onClick={handleNext} className="px-6 py-3 rounded-xl bg-primary text-on-primary font-headline text-[13px] font-bold uppercase tracking-widest hover:brightness-110 shadow-lg shadow-primary/20 transition-all">
+                    <button onClick={handleNext} className="btn btn-primary px-6">
                       Next Step
                     </button>
                   ) : (
-                    <button onClick={handleSubmit} disabled={submitting} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-tertiary text-on-tertiary font-headline text-[13px] font-bold uppercase tracking-widest hover:brightness-110 shadow-lg shadow-tertiary/20 disabled:opacity-50 transition-all">
-                      {submitting ? <><span className="w-4 h-4 border-2 border-on-tertiary/30 border-t-on-tertiary rounded-full animate-spin" /> Submitting</> : 'Submit Application'}
+                    <button onClick={handleSubmit} disabled={submitting} className="btn btn-primary px-6 flex items-center gap-2">
+                      {submitting ? <><span className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" /> Submitting</> : 'Submit Application'}
                     </button>
                   )}
                 </div>
@@ -313,7 +313,7 @@ export default function PartnerRegistrationModal({ isOpen, onClose, initialRole 
             
             {step === 5 && (
               <div className="px-8 py-6 bg-surface-container-lowest border-t border-outline-variant/10 flex justify-center">
-                <button onClick={onClose} className="px-8 py-3 rounded-xl bg-primary text-on-primary font-headline text-[13px] font-bold uppercase tracking-widest hover:brightness-110 shadow-lg shadow-primary/20 transition-all">
+                <button onClick={onClose} className="btn btn-primary px-8">
                   Return to Home
                 </button>
               </div>

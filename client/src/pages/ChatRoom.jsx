@@ -77,8 +77,9 @@ export default function ChatRoom() {
     if (!text) return;
 
     // Secure the payload: Encrypt the message content locally before emitting.
-    // We use the consultationId as the shared symmetric key for the "room".
-    const encryptedContent = CryptoJS.AES.encrypt(text, consultationId).toString();
+    // Derive a stronger symmetric key using PBKDF2 to prevent raw database ID decryption.
+    const chatSecret = CryptoJS.PBKDF2(consultationId, import.meta.env.VITE_APP_SECRET || 'incognicare_fallback_salt_93x', { keySize: 256/32, iterations: 1000 }).toString();
+    const encryptedContent = CryptoJS.AES.encrypt(text, chatSecret).toString();
 
     // 1. Save message to database
     api.post(`/consultation/${consultationId}/message`, { content: encryptedContent })
@@ -290,7 +291,8 @@ export default function ChatRoom() {
                     <p className="font-body text-[15px] leading-relaxed whitespace-pre-wrap word-break-words">
                       {(() => {
                         try {
-                          const bytes = CryptoJS.AES.decrypt(msg.content, consultationId);
+                          const chatSecret = CryptoJS.PBKDF2(consultationId, import.meta.env.VITE_APP_SECRET || 'incognicare_fallback_salt_93x', { keySize: 256/32, iterations: 1000 }).toString();
+                          const bytes = CryptoJS.AES.decrypt(msg.content, chatSecret);
                           const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
                           return decryptedText ? decryptedText : msg.content;
                         } catch (e) {

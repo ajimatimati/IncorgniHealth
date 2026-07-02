@@ -8,12 +8,24 @@ jest.mock('../db', () => ({
   user: {
     findUnique: jest.fn(),
     update: jest.fn(),
+    findMany: jest.fn(),
   },
   order: {
     findMany: jest.fn(),
+    create: jest.fn(),
   },
   consultation: {
     findMany: jest.fn(),
+    create: jest.fn(),
+  },
+  prescription: {
+    create: jest.fn(),
+  },
+  transaction: {
+    create: jest.fn(),
+  },
+  notification: {
+    create: jest.fn(),
   },
 }));
 
@@ -71,6 +83,66 @@ describe('User Routes', () => {
         .send({ age: 200 }); // Invalid age
 
       expect(res.statusCode).toBe(400); // Zod error
+    });
+  });
+
+  describe('POST /order', () => {
+    it('should place a direct purchase order successfully', async () => {
+      const mockUser = { id: 'user-123', walletBalance: 20000 };
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.user.findMany.mockResolvedValue([{ id: 'pharmacy-1' }]);
+      prisma.consultation.create.mockResolvedValue({ id: 'consult-1' });
+      prisma.prescription.create.mockResolvedValue({ id: 'presc-1' });
+      prisma.order.create.mockResolvedValue({
+        id: 'order-1',
+        publicOrderId: '#ORD-ABCD',
+        secureCode: '1234',
+        deliveryAddress: 'Ikeja, Lagos',
+      });
+      prisma.transaction.create.mockResolvedValue({ id: 'tx-1' });
+      prisma.user.update.mockResolvedValue({ id: 'user-123', walletBalance: 7500 });
+
+      const res = await request(app)
+        .post('/api/v1/user/order')
+        .send({
+          deliveryAddress: 'Ikeja, Lagos',
+          itemName: 'Complete STI Panel',
+          price: 12500,
+        });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.order.publicOrderId).toBe('#ORD-ABCD');
+      expect(prisma.order.create).toHaveBeenCalled();
+      expect(prisma.user.update).toHaveBeenCalled();
+    });
+
+    it('should block order if balance is insufficient', async () => {
+      const mockUser = { id: 'user-123', walletBalance: 1000 };
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+
+      const res = await request(app)
+        .post('/api/v1/user/order')
+        .send({
+          deliveryAddress: 'Ikeja, Lagos',
+          itemName: 'Complete STI Panel',
+          price: 12500,
+        });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.msg).toBe('Insufficient wallet balance');
+    });
+  });
+
+  describe('POST /erase', () => {
+    it('should shred user identity', async () => {
+      prisma.user.update.mockResolvedValue({ id: 'user-123', nickname: 'Deleted User' });
+
+      const res = await request(app)
+        .post('/api/v1/user/erase');
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.msg).toBe('Identity erased successfully');
+      expect(prisma.user.update).toHaveBeenCalled();
     });
   });
 });

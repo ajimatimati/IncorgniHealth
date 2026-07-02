@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import AvatarGenerator from '../components/AvatarGenerator';
@@ -20,43 +20,44 @@ const ROLE_LABELS = {
 };
 
 export default function Profile() {
-  const { user, login, token } = useAuth();
+  const { user, login, token, logout } = useAuth();
   const toast = useToast();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [erasing, setErasing] = useState(false);
   const [form, setForm] = useState({ nickname: '', avatar: '', age: '', sex: '' });
   const [txHistory, setTxHistory] = useState([]);
   const [activeTab, setActiveTab] = useState('identity');
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
 
   const avatarSeeds = useMemo(() => generateAvatarSeeds(user?.publicId), [user?.publicId]);
 
+  const loadProfileAndHistory = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true);
+    try {
+      const [profileRes, historyRes] = await Promise.all([
+        api.get('/user/profile'),
+        api.get('/payments/history'),
+      ]);
+      setProfile(profileRes.data);
+      setForm({
+        nickname: profileRes.data.nickname || '',
+        avatar: profileRes.data.avatar || '',
+        age: profileRes.data.age || '',
+        sex: profileRes.data.sex || '',
+      });
+      setTxHistory(historyRes.data?.data || historyRes.data || []);
+    } catch {
+      toast.error('Unable to load data.');
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await api.get('/user/profile');
-        setProfile(res.data);
-        setForm({
-          nickname: res.data.nickname || '',
-          avatar: res.data.avatar || '',
-          age: res.data.age || '',
-          sex: res.data.sex || '',
-        });
-      } catch {
-        toast.error('Unable to load profile.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    const fetchHistory = async () => {
-      try {
-        const res = await api.get('/payments/history');
-        setTxHistory(res.data || []);
-      } catch {}
-    };
-    fetchProfile();
-    fetchHistory();
-  }, []);
+    loadProfileAndHistory(true);
+  }, [loadProfileAndHistory]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -89,10 +90,26 @@ export default function Profile() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `incognihealth-data-${Date.now()}.json`;
+    a.download = `incognicare-data-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Data exported.');
+  };
+
+  const handleErase = async () => {
+    if (!window.confirm("WARNING: This will permanently delete all your profile records and empty your wallet balance. This action cannot be undone. Are you sure you want to proceed?")) {
+      return;
+    }
+    setErasing(true);
+    try {
+      await api.post('/user/erase');
+      toast.success('Your identity has been completely erased.');
+      logout();
+      window.location.replace('/auth');
+    } catch (err) {
+      toast.error(err.response?.data?.msg || 'Failed to erase identity.');
+      setErasing(false);
+    }
   };
 
   const fields = ['nickname', 'avatar', 'age', 'sex'];
@@ -295,8 +312,34 @@ export default function Profile() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="space-y-4"
+                  className="space-y-6"
                 >
+                  {/* Wallet Balance Card */}
+                  <div className="bg-gradient-to-br from-[#1c1b22] to-[#121115] border border-outline-variant/20 rounded-[2rem] p-6 relative overflow-hidden group shadow-card-md">
+                    <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[80px] pointer-events-none" />
+                    <div className="flex flex-col relative z-10">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-primary text-base">account_balance_wallet</span>
+                          <p className="font-label text-[10px] text-on-surface-variant uppercase tracking-[0.2em]">Wallet Balance</p>
+                        </div>
+                      </div>
+                      <div className="flex items-baseline mt-6 mb-2">
+                        <span className="font-headline text-2xl font-medium text-on-surface-variant mr-1.5">₦</span>
+                        <p className="font-headline text-5xl font-black text-on-surface tracking-tight">
+                          {Number(profile?.walletBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setIsDepositModalOpen(true)}
+                        className="mt-6 w-full sm:w-auto self-start px-6 h-12 rounded-xl bg-primary text-on-primary font-headline text-xs font-bold uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                      >
+                        <span className="material-symbols-outlined text-base">add</span>
+                        Add Funds
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="bg-surface-container-low border border-outline-variant/10 rounded-[32px] p-6 sm:p-8 shadow-sm">
                     <p className="font-label text-[9px] text-outline uppercase tracking-widest mb-6">Transaction Ledger</p>
                     {txHistory.length === 0 ? (
@@ -379,8 +422,12 @@ export default function Profile() {
                     <p className="font-body text-sm text-on-surface-variant leading-relaxed opacity-80 max-w-xl">
                       Permanently erase all your profile data from the secure enclave. This action is absolutely irreversible. Your Ghost ID will be retired forever.
                     </p>
-                    <button className="h-12 px-8 rounded-xl bg-error/10 border border-error/20 text-error font-label text-[10px] uppercase tracking-widest hover:bg-error hover:text-white transition-all shadow-sm">
-                      Request Complete Erase
+                    <button
+                      onClick={handleErase}
+                      disabled={erasing}
+                      className="h-12 px-8 rounded-xl bg-error/10 border border-error/20 text-error font-label text-[10px] uppercase tracking-widest hover:bg-error hover:text-white transition-all shadow-sm disabled:opacity-50"
+                    >
+                      {erasing ? 'Erasing Identity...' : 'Request Complete Erase'}
                     </button>
                   </div>
                 </motion.section>
@@ -389,7 +436,256 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Deposit Modal */}
+        <DepositModal
+          isOpen={isDepositModalOpen}
+          onClose={() => setIsDepositModalOpen(false)}
+          onDepositSuccess={() => loadProfileAndHistory(false)}
+        />
       </div>
     </div>
+  );
+}
+
+function DepositModal({ isOpen, onClose, onDepositSuccess }) {
+  const [amount, setAmount] = useState('');
+  const [voucherCode, setVoucherCode] = useState('');
+  const [method, setMethod] = useState('card'); // 'card', 'bank', or 'voucher'
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState('input'); // 'input', 'verifying', 'success'
+  const toast = useToast();
+
+  const handlePay = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setStep('verifying');
+    try {
+      if (method === 'voucher') {
+        if (!voucherCode.trim()) {
+          toast.error('Please enter a voucher code.');
+          setStep('input');
+          setLoading(false);
+          return;
+        }
+        const res = await api.post('/payments/voucher', { code: voucherCode.trim() });
+        toast.success(res.data.msg);
+      } else {
+        const numAmt = Number(amount);
+        if (!numAmt || numAmt <= 0) {
+          toast.error('Please enter a valid positive amount.');
+          setStep('input');
+          setLoading(false);
+          return;
+        }
+        await api.post('/payments/deposit', { amount: numAmt });
+      }
+      setStep('success');
+      setTimeout(() => {
+        onDepositSuccess();
+        onClose();
+        setAmount('');
+        setVoucherCode('');
+        setStep('input');
+        setLoading(false);
+      }, 1500);
+    } catch (err) {
+      toast.error(err.response?.data?.msg || 'Deposit failed.');
+      setStep('input');
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={() => { if (!loading) onClose(); }}
+        />
+        {/* Modal Window */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="bg-surface-container-low border border-outline-variant/10 rounded-3xl overflow-hidden w-full max-w-md shadow-2xl relative z-10"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-outline-variant/5 bg-surface-container-low/50">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">payments</span>
+              <h3 className="font-headline text-base font-bold text-on-surface">Payment Terminal</h3>
+            </div>
+            {!loading && (
+              <button onClick={onClose} className="material-symbols-outlined text-outline hover:text-on-surface transition-colors p-1 bg-surface-container-high rounded-full">
+                close
+              </button>
+            )}
+          </div>
+
+          <div className="p-6">
+            {step === 'input' && (
+              <form onSubmit={handlePay} className="space-y-5">
+                {method !== 'voucher' ? (
+                  <div className="space-y-2">
+                    <label className="font-label text-[10px] uppercase tracking-widest text-outline">Amount (NGN)</label>
+                    <input
+                      type="number"
+                      value={amount}
+                      onChange={e => setAmount(e.target.value)}
+                      placeholder="Enter amount to deposit"
+                      min="100"
+                      required
+                      className="w-full bg-surface-container border border-outline-variant/10 rounded-2xl px-5 py-4 text-center text-2xl font-headline font-bold text-on-surface focus:border-primary/40 focus:outline-none"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="font-label text-[10px] uppercase tracking-widest text-outline">Voucher Code</label>
+                    <input
+                      type="text"
+                      value={voucherCode}
+                      onChange={e => setVoucherCode(e.target.value)}
+                      placeholder="e.g. EMPOWER2026"
+                      required
+                      className="w-full bg-surface-container border border-outline-variant/10 rounded-2xl px-5 py-4 text-center text-lg font-mono uppercase font-bold text-primary focus:border-primary/40 focus:outline-none"
+                    />
+                  </div>
+                )}
+
+                {/* Tabs for payment method */}
+                <div className="flex bg-surface-container rounded-xl p-1">
+                  <button
+                    type="button"
+                    onClick={() => setMethod('card')}
+                    className={`flex-1 py-2.5 rounded-lg font-label text-[10px] uppercase tracking-widest transition-all ${
+                      method === 'card' ? 'bg-background text-on-surface shadow-sm' : 'text-outline hover:text-on-surface'
+                    }`}
+                  >
+                    Card
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMethod('bank')}
+                    className={`flex-1 py-2.5 rounded-lg font-label text-[10px] uppercase tracking-widest transition-all ${
+                      method === 'bank' ? 'bg-background text-on-surface shadow-sm' : 'text-outline hover:text-on-surface'
+                    }`}
+                  >
+                    Bank
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMethod('voucher')}
+                    className={`flex-1 py-2.5 rounded-lg font-label text-[10px] uppercase tracking-widest transition-all ${
+                      method === 'voucher' ? 'bg-background text-on-surface shadow-sm' : 'text-outline hover:text-on-surface'
+                    }`}
+                  >
+                    Voucher
+                  </button>
+                </div>
+
+                {method === 'card' && (
+                  <div className="space-y-3 p-4 rounded-2xl bg-surface-container border border-outline-variant/5">
+                    <div className="space-y-1">
+                      <label className="font-label text-[9px] uppercase tracking-wider text-outline">Card Number</label>
+                      <input
+                        type="text"
+                        placeholder="4000 1234 5678 9010"
+                        className="w-full bg-background border border-outline-variant/10 focus:border-primary/50 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="font-label text-[9px] uppercase tracking-wider text-outline">Expiry</label>
+                        <input
+                          type="text"
+                          placeholder="12/29"
+                          className="w-full bg-background border border-outline-variant/10 focus:border-primary/50 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="font-label text-[9px] uppercase tracking-wider text-outline">CVV</label>
+                        <input
+                          type="password"
+                          maxLength={3}
+                          placeholder="•••"
+                          className="w-full bg-background border border-outline-variant/10 focus:border-primary/50 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {method === 'bank' && (
+                  <div className="p-4 rounded-2xl bg-surface-container border border-outline-variant/5 space-y-3">
+                    <p className="font-body text-xs text-on-surface-variant">
+                      Transfer the exact amount to the temporary escrow account below:
+                    </p>
+                    <div className="p-3 bg-background rounded-xl space-y-1.5 border border-outline-variant/10 font-mono text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-outline text-xs">Bank:</span>
+                        <span className="text-on-surface font-bold">Providus Bank</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-outline text-xs">Account:</span>
+                        <span className="text-on-surface font-bold">1029384756</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-outline text-xs">Name:</span>
+                        <span className="text-on-surface font-bold">IncogniCare Escrow</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {method === 'voucher' && (
+                  <div className="p-4 rounded-2xl bg-surface-container border border-outline-variant/5 space-y-2">
+                    <p className="font-headline text-xs font-bold text-on-surface">Redeem Sponsored Voucher</p>
+                    <p className="font-body text-xs text-on-surface-variant leading-relaxed">
+                      Enter a valid 12-digit code or NGO partner voucher (e.g. <span className="font-mono text-primary font-bold">EMPOWER2026</span>) to add prepaid care funds instantly.
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full h-14 rounded-2xl bg-primary text-on-primary font-headline font-bold text-[12px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-base">lock</span>
+                  {method === 'voucher' ? 'Redeem Voucher' : `Pay ₦${amount ? Number(amount).toLocaleString() : '0'}`}
+                </button>
+
+                <p className="font-label text-[8px] text-outline text-center uppercase tracking-wider opacity-60">
+                  🔒 Secured Mock Gateway
+                </p>
+              </form>
+            )}
+
+            {step === 'verifying' && (
+              <div className="py-12 flex flex-col items-center justify-center gap-4">
+                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                <p className="font-headline text-sm font-bold text-on-surface">Verifying transaction...</p>
+                <p className="font-body text-xs text-outline">Simulating bank clearance</p>
+              </div>
+            )}
+
+            {step === 'success' && (
+              <div className="py-12 flex flex-col items-center justify-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-tertiary/20 flex items-center justify-center text-tertiary animate-bounce">
+                  <span className="material-symbols-outlined text-3xl font-bold">check</span>
+                </div>
+                <p className="font-headline text-base font-bold text-on-surface">Deposit Successful!</p>
+                <p className="font-body text-xs text-outline">₦{Number(amount).toLocaleString()} added to wallet</p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
   );
 }

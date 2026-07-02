@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AvatarGenerator from './AvatarGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,6 +23,7 @@ const NAV = {
     { to: '/mental-wellness', label: 'Mental Wellness', icon: 'self_improvement' },
     { to: '/sexual-health',   label: 'Sexual Health',   icon: 'health_and_safety'},
     { to: '/safe-haven',      label: 'Safe Haven',      icon: 'shield_with_heart'},
+    { to: '/coaching',        label: 'IncogniCoach',    icon: 'diversity_1'      },
     { to: '/profile',         label: 'My Profile',      icon: 'person'           },
     { to: '/settings',        label: 'Settings',        icon: 'settings'         },
   ],
@@ -115,7 +116,7 @@ function SidebarContent({ onClose }) {
         </span>
         <div className="min-w-0">
           <h1 className="font-headline text-base font-bold text-on-surface tracking-wide truncate">
-            IncogniHealth
+            IncogniCare
           </h1>
           <p className="font-label text-[9px] text-primary uppercase tracking-[0.2em]">
             {roleLabel} Portal
@@ -170,6 +171,40 @@ function SidebarContent({ onClose }) {
 /* ── Main Sidebar component ───────────────────────────────────────────────── */
 export default function Sidebar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { user } = useAuth();
+  const location = useLocation();
+
+  // Full-screen paths shouldn't show top/bottom navigation on mobile
+  const isFullScreen = ['/chat/', '/consult/', '/waiting-room/', '/rider'].some(p =>
+    location.pathname.startsWith(p)
+  );
+
+  const role = user?.role || 'PATIENT';
+
+  // Bottom Navigation Config based on Role
+  const bottomNavItems = role === 'PATIENT' ? [
+    { to: '/dashboard',       label: 'Home',       icon: 'home_health'      },
+    { to: '/directory',       label: 'Consult',    icon: 'stethoscope'      },
+    { to: '/safe-haven',      label: 'Safe Haven', icon: 'shield_with_heart'},
+    { to: '/profile',         label: 'Profile',    icon: 'person'           },
+  ] : [
+    // Providers & Admins
+    { to: role === 'DOCTOR' ? '/doctor-dashboard' :
+          role === 'PHARMACY' ? '/pharmacy-dashboard' :
+          role === 'RIDER' ? '/rider-dashboard' :
+          role === 'LAB_SCIENTIST' ? '/lab-dashboard' :
+          role === 'SARC_OFFICER' ? '/sarc-dashboard' :
+          role === 'ADMIN' ? '/admin' : '/dashboard',
+      label: 'Dashboard',
+      icon: role === 'PHARMACY' ? 'medication' :
+            role === 'RIDER' ? 'delivery_truck' :
+            role === 'LAB_SCIENTIST' ? 'biotech' :
+            role === 'SARC_OFFICER' ? 'shield_with_heart' :
+            role === 'ADMIN' ? 'admin_panel_settings' : 'medical_services'
+    },
+    { to: '/profile',  label: 'Profile',  icon: 'person'   },
+    { to: '/settings', label: 'Settings', icon: 'settings' },
+  ];
 
   return (
     <>
@@ -178,28 +213,87 @@ export default function Sidebar() {
         <SidebarContent />
       </aside>
 
-      {/* ── Mobile: top bar ── */}
-      <div className="lg:hidden fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-4 bg-background/90 backdrop-blur-md border-b border-outline-variant/10">
-        <div className="flex items-center gap-2">
-          <span
-            className="material-symbols-outlined text-primary text-xl"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            shield_with_heart
-          </span>
-          <span className="font-headline text-sm font-bold text-on-surface tracking-wide">IncogniHealth</span>
-        </div>
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-low border border-outline-variant/10 text-on-surface-variant hover:text-on-surface transition-colors"
-          aria-label="Open menu"
-        >
-          <span className="material-symbols-outlined text-xl">menu</span>
-        </button>
-      </div>
+      {/* ── Mobile & Tablet Navigation ── */}
+      {!isFullScreen && (
+        <>
+          {/* Mobile top bar */}
+          <div className="lg:hidden fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-4 bg-background/90 backdrop-blur-md border-b border-outline-variant/10">
+            <div className="flex items-center gap-2">
+              <span
+                className="material-symbols-outlined text-primary text-xl"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                shield_with_heart
+              </span>
+              <span className="font-headline text-sm font-bold text-on-surface tracking-wide">IncogniCare</span>
+            </div>
+            
+            {/* Quick Actions (SOS & Panic/Exit) */}
+            <div className="flex items-center gap-2">
+              {role === 'PATIENT' && (
+                <button
+                  onClick={() => window.dispatchEvent(new Event('open-sos'))}
+                  className="px-3 py-1 flex items-center gap-1.5 rounded-full bg-error/15 border border-error/30 text-error hover:bg-error/25 active:scale-95 transition-all"
+                  style={{ height: '32px' }}
+                >
+                  <span className="material-symbols-outlined text-sm animate-pulse">emergency</span>
+                  <span className="font-label text-[10px] font-bold tracking-widest uppercase">SOS</span>
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  localStorage.clear();
+                  sessionStorage.clear();
+                  window.location.replace('https://weather.com');
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-container-low border border-outline-variant/10 text-outline hover:text-on-surface hover:border-outline-variant/30 active:scale-95 transition-all"
+                title="Quick Exit"
+              >
+                <span className="material-symbols-outlined text-[18px]">exit_to_app</span>
+              </button>
+            </div>
+          </div>
 
-      {/* Mobile spacer */}
-      <div className="lg:hidden h-14 shrink-0" />
+          {/* Mobile spacer */}
+          <div className="lg:hidden h-14 shrink-0" />
+
+          {/* Mobile bottom navigation bar */}
+          <nav className="bottom-nav lg:hidden">
+            {bottomNavItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+              >
+                {({ isActive }) => (
+                  <>
+                    <span
+                      className="material-symbols-outlined text-[20px]"
+                      style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="font-label text-[9px] uppercase tracking-wider">{item.label}</span>
+                  </>
+                )}
+              </NavLink>
+            ))}
+            {/* Drawer menu toggle button */}
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className={`nav-item ${drawerOpen ? 'active' : ''}`}
+            >
+              <span
+                className="material-symbols-outlined text-[20px]"
+                style={{ fontVariationSettings: drawerOpen ? "'FILL' 1" : "'FILL' 0" }}
+              >
+                menu
+              </span>
+              <span className="font-label text-[9px] uppercase tracking-wider">Menu</span>
+            </button>
+          </nav>
+        </>
+      )}
 
       {/* ── Mobile: slide-in drawer ── */}
       <AnimatePresence>

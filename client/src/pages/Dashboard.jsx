@@ -1,8 +1,45 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+// eslint-disable-next-line no-unused-vars
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
+import DiagnosticOverview from '../components/DiagnosticOverview';
+
+// Deterministic mock vitals generator based on patient ID
+function getMockVitals(publicId) {
+  if (!publicId) return {
+    heartRate:     72,
+    bloodPressure: '120/80',
+    weight:        '75kg',
+    height:        '180cm',
+    bmi:           '23.1',
+    temperature:   '36.8°C',
+    oxygen:        '98%',
+    status:        'Optimal',
+  };
+  let hash = 0;
+  for (let i = 0; i < publicId.length; i++) {
+    hash = publicId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const heartRate = 60 + Math.abs(hash % 30);
+  const bpSys = 110 + Math.abs((hash >> 2) % 25);
+  const bpDia = 70 + Math.abs((hash >> 4) % 15);
+  const temp = (36.2 + Math.abs((hash >> 6) % 12) / 10).toFixed(1);
+  const oxygen = 95 + Math.abs((hash >> 8) % 5);
+  const bmi = (20.5 + Math.abs((hash >> 10) % 70) / 10).toFixed(1);
+  
+  return {
+    heartRate,
+    bloodPressure: `${bpSys}/${bpDia}`,
+    weight: `${70 + Math.abs((hash >> 12) % 20)}kg`,
+    height: `${170 + Math.abs((hash >> 14) % 20)}cm`,
+    bmi,
+    temperature: `${temp}°C`,
+    oxygen: `${oxygen}%`,
+    status: heartRate > 85 || bpSys > 130 ? 'Caution' : 'Optimal',
+  };
+}
 
 // ── Greeting helper ─────────────────────────────────────────────────────────
 function getGreeting() {
@@ -94,6 +131,7 @@ const SERVICES = [
   { icon: 'stethoscope',    label: 'Consult',       to: '/directory',       color: 'text-primary'    },
   { icon: 'medication',     label: 'Pharmacy',      to: '/pharmacy',        color: 'text-tertiary'   },
   { icon: 'shield_with_heart', label: 'Safe Haven', to: '/safe-haven',      color: 'text-error'      },
+  { icon: 'diversity_1',    label: 'Coaching',      to: '/coaching',        color: 'text-tertiary'   },
   { icon: 'health_and_safety', label: 'Sexual Health', to: '/sexual-health', color: 'text-secondary' },
   { icon: 'self_improvement',  label: 'Wellness',   to: '/mental-wellness', color: 'text-primary'    },
   { icon: 'local_hospital', label: 'Emergency',     action: () => window.dispatchEvent(new Event('open-sos')), color: 'text-error' },
@@ -106,16 +144,21 @@ export default function Dashboard() {
 
   const [profile, setProfile]         = useState(null);
   const [consultations, setConsults]  = useState([]);
+  const [orders, setOrders]           = useState([]);
   const [loading, setLoading]         = useState(true);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [isStealthMode, setIsStealthMode] = useState(() => localStorage.getItem('stealth_mode') === 'true');
 
   const fetchData = useCallback(async () => {
     try {
-      const [profileRes, consultRes] = await Promise.all([
+      const [profileRes, consultRes, ordersRes] = await Promise.all([
         api.get('/user/profile'),
         api.get('/user/consultations?limit=5'),
+        api.get('/user/orders?limit=5'),
       ]);
       setProfile(profileRes.data);
       setConsults(consultRes.data?.data || consultRes.data || []);
+      setOrders(ordersRes.data?.data || ordersRes.data || []);
     } catch (err) {
       console.error('Dashboard fetch error:', err);
     } finally {
@@ -126,6 +169,25 @@ export default function Dashboard() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const balance  = profile?.walletBalance ?? 0;
+
+  const toggleStealthMode = () => {
+    const nextVal = !isStealthMode;
+    setIsStealthMode(nextVal);
+    localStorage.setItem('stealth_mode', String(nextVal));
+  };
+
+  const getOrderStatusStep = (status) => {
+    switch (status) {
+      case 'PENDING': return 0;
+      case 'PROCESSING': return 1;
+      case 'READY_FOR_PICKUP':
+      case 'PICKED_UP': return 2;
+      case 'DELIVERED': return 3;
+      default: return 0;
+    }
+  };
+
+  const activeOrder = orders.find(o => o.status !== 'DELIVERED');
   const nickname = profile?.nickname || user?.publicId || 'Anonymous';
 
   return (
@@ -200,6 +262,132 @@ export default function Dashboard() {
               </div>
             </motion.div>
 
+            {/* Active Delivery Tracking Card */}
+            {activeOrder && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-surface-container-low border border-outline-variant/10 rounded-[2rem] p-6 shadow-md relative overflow-hidden"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                      <span className="material-symbols-outlined">
+                        {isStealthMode ? 'restaurant' : 'local_shipping'}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-headline text-base font-bold text-on-surface">
+                        {isStealthMode ? 'Jumia Food Order' : 'Discreet Delivery'}
+                      </h3>
+                      <p className="font-headline text-[11px] font-mono text-outline">
+                        {isStealthMode ? '#JF-938217' : activeOrder.publicOrderId}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Stealth Toggle Switch */}
+                  <button
+                    onClick={toggleStealthMode}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+                      isStealthMode
+                        ? 'bg-tertiary/10 border-tertiary text-tertiary shadow-[0_0_8px_rgba(140,205,255,0.2)]'
+                        : 'bg-surface-container border-outline-variant/35 text-outline hover:text-on-surface'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      {isStealthMode ? 'visibility_off' : 'visibility'}
+                    </span>
+                    <span className="font-label text-[9px] uppercase tracking-wider font-bold">
+                      {isStealthMode ? 'Stealth ON' : 'Stealth Off'}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-outline-variant/5">
+                  <div className="space-y-1.5">
+                    <p className="font-label text-[9px] text-outline uppercase tracking-widest">
+                      {isStealthMode ? 'Items Ordered' : 'Prescription / Contents'}
+                    </p>
+                    <p className="font-body text-sm font-bold text-on-surface">
+                      {isStealthMode ? 'Double Cheeseburger & Fries Combo' : (activeOrder.prescription?.medications?.[0]?.name || 'Medical Supply')}
+                    </p>
+                    <p className="font-body text-xs text-on-surface-variant opacity-70">
+                      {isStealthMode ? 'Burger Bistro, Lekki' : 'Discreet Pharmacy Hub'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <p className="font-label text-[9px] text-outline uppercase tracking-widest">
+                      {isStealthMode ? 'Delivery Address' : 'Private Delivery Address'}
+                    </p>
+                    <p className="font-body text-xs text-on-surface truncate">
+                      {isStealthMode ? '12, Joel Ogunnaike St, Ikeja' : (activeOrder.deliveryAddress || 'Secure Handover Point')}
+                    </p>
+                    {activeOrder.secureCode && (
+                      <div className="inline-flex mt-1 px-2.5 py-1 rounded bg-surface-container border border-outline-variant/15 font-mono text-[10px] text-primary font-bold">
+                        {isStealthMode ? 'Delivery PIN: ' : 'Secure Handover PIN: '}
+                        {activeOrder.secureCode}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress Stepper */}
+                <div className="mt-6">
+                  <p className="font-label text-[9px] text-outline uppercase tracking-widest mb-4">Tracking Progress</p>
+                  <div className="flex items-center justify-between relative">
+                    {/* Background Progress Line */}
+                    <div className="absolute left-0 right-0 top-3 h-0.5 bg-surface-container-high z-0" />
+                    {/* Active Progress Line */}
+                    <div
+                      className="absolute left-0 top-3 h-0.5 bg-primary z-0 transition-all duration-500"
+                      style={{
+                        width: `${(getOrderStatusStep(activeOrder.status) / 3) * 100}%`
+                      }}
+                    />
+
+                    {/* Steps */}
+                    {(isStealthMode
+                      ? ['Order Received', 'Kitchen Prep', 'Rider Picked Up', 'Arrived']
+                      : ['Order Placed', 'Dispensing', 'In Transit', 'Handover Ready']
+                    ).map((stepLabel, idx) => {
+                      const currentStep = getOrderStatusStep(activeOrder.status);
+                      const isCompleted = idx < currentStep;
+                      const isActive = idx === currentStep;
+
+                      return (
+                        <div key={idx} className="flex flex-col items-center z-10 relative">
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
+                              isCompleted
+                                ? 'bg-primary text-on-primary'
+                                : isActive
+                                ? 'bg-background border-2 border-primary text-primary scale-110 shadow-[0_0_8px_rgba(208,188,255,0.4)]'
+                                : 'bg-surface-container border border-outline-variant/20 text-outline'
+                            }`}
+                          >
+                            {isCompleted ? (
+                              <span className="material-symbols-outlined text-xs font-bold">check</span>
+                            ) : (
+                              <span className="font-headline text-[10px] font-bold">{idx + 1}</span>
+                            )}
+                          </div>
+                          <span
+                            className={`font-label text-[9px] mt-2 text-center max-w-[80px] leading-tight ${
+                              isActive ? 'text-primary font-bold' : isCompleted ? 'text-on-surface font-medium' : 'text-outline'
+                            }`}
+                          >
+                            {stepLabel}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* Stats bento */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <StatCard
@@ -257,6 +445,35 @@ export default function Dashboard() {
               </p>
             </motion.div>
 
+            {/* 3D Health Avatar card */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 }}
+              className="bg-gradient-to-br from-surface-container-low to-surface-container-lowest border border-outline-variant/10 rounded-[2rem] p-6 relative overflow-hidden group shadow-card-md"
+            >
+              <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[40px] pointer-events-none" />
+              <div className="relative z-10 flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-xl">biotech</span>
+                  <p className="font-label text-[10px] text-on-surface-variant uppercase tracking-[0.2em]">3D Diagnostics</p>
+                </div>
+                <div>
+                  <h3 className="font-headline text-lg font-bold text-on-surface">Interactive Health Profile</h3>
+                  <p className="font-body text-xs text-on-surface-variant mt-1.5 opacity-70 leading-relaxed">
+                    Visualize your vitals, biometrics, and body map in real-time.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsAvatarModalOpen(true)}
+                  className="w-full bg-surface-container-high border border-outline-variant/15 text-primary hover:text-on-primary hover:bg-primary font-headline text-xs font-bold py-3.5 px-4 rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-[16px]">visibility</span>
+                  Examine Avatar
+                </button>
+              </div>
+            </motion.div>
+
             {/* Recent consultations */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -302,6 +519,54 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      
+      {/* ── Modal for 3D Diagnostics ── */}
+      <AnimatePresence>
+        {isAvatarModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/70 backdrop-blur-md"
+              onClick={() => setIsAvatarModalOpen(false)}
+            />
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+              className="bg-surface-container-low border border-outline-variant/10 rounded-3xl overflow-hidden w-full max-w-5xl shadow-2xl relative z-10"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-outline-variant/5 bg-surface-container-low/50 backdrop-blur-md">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-xl">biotech</span>
+                  <h3 className="font-headline text-lg font-bold text-on-surface">Interactive Health Profile</h3>
+                </div>
+                <button
+                  onClick={() => setIsAvatarModalOpen(false)}
+                  className="material-symbols-outlined text-outline hover:text-on-surface transition-colors p-2 bg-surface-container-high rounded-full"
+                >
+                  close
+                </button>
+              </div>
+              
+              {/* Diagnostic Overview Container */}
+              <div className="p-6 bg-background">
+                <DiagnosticOverview
+                  patientData={{ nickname: nickname, age: profile?.age || user?.age }}
+                  vitals={getMockVitals(user?.publicId)}
+                  title="Your Virtual Medical Record"
+                  readOnly={true}
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

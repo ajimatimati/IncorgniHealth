@@ -32,8 +32,8 @@ class ErrorBoundary extends Component {
               An unexpected error occurred. Your encrypted session is preserved — try refreshing the application.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
-              <button onClick={this.handleReset} className="py-3 px-6 rounded-xl bg-surface-container-high text-on-surface font-label text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all">Try Again</button>
-              <button onClick={() => window.location.reload()} className="py-3 px-6 rounded-xl bg-error text-onError font-label text-xs uppercase tracking-widest hover:brightness-110 transition-all">Refresh Page</button>
+              <button onClick={this.handleReset} className="btn btn-secondary px-6">Try Again</button>
+              <button onClick={() => window.location.reload()} className="btn btn-danger px-6">Refresh Page</button>
             </div>
             {this.state.error && (
               <details className="text-left group">

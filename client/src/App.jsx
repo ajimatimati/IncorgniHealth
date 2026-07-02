@@ -35,6 +35,7 @@ const Settings              = lazy(() => import('./pages/Settings'));
 const NotFound              = lazy(() => import('./pages/NotFound'));
 const PharmacyShop          = lazy(() => import('./pages/PharmacyShop'));
 const SarcOfficerDashboard  = lazy(() => import('./pages/SarcOfficerDashboard'));
+const CoachingHub           = lazy(() => import('./pages/CoachingHub'));
 
 // ─── Loading fallback ─────────────────────────────────────────────────────────
 function PageLoader() {
@@ -96,6 +97,8 @@ function InnerRoutes() {
               element={<ProtectedRoute roles={['PATIENT']}><WaitingRoom /></ProtectedRoute>} />
             <Route path="/review/:id"
               element={<ProtectedRoute roles={['PATIENT']}><PostConsultationReview /></ProtectedRoute>} />
+            <Route path="/coaching"
+              element={<ProtectedRoute roles={['PATIENT']}><CoachingHub /></ProtectedRoute>} />
 
             {/* ── Doctor-only ── */}
             <Route path="/doctor-dashboard"
@@ -150,8 +153,8 @@ function InnerRoutes() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <GlobalModals />
       <BrowserRouter>
+        <GlobalModals />
         <AuthProvider>
           <SocketProvider>
             <ToastProvider>

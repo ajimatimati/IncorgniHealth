@@ -11,6 +11,7 @@ const prisma = require('./db');
 const { SECRET_KEY } = require('./utils/crypto');
 
 const app = express();
+app.set('trust proxy', 1);
 const IS_DEV = process.env.NODE_ENV !== 'production';
 
 // In development: allow any localhost origin (Vite auto-increments ports)
@@ -20,7 +21,7 @@ const corsOptions = {
     // Allow requests with no origin (curl, Postman, mobile apps)
     if (!origin) return callback(null, true);
 
-    if (IS_DEV) {
+    if (IS_DEV || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.startsWith('https://localhost') || origin.startsWith('https://127.0.0.1')) {
       return callback(null, true);
     }
 
@@ -32,7 +33,7 @@ const corsOptions = {
     callback(new Error(`CORS: Multi-Origin security blocked request from '${origin}'.`));
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token', 'x-requested-with'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token', 'x-requested-with', 'bypass-tunnel-reminder', 'ngrok-skip-browser-warning'],
   credentials: true,
 };
 
@@ -92,7 +93,7 @@ app.use('/api/v1/admin', require('./routes/admin'));
 app.get('/', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'IncorgniHealth API',
+    service: 'IncogniCare API',
     version: '2.0.0',
     timestamp: new Date().toISOString(),
   });

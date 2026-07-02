@@ -16,8 +16,8 @@ const ROLE_HOME = {
   PHARMACY:    '/pharmacy-dashboard',
   RIDER:       '/rider-dashboard',
   ADMIN:       '/admin',
-  LAB_SCIENTIST: '/dashboard',
-  SARC_OFFICER:  '/dashboard',
+  LAB_SCIENTIST: '/lab-dashboard',
+  SARC_OFFICER:  '/sarc-dashboard',
 };
 
 /**

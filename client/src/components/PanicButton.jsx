@@ -1,5 +1,3 @@
-import { useNavigate } from 'react-router-dom';
-
 export default function PanicButton() {
   const handlePanic = () => {
     // 1. Obliterate all local traces
@@ -13,7 +11,7 @@ export default function PanicButton() {
   return (
     <button
       onClick={handlePanic}
-      className="fixed bottom-6 right-6 md:bottom-10 md:right-10 w-16 h-16 rounded-full bg-error text-white shadow-2xl shadow-error/40 flex items-center justify-center hover:scale-110 hover:bg-red-600 active:scale-95 transition-all z-[9999] group overflow-hidden"
+      className="fixed bottom-24 lg:bottom-10 right-6 md:right-10 w-16 h-16 rounded-full bg-error text-white border-2 border-red-700 shadow-[0_4px_0_#5f0003] flex items-center justify-center hover:bg-red-600 active:translate-y-[3px] active:shadow-[0_1px_0_#5f0003] transition-all z-[9999] group overflow-hidden"
       title="Quick Exit"
     >
       <span className="material-symbols-outlined text-3xl">exit_to_app</span>

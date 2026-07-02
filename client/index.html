@@ -3,26 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Incognihealth — Maximum health Outcome, minimum social exposure." />
+    <meta name="description" content="IncogniCare — Maximum health Outcome, minimum social exposure." />
     <meta name="theme-color" content="#7c3aed" />
 
-    <!-- Prevent ALL caching of this page -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-
-    <!-- Content Security Policy -->
-    <!-- NOTE: Update connect-src with your actual Koyeb backend URL after deployment -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org; connect-src 'self' wss://*.koyeb.app https://*.koyeb.app https://accounts.google.com http://localhost:*; media-src 'self' blob:; frame-src 'self' https://accounts.google.com;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org; connect-src 'self' wss://*.supabase.co https://*.supabase.co wss://*.koyeb.app https://*.koyeb.app wss://incognicare.vercel.app https://incognicare.vercel.app https://accounts.google.com http://localhost:* ws://localhost:* ws://127.0.0.1:*; media-src 'self' blob:; frame-src 'self' https://accounts.google.com;" />
 
     <link rel="icon" type="image/png" href="/favicon.png" />
 
     <!-- Apple PWA meta -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Incognihealth" />
+    <meta name="apple-mobile-web-app-title" content="IncogniCare" />
 
-    <title>Incognihealth — Maximum health Outcome, minimum social exposure.</title>
+    <title>IncogniCare — Maximum health Outcome, minimum social exposure.</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
@@ -32,33 +25,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script>
-      // ═══ NUCLEAR CACHE PURGE ═══
-      // 1. Unregister ALL service workers
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for (let registration of registrations) {
-            registration.unregister();
-            console.log('[CachePurge] Unregistered service worker:', registration.scope);
-          }
-        });
-        // Register the self-destructing sw.js to clean up any remaining caches
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
-      }
-
-      // 2. Nuke ALL CacheStorage entries
-      if ('caches' in window) {
-        caches.keys().then((names) => {
-          for (const name of names) {
-            caches.delete(name);
-            console.log('[CachePurge] Deleted cache:', name);
-          }
-        });
-      }
-
-      // 3. Clear stale session artifacts
-      try { sessionStorage.clear(); } catch(e) {}
-      console.log('[CachePurge] All caches, service workers, and session artifacts cleared.');
-    </script>
   </body>
 </html>

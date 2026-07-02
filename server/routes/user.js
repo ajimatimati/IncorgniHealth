@@ -191,4 +191,120 @@ router.post('/order/:id/source', auth, validate(sourceSchema), async (req, res) 
   }
 });
 
+// @route   POST /api/v1/user/order
+const directOrderSchema = z.object({
+  deliveryAddress: z.string().min(3, 'Address must be at least 3 characters'),
+  itemName: z.string().min(2),
+  price: z.number().positive(),
+});
+
+router.post('/order', auth, validate(directOrderSchema), async (req, res) => {
+  try {
+    const { deliveryAddress, itemName, price } = req.body;
+
+    // Check balance
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user || user.deletedAt) return res.status(404).json({ msg: 'User not found' });
+    
+    const balance = Number(user.walletBalance);
+    if (balance < price) {
+      return res.status(400).json({ msg: 'Insufficient wallet balance' });
+    }
+
+    const orderId = `#ORD-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const secureCode = String(Math.floor(1000 + Math.random() * 9000));
+
+    // 1. Create a Completed Consultation
+    const consultation = await prisma.consultation.create({
+      data: {
+        patientId: req.user.id,
+        status: 'COMPLETED',
+      },
+    });
+
+    // 2. Create the Prescription
+    const prescription = await prisma.prescription.create({
+      data: {
+        consultationId: consultation.id,
+        medications: [{ name: itemName, dosage: '1 unit', instructions: `Direct Shop Purchase` }],
+        status: 'FULFILLED',
+      },
+    });
+
+    // 3. Create the Order
+    const order = await prisma.order.create({
+      data: {
+        publicOrderId: orderId,
+        prescriptionId: prescription.id,
+        patientId: req.user.id,
+        status: 'PENDING',
+        secureCode,
+        deliveryAddress,
+      },
+    });
+
+    // 4. Create Transaction
+    const platformFee = price * 0.05;
+    const netAmount = price - platformFee;
+    const transaction = await prisma.transaction.create({
+      data: {
+        amount: price,
+        type: 'MEDICATION',
+        status: 'SUCCESS',
+        payerId: req.user.id,
+        platformFee,
+        netAmount,
+      },
+    });
+
+    // 5. Debit Wallet
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { walletBalance: { decrement: price } },
+    });
+
+    // 6. Notify all pharmacies
+    const pharmacists = await prisma.user.findMany({
+      where: { role: 'PHARMACY', deletedAt: null },
+      select: { id: true },
+    });
+    for (const p of pharmacists) {
+      await createNotification(p.id, 'ORDER', 'New order received', `Direct purchase order ${order.publicOrderId} needs preparation.`);
+    }
+
+    logger.info('Direct purchase order placed', { userId: req.user.id, orderId: order.publicOrderId });
+    res.json({ msg: 'Order placed successfully', order, transaction });
+  } catch (err) {
+    logger.error('Direct purchase error', { error: err.message });
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route   POST /api/v1/user/erase
+router.post('/erase', auth, async (req, res) => {
+  try {
+    // Shred all user data: set deletedAt, clear PII logs, clear refresh token, and reset wallet balance
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        deletedAt: new Date(),
+        dataHash: null,
+        encryptedData: null,
+        googleId: null,
+        appleId: null,
+        nickname: 'Deleted User',
+        avatar: 'deleted',
+        walletBalance: 0.00,
+        refreshToken: null,
+      },
+    });
+
+    logger.info('User identity erased permanently', { userId: req.user.id });
+    res.json({ msg: 'Identity erased successfully' });
+  } catch (err) {
+    logger.error('Erase identity error', { error: err.message });
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 module.exports = router;

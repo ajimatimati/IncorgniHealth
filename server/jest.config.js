@@ -9,4 +9,5 @@ module.exports = {
     '/prisma/',
   ],
   testMatch: ['**/__tests__/**/*.test.js'],
+  setupFiles: ['dotenv/config'],
 };

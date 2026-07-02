@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ── IncogniHealth — Dark Cinema Design System (Stitch) ──────────
+        // ── IncogniCare — Dark Cinema Design System (Stitch) ──────────
         'background':               '#131313',
         'on-background':            '#e5e2e1',
         'surface':                  '#131313',

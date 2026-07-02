@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../components/Toast';
+import api from '../api';
 
 /* ── Product data ─────────────────────────────────────────────────────────── */
 const PRODUCTS = [
@@ -23,15 +24,25 @@ const CATEGORIES = ['All', 'Test Kits', 'Prescriptions', 'Wellness'];
 function OrderSheet({ product, onClose, onSuccess }) {
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
-  const handleOrder = (e) => {
+  const handleOrder = async (e) => {
     e.preventDefault();
     if (!address.trim()) return;
     setLoading(true);
-    setTimeout(() => {
-      onSuccess(`IH-ORD-${Date.now().toString(36).toUpperCase().slice(-6)}`);
+    try {
+      const res = await api.post('/user/order', {
+        deliveryAddress: address.trim(),
+        itemName: product.name,
+        price: product.price,
+      });
+      onSuccess(res.data.order.publicOrderId);
       onClose();
-    }, 1000);
+    } catch (err) {
+      toast.error(err.response?.data?.msg || 'Failed to place order.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,7 +80,7 @@ function OrderSheet({ product, onClose, onSuccess }) {
 
                 <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/10 space-y-1">
                   <p className="font-label text-[9px] text-outline uppercase tracking-widest">Discreet Delivery Guarantee</p>
-                  <p className="font-body text-xs text-on-surface-variant">Plain, unmarked packaging. No brand name, no medical indicator on the parcel. Delivered by a verified IncogniHealth rider.</p>
+                  <p className="font-body text-xs text-on-surface-variant">Plain, unmarked packaging. No brand name, no medical indicator on the parcel. Delivered by a verified IncogniCare rider.</p>
                 </div>
 
                 <div className="space-y-2">

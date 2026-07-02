@@ -78,7 +78,7 @@ export default function CrisisLineModal({ isOpen, onClose }) {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleCopy(line.number)}
-                        className="flex-1 h-9 rounded-xl bg-surface-container border border-outline-variant/15 text-on-surface-variant hover:text-on-surface font-label text-[9px] uppercase tracking-widest transition-all flex items-center justify-center gap-1.5"
+                        className="btn btn-secondary flex-1 h-9 min-h-0 text-[9px] flex items-center justify-center gap-1.5"
                       >
                         <span className="material-symbols-outlined text-sm">{copied === line.number ? 'check' : 'content_copy'}</span>
                         {copied === line.number ? 'Copied!' : 'Copy'}
@@ -86,7 +86,7 @@ export default function CrisisLineModal({ isOpen, onClose }) {
                       {/^[\d\s\-+()]+$/.test(line.number) && (
                         <button
                           onClick={() => handleCall(line.number)}
-                          className="flex-2 min-w-[100px] h-9 rounded-xl bg-tertiary text-on-tertiary font-label text-[9px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-1.5"
+                          className="btn btn-primary flex-2 min-w-[100px] h-9 min-h-0 text-[9px] flex items-center justify-center gap-1.5"
                         >
                           <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>call</span>
                           Call Now

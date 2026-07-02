@@ -41,3 +41,12 @@ lint_report.json
 # Firebase
 .firebase/
 .firebaserc
+
+.vercel
+
+# Generated database clients
+server/prisma/generated-client/
+
+# Production credentials / Local scripts
+client/.env.production
+test_live_auth.js

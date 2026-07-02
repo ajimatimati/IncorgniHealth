@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "cd server && npm ci --omit=dev",
+  "installCommand": "cd server && npm install && npx prisma db push --accept-data-loss",
   "builds": [
     {
       "src": "server/index.js",

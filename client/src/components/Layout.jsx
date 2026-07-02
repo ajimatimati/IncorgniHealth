@@ -15,7 +15,7 @@ function PageLoader() {
           <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
         </div>
         <div className="text-center">
-          <p className="font-headline text-sm text-on-surface">IncogniHealth</p>
+          <p className="font-headline text-sm text-on-surface">IncogniCare</p>
           <p className="font-label text-[10px] text-primary uppercase tracking-[0.2em] mt-1">Loading session…</p>
         </div>
       </div>

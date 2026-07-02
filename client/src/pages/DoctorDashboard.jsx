@@ -1,9 +1,45 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../api';
+import DiagnosticOverview from '../components/DiagnosticOverview';
+
+// Deterministic mock vitals generator based on patient ID
+function getMockVitals(publicId) {
+  if (!publicId) return {
+    heartRate:     72,
+    bloodPressure: '120/80',
+    weight:        '75kg',
+    height:        '180cm',
+    bmi:           '23.1',
+    temperature:   '36.8°C',
+    oxygen:        '98%',
+    status:        'Optimal',
+  };
+  let hash = 0;
+  for (let i = 0; i < publicId.length; i++) {
+    hash = publicId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const heartRate = 60 + Math.abs(hash % 30);
+  const bpSys = 110 + Math.abs((hash >> 2) % 25);
+  const bpDia = 70 + Math.abs((hash >> 4) % 15);
+  const temp = (36.2 + Math.abs((hash >> 6) % 12) / 10).toFixed(1);
+  const oxygen = 95 + Math.abs((hash >> 8) % 5);
+  const bmi = (20.5 + Math.abs((hash >> 10) % 70) / 10).toFixed(1);
+  
+  return {
+    heartRate,
+    bloodPressure: `${bpSys}/${bpDia}`,
+    weight: `${70 + Math.abs((hash >> 12) % 20)}kg`,
+    height: `${170 + Math.abs((hash >> 14) % 20)}cm`,
+    bmi,
+    temperature: `${temp}°C`,
+    oxygen: `${oxygen}%`,
+    status: heartRate > 85 || bpSys > 130 ? 'Caution' : 'Optimal',
+  };
+}
 
 
 // ── Queue card ──────────────────────────────────────────────────────────────
@@ -82,11 +118,7 @@ export default function DoctorDashboard() {
   // Tri-Pane State
   const [activeTab, setActiveTab] = useState('queue'); // 'queue', 'active', 'waiting'
   const [selectedPatient, setSelectedPatient] = useState(null);
-
-  // Pagination states
-  const [visiblePending, setVisiblePending] = useState(10);
-  const [visibleActive, setVisibleActive] = useState(10);
-  const [visibleWaiting, setVisibleWaiting] = useState(10);
+  const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -260,6 +292,14 @@ export default function DoctorDashboard() {
                     Patient detail records will be securely loaded from the backend when fully integrated. Check the Action tools to admit or examine this patient.
                   </p>
                 </div>
+                
+                <button
+                  onClick={() => setIsDiagnosticsOpen(true)}
+                  className="w-full mt-6 bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-on-primary font-headline text-xs font-bold py-3.5 px-4 rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 animate-pulse"
+                >
+                  <span className="material-symbols-outlined text-[18px]">biotech</span>
+                  Launch 3D Diagnostic scan
+                </button>
               </div>
             ) : (
               <div className="h-full flex flex-col items-center justify-center opacity-30 text-center">
@@ -315,6 +355,65 @@ export default function DoctorDashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── Modal for 3D Diagnostics ── */}
+      <AnimatePresence>
+        {isDiagnosticsOpen && selectedPatient && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/70 backdrop-blur-md"
+              onClick={() => setIsDiagnosticsOpen(false)}
+            />
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+              className="bg-surface-container-low border border-outline-variant/10 rounded-3xl overflow-hidden w-full max-w-5xl shadow-2xl relative z-10"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-outline-variant/5 bg-surface-container-low/50 backdrop-blur-md">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-xl">biotech</span>
+                  <h3 className="font-headline text-lg font-bold text-on-surface">Interactive Health Scan</h3>
+                </div>
+                <button
+                  onClick={() => setIsDiagnosticsOpen(false)}
+                  className="material-symbols-outlined text-outline hover:text-on-surface transition-colors p-2 bg-surface-container-high rounded-full"
+                >
+                  close
+                </button>
+              </div>
+              
+              {/* Diagnostic Overview Container */}
+              <div className="p-6 bg-background">
+                <DiagnosticOverview
+                  patientData={{
+                    nickname: selectedPatient.type === 'waiting' 
+                      ? selectedPatient.data.publicId 
+                      : selectedPatient.data.patient?.publicId,
+                    age: selectedPatient.type === 'waiting'
+                      ? selectedPatient.data.age
+                      : selectedPatient.data.patient?.age
+                  }}
+                  vitals={getMockVitals(
+                    selectedPatient.type === 'waiting' 
+                      ? selectedPatient.data.publicId 
+                      : selectedPatient.data.patient?.publicId
+                  )}
+                  title="Patient Virtual Chart"
+                  readOnly={false}
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

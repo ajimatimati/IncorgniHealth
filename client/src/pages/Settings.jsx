@@ -73,7 +73,7 @@ export default function Settings() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `incorgnihealth-export-${Date.now()}.json`;
+    a.download = `incognicare-export-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Data exported.');

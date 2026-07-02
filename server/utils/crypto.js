@@ -7,7 +7,8 @@ if (!SECRET_KEY) {
 
 // Deterministic Hash for uniqueness checks (e.g. Phone Number)
 const hashData = (data) => {
-  return CryptoJS.SHA256(data).toString();
+  const pepper = process.env.HASH_SALT || SECRET_KEY;
+  return CryptoJS.SHA256(data + pepper).toString();
 };
 
 // Reversible Encryption for storage
