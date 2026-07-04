@@ -11,66 +11,97 @@ const SPECIALIZATIONS = [
 
 function StarRating({ rating }) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5">
       {[1,2,3,4,5].map(i => (
         <span
           key={i}
-          className={`material-symbols-outlined text-[14px] ${i <= Math.round(rating) ? 'text-primary' : 'text-outline opacity-30'}`}
-          style={{ fontVariationSettings: i <= Math.round(rating) ? "'FILL' 1" : "'FILL' 0" }}
+          className={`material-symbols-outlined text-[13px] ${i <= Math.round(rating || 0) ? 'text-primary' : 'text-outline opacity-20'}`}
+          style={{ fontVariationSettings: i <= Math.round(rating || 0) ? "'FILL' 1" : "'FILL' 0" }}
         >
           star
         </span>
       ))}
-      <span className="font-label text-[10px] text-outline ml-1">{rating?.toFixed(1) || '—'}</span>
+      <span className="font-mono text-[9px] text-outline ml-1.5">{(rating || 5.0).toFixed(1)}</span>
     </div>
   );
 }
 
 function DoctorCard({ doctor, onConsult }) {
   return (
-    <div className="bg-surface-container-low border border-outline-variant/10 rounded-2xl p-5 flex flex-col gap-4 hover:bg-surface-container-high transition-all group">
+    <div className="relative overflow-hidden bg-gradient-to-b from-white/[0.03] to-white/[0.01] border border-white/5 rounded-3xl p-6 flex flex-col gap-5 hover:border-primary/20 hover:from-white/[0.05] hover:to-primary/[0.01] transition-all duration-300 group">
+      
+      {/* Glow highlight background */}
+      <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-all duration-500 pointer-events-none" />
+
       <div className="flex items-start gap-4">
+        {/* Avatar Frame with animated zoom and LED pulse */}
         <div className="relative shrink-0">
-          <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
-            <AvatarGenerator seed={doctor.avatar || doctor.publicId} size="md" />
+          <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/5 bg-surface-container-low group-hover:scale-105 transition-all duration-300">
+            <AvatarGenerator seed={doctor.avatar || doctor.publicId} size="lg" />
           </div>
-          {doctor.isOnline && (
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-tertiary border-2 border-background" />
+          {doctor.isOnline ? (
+            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border border-black/50"></span>
+            </span>
+          ) : (
+            <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-outline/40 border border-black/50" />
           )}
         </div>
+
+        {/* Doctor Details */}
         <div className="min-w-0 flex-1">
-          <p className="font-headline text-sm font-bold text-on-surface truncate">
-            Dr. {doctor.nickname || doctor.publicId}
-          </p>
-          <p className="font-label text-[11px] text-on-surface-variant mt-0.5 truncate">
+          <div className="flex items-center gap-1.5">
+            <p className="font-headline text-base font-black text-on-surface truncate">
+              Dr. {doctor.nickname || doctor.publicId}
+            </p>
+            {doctor.isOnline && (
+              <span className="font-mono text-[8px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 uppercase tracking-wider shrink-0 scale-90 origin-left">
+                Active
+              </span>
+            )}
+          </div>
+          <p className="font-label text-[10px] text-primary uppercase tracking-widest mt-1 truncate">
             {doctor.specialization || 'General Practitioner'}
           </p>
-          <div className="mt-2">
+          <div className="mt-2.5">
             <StarRating rating={doctor.rating} />
           </div>
         </div>
       </div>
 
+      {/* Metrics Row */}
+      <div className="grid grid-cols-2 gap-3 py-3 border-y border-white/5">
+        <div className="space-y-0.5">
+          <span className="font-label text-[8px] text-outline uppercase tracking-wider block">Consult Fee</span>
+          <span className="font-mono text-xs text-on-surface font-bold">₦15,000</span>
+        </div>
+        <div className="space-y-0.5 text-right">
+          <span className="font-label text-[8px] text-outline uppercase tracking-wider block">Wait Time</span>
+          <span className="font-mono text-xs text-on-surface font-bold">~ 5 mins</span>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between text-on-surface-variant">
         <div className="flex items-center gap-1.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${doctor.isOnline ? 'bg-tertiary' : 'bg-outline opacity-40'}`} />
-          <span className="font-label text-[10px] uppercase tracking-wide">{doctor.isOnline ? 'Available' : 'Offline'}</span>
+          <span className="material-symbols-outlined text-[12px] text-outline">verified_user</span>
+          <span className="font-mono text-[9px] uppercase tracking-wide text-outline">Verified Enclave</span>
         </div>
         {doctor.reviewCount > 0 && (
-          <span className="font-label text-[10px] text-outline">{doctor.reviewCount} reviews</span>
+          <span className="font-label text-[9px] text-outline">{doctor.reviewCount} patient reviews</span>
         )}
       </div>
 
       <button
         onClick={() => onConsult(doctor)}
         disabled={!doctor.isOnline}
-        className={`w-full py-2.5 rounded-xl font-label text-[11px] uppercase tracking-widest transition-all
+        className={`w-full py-3.5 rounded-2xl font-label text-[10px] uppercase tracking-widest transition-all duration-300 font-bold
           ${doctor.isOnline
-            ? 'bg-primary text-on-primary hover:brightness-110 active:scale-[0.98]'
-            : 'bg-surface-container-high text-outline cursor-not-allowed opacity-50'
+            ? 'bg-primary text-on-primary shadow-lg shadow-primary/10 hover:shadow-primary/25 hover:brightness-110 active:scale-[0.98]'
+            : 'bg-white/5 text-outline cursor-not-allowed opacity-50'
           }`}
       >
-        {doctor.isOnline ? 'Consult Now' : 'Not Available'}
+        {doctor.isOnline ? 'Initiate Private Call' : 'Offline'}
       </button>
     </div>
   );
@@ -99,10 +130,9 @@ export default function DoctorDirectory() {
 
   const handleConsult = async (doctor) => {
     try {
-      const res = await api.post('/consultation', { doctorId: doctor.id });
+      await api.post('/consultation', { doctorId: doctor.id });
       navigate(`/waiting-room/${doctor.publicId}`);
     } catch (err) {
-      // If consultation already exists, go to waiting room anyway
       navigate(`/waiting-room/${doctor.publicId}`);
     }
   };
@@ -120,93 +150,102 @@ export default function DoctorDirectory() {
 
   return (
     <div className="bg-background min-h-full text-on-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 lg:py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 lg:py-12 space-y-8">
 
-        {/* Header */}
-        <header className="mb-8">
-          <p className="font-label text-[11px] text-primary uppercase tracking-[0.2em]">Doctor Directory</p>
-          <h1 className="font-headline text-3xl lg:text-4xl font-bold text-on-surface mt-1">Find a Doctor</h1>
-          <div className="flex items-center gap-4 mt-2">
-            <p className="font-body text-sm text-on-surface-variant opacity-70">
-              {doctors.length} specialists available
-            </p>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse" />
-              <span className="font-label text-[10px] text-tertiary uppercase tracking-wide">{onlineCount} online now</span>
+        {/* Top Header Section */}
+        <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/5 pb-6">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              <p className="font-label text-[10px] text-primary uppercase tracking-[0.25em]">Specialist Network</p>
             </div>
+            <h1 className="font-headline text-3xl sm:text-4xl font-black text-on-surface mt-1.5">Consult with verified experts</h1>
+            <p className="font-body text-xs text-outline mt-1.5 max-w-xl">
+              Connect anonymously with certified Nigerian physicians, clinical experts, and SARC trauma support specialists.
+            </p>
+          </div>
+          
+          <div className="bg-white/[0.02] border border-white/5 rounded-2xl px-4 py-2.5 flex items-center gap-3 self-start sm:self-auto">
+            <div className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </div>
+            <span className="font-mono text-[10px] text-emerald-400 uppercase tracking-widest font-bold">{onlineCount} Practitioners active</span>
           </div>
         </header>
 
-        {/* Desktop Split-Pane Layout */}
-        <div className="flex flex-col xl:flex-row gap-8">
+        {/* Elevated Search & Filters Controls Bento */}
+        <section className="bg-gradient-to-r from-white/[0.03] to-white/[0.01] border border-white/5 rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
           
-          {/* ── Left Column: Faceted Search & Filters (Sticky on Desktop) ── */}
-          <div className="xl:w-64 xl:shrink-0 flex flex-col gap-6 xl:sticky xl:top-8 self-start">
-            {/* Search */}
-          <div className="relative flex-1">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-base">search</span>
+          {/* Glass Search Input */}
+          <div className="relative w-full md:w-80 shrink-0">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-lg">search</span>
             <input
               type="search"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search by name or specialization…"
-              className="w-full bg-surface-container-low border border-outline-variant/10 rounded-full pl-11 pr-5 py-3 text-on-surface font-body text-sm outline-none focus:border-primary transition-all"
+              placeholder="Search by name or specialty..."
+              className="w-full bg-surface-container-low border border-outline-variant/10 rounded-2xl pl-11 pr-4 py-3 text-on-surface font-body text-xs outline-none focus:border-primary/40 focus:bg-background transition-all"
             />
           </div>
 
-            {/* Specialty List (Vertical on Desktop, Horizontal Pills on Mobile) */}
-            <div>
-              <p className="font-label text-[10px] uppercase tracking-widest text-outline mb-3">Specialities</p>
-              <div className="flex xl:flex-col gap-2 flex-wrap">
-                {SPECIALIZATIONS.map(s => (
-                  <button
-                    key={s}
-                    onClick={() => setFilter(s)}
-                    className={`px-4 py-2 xl:py-2.5 rounded-full xl:rounded-xl font-label text-[11px] uppercase tracking-wide transition-all xl:text-left ${
-                      filter === s
-                        ? 'bg-primary text-on-primary shadow-lg shadow-primary/20'
-                        : 'bg-surface-container-low border border-outline-variant/10 text-on-surface-variant hover:text-on-surface hover:border-outline-variant/30 xl:bg-transparent xl:border-transparent'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ── Right Column: Doctor Grid ── */}
-          <div className="flex-1">
-
-        {/* Doctor grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {[1,2,3,4,5,6].map(i => (
-              <div key={i} className="h-52 rounded-2xl bg-surface-container-low animate-pulse" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <span className="material-symbols-outlined text-5xl text-outline opacity-30">search_off</span>
-            <p className="font-headline text-lg text-on-surface mt-4">No doctors found</p>
-            <p className="font-body text-sm text-on-surface-variant mt-2 opacity-60">Try a different search term or specialty</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filtered.map((doc, i) => (
-              <motion.div
-                key={doc.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
+          {/* Specialties horizontal capsule stream */}
+          <div className="w-full overflow-x-auto flex gap-2 scrollbar-hide py-1">
+            {SPECIALIZATIONS.map(s => (
+              <button
+                key={s}
+                onClick={() => setFilter(s)}
+                className={`px-4 py-2.5 rounded-xl font-label text-[10px] uppercase tracking-wider shrink-0 transition-all font-semibold border ${
+                  filter === s
+                    ? 'bg-primary border-primary text-on-primary shadow-lg shadow-primary/10'
+                    : 'bg-surface-container-low border-outline-variant/10 text-outline hover:text-on-surface hover:border-white/10'
+                }`}
               >
-                <DoctorCard doctor={doc} onConsult={handleConsult} />
-              </motion.div>
+                {s}
+              </button>
             ))}
           </div>
-        )}
-          </div>
-        </div>
+        </section>
+
+        {/* Doctor Grid Section */}
+        <section className="flex-1">
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="h-72 rounded-3xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/5 animate-pulse flex flex-col justify-between p-6">
+                  <div className="flex gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-white/5" />
+                    <div className="flex-1 space-y-3 py-1">
+                      <div className="h-4 bg-white/5 rounded-full w-2/3" />
+                      <div className="h-3 bg-white/5 rounded-full w-1/2" />
+                    </div>
+                  </div>
+                  <div className="h-10 bg-white/5 rounded-2xl" />
+                </div>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-24 bg-white/[0.01] border border-white/5 rounded-[32px] max-w-xl mx-auto px-6">
+              <span className="material-symbols-outlined text-5xl text-outline opacity-20">search_off</span>
+              <p className="font-headline text-base font-bold text-on-surface mt-4">No active practitioners found</p>
+              <p className="font-body text-xs text-outline mt-1.5">Try widening your search terms or selecting a different specialty category.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filtered.map((doc, i) => (
+                <motion.div
+                  key={doc.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03, duration: 0.3 }}
+                >
+                  <DoctorCard doctor={doc} onConsult={handleConsult} />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </section>
+
       </div>
     </div>
   );

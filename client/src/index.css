@@ -15,7 +15,7 @@
   --accent-glow: rgba(140, 205, 255, 0.08);
   --primary: #ffffff;
   --secondary: #8ccdff;
-  --tertiary: #d0bcff;
+  --tertiary: #7dd3fc;
   --muted: #62728f;
   --border-light: rgba(255, 255, 255, 0.05);
   --border-glow: rgba(140, 205, 255, 0.15);
@@ -33,11 +33,12 @@ html {
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   text-size-adjust: 100%;
+  background-color: var(--bg-pure);
 }
 
 body {
   margin: 0;
-  background-color: var(--bg-pure);
+  background-color: transparent;
   color: var(--primary);
   font-family: var(--font-sans);
   font-size: 16px;
@@ -82,7 +83,7 @@ p  { margin: 0; font-weight: 400; opacity: 0.85; }
 /* ── Layout Panels ───────────────────────────────────────────────────────── */
 #scroll-video-container {
   position: fixed; inset: 0; z-index: -10;
-  background: var(--bg-pure); top: -10%;
+  background: transparent; top: -10%;
   pointer-events: none;
 }
 #scroll-video-container canvas,

@@ -26,7 +26,14 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [erasing, setErasing] = useState(false);
-  const [form, setForm] = useState({ nickname: '', avatar: '', age: '', sex: '' });
+  const [form, setForm] = useState({
+    nickname: '',
+    avatar: '',
+    age: '',
+    sex: '',
+    language: 'English',
+    sosNumber: ''
+  });
   const [txHistory, setTxHistory] = useState([]);
   const [activeTab, setActiveTab] = useState('identity');
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
@@ -46,6 +53,8 @@ export default function Profile() {
         avatar: profileRes.data.avatar || '',
         age: profileRes.data.age || '',
         sex: profileRes.data.sex || '',
+        language: localStorage.getItem('incognicare_language') || 'English',
+        sosNumber: localStorage.getItem('incognicare_sos_number') || '',
       });
       setTxHistory(historyRes.data?.data || historyRes.data || []);
     } catch {
@@ -62,10 +71,15 @@ export default function Profile() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const { language, sosNumber, ...dbPayload } = form;
       const payload = Object.fromEntries(
-        Object.entries(form).filter(([, v]) => v !== '' && v !== null && v !== undefined)
+        Object.entries(dbPayload).filter(([, v]) => v !== '' && v !== null && v !== undefined)
       );
       const res = await api.put('/user/profile', payload);
+      
+      localStorage.setItem('incognicare_language', form.language || 'English');
+      localStorage.setItem('incognicare_sos_number', form.sosNumber || '');
+
       toast.success('Profile updated securely.');
       const updatedUser = { ...user, ...(res.data.user ?? res.data) };
       login(token, updatedUser);
@@ -244,12 +258,13 @@ export default function Profile() {
                     </div>
 
                     {/* Avatar Picker */}
-                    <div className="space-y-3">
-                      <label className="font-label text-[9px] text-outline uppercase tracking-widest pl-1">Avatar Variant</label>
+                    <div className="space-y-4">
+                      <label className="font-label text-[9px] text-outline uppercase tracking-widest pl-1">Select Presets or Customise</label>
                       <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3">
                         {avatarSeeds.map(seed => (
                           <button
                             key={seed}
+                            type="button"
                             onClick={() => setForm(f => ({ ...f, avatar: seed }))}
                             className={`aspect-square rounded-[20px] flex items-center justify-center p-1 border transition-all ${
                               form.avatar === seed
@@ -260,6 +275,99 @@ export default function Profile() {
                             <AvatarGenerator seed={seed} size="md" />
                           </button>
                         ))}
+                      </div>
+
+                      {/* Custom Avatar Designer Sub-Card */}
+                      <div className="bg-surface-container/50 border border-outline-variant/10 rounded-2xl p-5 space-y-4 mt-4">
+                        <p className="font-mono text-[9px] text-outline uppercase tracking-wider font-semibold">Custom Avatar Designer</p>
+                        
+                        {/* Seed Input */}
+                        <div className="space-y-1.5">
+                          <label className="font-label text-[8px] text-outline uppercase tracking-wider pl-1">Aesthetic Seed Word</label>
+                          <input
+                            type="text"
+                            value={form.avatar?.startsWith('{') ? (JSON.parse(form.avatar).seed || '') : form.avatar}
+                            onChange={(e) => {
+                              const currentVal = form.avatar?.startsWith('{') ? JSON.parse(form.avatar) : { seed: form.avatar || 'user', paletteIndex: 0, shapeCount: 4, centerSize: 15 };
+                              setForm(f => ({ ...f, avatar: JSON.stringify({ ...currentVal, seed: e.target.value }) }));
+                            }}
+                            placeholder="Type a word to randomize shapes..."
+                            className="w-full bg-background border border-outline-variant/10 rounded-xl px-4 py-2.5 text-xs text-on-surface focus:outline-none focus:border-primary"
+                          />
+                        </div>
+
+                        {/* Palette Selector */}
+                        <div className="space-y-1.5">
+                          <label className="font-label text-[8px] text-outline uppercase tracking-wider pl-1">Color Palette</label>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+                              'linear-gradient(135deg, #a0c4ff 0%, #c0fdff 100%)',
+                              'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+                              'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
+                              'linear-gradient(135deg, #add8e6 0%, #87ceeb 100%)',
+                              'linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%)',
+                              'linear-gradient(135deg, #e6f0fa 0%, #b0c4de 100%)',
+                              'linear-gradient(135deg, #ef4444 0%, #f87171 100%)',
+                              'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
+                              'linear-gradient(135deg, #14b8a6 0%, #2dd4bf 100%)',
+                            ].map((grad, idx) => {
+                              const currentVal = form.avatar?.startsWith('{') ? JSON.parse(form.avatar) : { seed: form.avatar || 'user', paletteIndex: 0, shapeCount: 4, centerSize: 15 };
+                              const isActive = currentVal.paletteIndex === idx;
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => setForm(f => ({ ...f, avatar: JSON.stringify({ ...currentVal, paletteIndex: idx }) }))}
+                                  className={`w-6 h-6 rounded-full border transition-all ${
+                                    isActive ? 'border-white scale-110 shadow-lg ring-1 ring-white/20' : 'border-transparent opacity-75 hover:opacity-100'
+                                  }`}
+                                  style={{ background: grad }}
+                                  title={`Palette ${idx + 1}`}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Shape Density Slider & Center Size Slider */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center pr-1">
+                              <label className="font-label text-[8px] text-outline uppercase tracking-wider pl-1">Shape Density</label>
+                              <span className="font-mono text-[8px] text-primary">{form.avatar?.startsWith('{') ? (JSON.parse(form.avatar).shapeCount || 4) : 4}</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="3"
+                              max="8"
+                              value={form.avatar?.startsWith('{') ? (JSON.parse(form.avatar).shapeCount || 4) : 4}
+                              onChange={(e) => {
+                                const currentVal = form.avatar?.startsWith('{') ? JSON.parse(form.avatar) : { seed: form.avatar || 'user', paletteIndex: 0, shapeCount: 4, centerSize: 15 };
+                                setForm(f => ({ ...f, avatar: JSON.stringify({ ...currentVal, shapeCount: Number(e.target.value) }) }));
+                              }}
+                              className="w-full h-1 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center pr-1">
+                              <label className="font-label text-[8px] text-outline uppercase tracking-wider pl-1">Focal Size</label>
+                              <span className="font-mono text-[8px] text-primary">{form.avatar?.startsWith('{') ? (JSON.parse(form.avatar).centerSize || 15) : 15}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="5"
+                              max="30"
+                              value={form.avatar?.startsWith('{') ? (JSON.parse(form.avatar).centerSize || 15) : 15}
+                              onChange={(e) => {
+                                const currentVal = form.avatar?.startsWith('{') ? JSON.parse(form.avatar) : { seed: form.avatar || 'user', paletteIndex: 0, shapeCount: 4, centerSize: 15 };
+                                setForm(f => ({ ...f, avatar: JSON.stringify({ ...currentVal, centerSize: Number(e.target.value) }) }));
+                              }}
+                              className="w-full h-1 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -288,6 +396,34 @@ export default function Profile() {
                           <option value="Female">Female</option>
                           <option value="Other">Other</option>
                         </select>
+                      </div>
+                    </div>
+
+                    {/* Localized Preferences */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="font-label text-[9px] text-outline uppercase tracking-widest pl-1">Communication Dialect</label>
+                        <select
+                          value={form.language}
+                          onChange={e => setForm(f => ({ ...f, language: e.target.value }))}
+                          className="w-full bg-surface-container border border-outline-variant/10 rounded-2xl px-5 py-4 text-sm text-on-surface focus:border-primary/40 focus:outline-none transition-all appearance-none cursor-pointer hover:border-outline-variant/20"
+                        >
+                          <option value="English">English</option>
+                          <option value="Pidgin">Nigerian Pidgin</option>
+                          <option value="Yoruba">Yoruba</option>
+                          <option value="Hausa">Hausa</option>
+                          <option value="Igbo">Igbo</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="font-label text-[9px] text-outline uppercase tracking-widest pl-1">Custom Panic SOS Number</label>
+                        <input
+                          type="tel"
+                          value={form.sosNumber}
+                          onChange={e => setForm(f => ({ ...f, sosNumber: e.target.value }))}
+                          placeholder="e.g. +234 803 123 4567"
+                          className="w-full bg-surface-container border border-outline-variant/10 rounded-2xl px-5 py-4 text-sm text-on-surface focus:border-primary/40 focus:outline-none transition-all hover:border-outline-variant/20"
+                        />
                       </div>
                     </div>
 

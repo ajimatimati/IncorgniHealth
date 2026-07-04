@@ -6,12 +6,12 @@
 
 const PALETTES = [
   ['#00f2fe', '#4facfe', '#0a1628'],   // Teal → Blue
-  ['#7c3aed', '#c084fc', '#0f0520'],   // Violet
+  ['#a0c4ff', '#c0fdff', '#0b1625'],   // Soft Pastel Blue/Teal
   ['#10b981', '#34d399', '#021a0f'],   // Emerald
   ['#f59e0b', '#fbbf24', '#1a1000'],   // Amber
-  ['#ec4899', '#f472b6', '#1a0510'],   // Pink
+  ['#add8e6', '#87ceeb', '#051b24'],   // Baby Blue / Sky Blue
   ['#06b6d4', '#22d3ee', '#021a20'],   // Cyan
-  ['#8b5cf6', '#a78bfa', '#0d0520'],   // Purple
+  ['#e6f0fa', '#b0c4de', '#0c1622'],   // Steel / Silver Blue
   ['#ef4444', '#f87171', '#1a0808'],   // Red
   ['#3b82f6', '#60a5fa', '#050d1a'],   // Blue
   ['#14b8a6', '#2dd4bf', '#021a16'],   // Teal Deep
@@ -48,8 +48,16 @@ export default function AvatarGenerator({
   isOnline = false,
   className = '',
 }) {
-  const hash = hashSeed(seed);
-  const palette = PALETTES[hash % PALETTES.length];
+  let config = {};
+  if (seed && typeof seed === 'string' && seed.startsWith('{')) {
+    try {
+      config = JSON.parse(seed);
+    } catch (e) {}
+  }
+
+  const hash = hashSeed(config.seed || seed);
+  const paletteIndex = config.paletteIndex !== undefined ? config.paletteIndex : (hash % PALETTES.length);
+  const palette = PALETTES[paletteIndex] || PALETTES[0];
   const [c1, c2, bg] = palette;
   const dim = SIZES[size] || SIZES.md;
   const viewBox = 100;
@@ -58,7 +66,7 @@ export default function AvatarGenerator({
   // Derive shape parameters
   const r = (i) => seededRandom(hash, i);
 
-  const shapeCount = 3 + Math.floor(r(0) * 4); // 3–6 shapes
+  const shapeCount = config.shapeCount !== undefined ? config.shapeCount : (3 + Math.floor(r(0) * 4)); // 3–6 shapes
   const shapes = [];
 
   for (let i = 0; i < shapeCount; i++) {
@@ -138,7 +146,7 @@ export default function AvatarGenerator({
   }
 
   // Central focal shape
-  const centralSize = 12 + r(100) * 10;
+  const centralSize = config.centerSize !== undefined ? config.centerSize : (12 + r(100) * 10);
   shapes.push(
     <circle
       key="center"
