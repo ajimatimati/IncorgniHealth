@@ -249,7 +249,7 @@ export default function Sidebar() {
                   className="px-3.5 py-1.5 flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 active:scale-95 transition-all"
                   style={{ height: '32px' }}
                 >
-                  <span className="material-symbols-outlined text-sm animate-pulse">emergency</span>
+                  <span className="material-symbols-outlined text-sm">emergency</span>
                   <span className="font-mono text-[9px] font-bold tracking-widest uppercase">SOS</span>
                 </button>
               )}

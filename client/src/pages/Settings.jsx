@@ -365,7 +365,7 @@ export default function Settings() {
                       <div className="flex items-center justify-between p-5 bg-surface-container rounded-2xl border border-outline-variant/5">
                         <span className="font-body text-sm font-semibold text-on-surface">Status</span>
                         <span className="font-label text-[10px] uppercase tracking-widest text-primary flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
-                          <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                          <span className="w-1.5 h-1.5 bg-primary rounded-full" />
                           Authenticated
                         </span>
                       </div>

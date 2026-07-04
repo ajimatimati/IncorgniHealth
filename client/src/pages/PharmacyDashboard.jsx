@@ -160,8 +160,8 @@ export default function PharmacyDashboard() {
                   <div className="space-y-3 min-h-[200px] flex-1 overflow-y-auto max-h-[50vh] lg:max-h-[calc(100vh-25rem)] pr-2 custom-scrollbar">
                     {loading ? (
                       <>
-                        <div className="h-24 rounded-2xl bg-surface-container-high animate-pulse" />
-                        <div className="h-24 rounded-2xl bg-surface-container-high animate-pulse" />
+                        <div className="h-24 rounded-2xl bg-surface-container-high" />
+                        <div className="h-24 rounded-2xl bg-surface-container-high" />
                       </>
                     ) : colOrders.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-12 text-center">

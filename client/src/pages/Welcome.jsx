@@ -633,9 +633,9 @@ export default function Welcome() {
         <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-12 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
           
           <div className="lg:col-span-7 space-y-8 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              <span className="font-mono text-[8px] uppercase tracking-[0.15em] text-white/60">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-sm bg-sky-400" />
+              <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/70 font-semibold">
                 Interactive 3D Diagnostics Active
               </span>
             </div>
@@ -1002,7 +1002,7 @@ export default function Welcome() {
                   { title: 'Decoupled Consultation Ledger', desc: 'Medical records are indexed under random public Ghost IDs, protecting patient metadata.' }
                 ].map((item, idx) => (
                   <div key={idx} className="flex gap-4">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white mt-2 shrink-0 animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-sm bg-sky-400 mt-2 shrink-0" />
                     <div>
                       <h4 className="font-sans text-xs font-bold text-white">{item.title}</h4>
                       <p className="font-sans text-xs text-white/50 mt-0.5">{item.desc}</p>

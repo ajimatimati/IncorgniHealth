@@ -210,7 +210,7 @@ export default function VideoConsultation() {
       {/* Immersive HUD Overlay Title */}
       <div className="absolute top-6 left-6 z-40 flex items-center gap-3">
         <div className="bg-[#010101]/60 backdrop-blur-xl border border-white/5 px-4 py-2 rounded-full flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           <span className="font-mono text-[9px] text-white/50 uppercase tracking-[0.2em] font-semibold">P2P Encrypted Tunnel</span>
         </div>
       </div>
@@ -227,7 +227,7 @@ export default function VideoConsultation() {
           />
           {!remoteVideoRef.current?.srcObject && (
             <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4">
-              <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center animate-pulse">
+              <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-white/30 text-2xl">videocam_off</span>
               </div>
               <p className="font-mono text-[9px] text-white/40 uppercase tracking-[0.3em]">Awaiting clinical peer connection</p>

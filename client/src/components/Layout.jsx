@@ -13,7 +13,7 @@ function PageLoader() {
         <div className="w-10 h-10 border border-white/10 border-t-white rounded-full animate-spin" />
         <div className="text-center space-y-1">
           <p className="font-sans text-xs font-black tracking-[0.1em] text-white uppercase">IncogniCare Enclave</p>
-          <p className="font-mono text-[9px] text-white/40 uppercase tracking-widest animate-pulse">Decrypting session state…</p>
+          <p className="font-mono text-[9px] text-white/50 uppercase tracking-widest">Decrypting session state…</p>
         </div>
       </div>
     </div>

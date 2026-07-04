@@ -177,7 +177,7 @@ export default function CoachingHub() {
           </div>
 
           <div className="flex items-center gap-2.5 bg-surface-container-low px-4 py-2 rounded-xl border border-outline-variant/10 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-primary" />
             <span className="font-label text-[10px] text-outline uppercase tracking-wider">
               Secure Ledger: <span className="text-on-surface font-mono font-bold">{ghostId}</span>
             </span>
@@ -352,7 +352,7 @@ export default function CoachingHub() {
                   {/* Chat Header */}
                   <div className="p-4 border-b border-outline-variant/10 bg-surface-container-low/60 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
                       <span className="font-headline text-xs font-bold text-on-surface">Consultation Feed</span>
                     </div>
                     <span className="font-label text-[8px] text-outline uppercase tracking-wider">Secure Tunnel</span>

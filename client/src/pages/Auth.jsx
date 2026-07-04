@@ -279,7 +279,7 @@ export default function Auth() {
           >
             <div className="text-center space-y-4">
               <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-2 shadow-lg">
-                <span className="material-symbols-outlined text-white text-2xl animate-pulse">lock_open</span>
+                <span className="material-symbols-outlined text-white text-2xl">lock_open</span>
               </div>
               <h2 className="text-xl font-mono uppercase tracking-[0.25em]">
                 <DecryptText

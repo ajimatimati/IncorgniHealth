@@ -125,7 +125,7 @@ export default function SarcOfficerDashboard() {
                 <AnimatePresence mode="popLayout">
                   {loading && activeTab !== 'audit' ? (
                     <div className="space-y-4">
-                      {[1, 2, 3].map(i => <div key={i} className="h-28 bg-surface-container rounded-2xl animate-pulse" />)}
+                      {[1, 2, 3].map(i => <div key={i} className="h-28 bg-surface-container rounded-2xl" />)}
                     </div>
                   ) : (
                     <>
@@ -314,7 +314,7 @@ export default function SarcOfficerDashboard() {
                      <div>
                        <h2 className="font-headline text-base font-bold text-on-surface">Coverage Area</h2>
                        <p className="font-label text-[9px] text-outline uppercase tracking-[0.2em] flex items-center gap-1">
-                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Regional Monitor
+                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Live Regional Monitor
                        </p>
                      </div>
                    </div>

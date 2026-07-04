@@ -260,7 +260,7 @@ export default function SafeHaven() {
           >
             <div className="text-center space-y-4">
               <div className="w-14 h-14 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-2 shadow-lg">
-                <span className="material-symbols-outlined text-white text-xl animate-pulse">lock_open</span>
+                <span className="material-symbols-outlined text-white text-xl">lock_open</span>
               </div>
               <h2 className="text-sm font-mono uppercase tracking-[0.25em]">
                 <DecryptText
@@ -300,7 +300,7 @@ export default function SafeHaven() {
 
         {/* Privacy alert bar */}
         <section className="bg-white/[0.02] rounded-3xl border border-white/5 p-5 flex items-start gap-4 bento-glass">
-          <span className="material-symbols-outlined text-white/60 text-lg mt-0.5 animate-pulse">gpp_maybe</span>
+          <span className="material-symbols-outlined text-white/60 text-lg mt-0.5">gpp_maybe</span>
           <p className="font-sans text-xs text-white/60 leading-relaxed">
             <strong>Client-Side Cryptography Active.</strong> This vault uses client-side encryption. Keys are derived from your Master PIN and never stored on our servers. Tapping Quick Exit redirects instantly and wipes local session variables.
           </p>

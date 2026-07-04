@@ -196,7 +196,7 @@ export default function DoctorDashboard() {
                 : 'bg-surface-container-low border-outline-variant/20 text-on-surface-variant'
               }`}
           >
-            <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-tertiary animate-pulse' : 'bg-outline'}`} />
+            <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-tertiary' : 'bg-outline'}`} />
             {isOnline ? 'Available' : 'Offline'} · Click to toggle
           </button>
         </header>
@@ -295,7 +295,7 @@ export default function DoctorDashboard() {
                 
                 <button
                   onClick={() => setIsDiagnosticsOpen(true)}
-                  className="w-full mt-6 bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-on-primary font-headline text-xs font-bold py-3.5 px-4 rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 animate-pulse"
+                  className="w-full mt-6 bg-primary/10 border border-primary/20 text-primary hover:bg-primary hover:text-on-primary font-headline text-xs font-bold py-3.5 px-4 rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined text-[18px]">biotech</span>
                   Launch 3D Diagnostic scan

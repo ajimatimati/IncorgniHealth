@@ -85,18 +85,17 @@ export default function WaitingRoom() {
               animate={{ opacity: 1, x: 0 }}
               className="md:col-span-8 bg-surface-container-low p-10 rounded-[32px] border border-outline-variant/10 flex flex-col items-center justify-center text-center space-y-8 relative overflow-hidden h-[400px]"
             >
-              {/* Pulsing indicator */}
+              {/* Indicator */}
               <div className="relative">
-                 <div className="absolute inset-[-10px] rounded-full animate-ping opacity-10 bg-primary"></div>
-                 <div className="w-32 h-32 rounded-full border-4 border-primary/10 flex items-center justify-center bg-surface-container-high/50 backdrop-blur-md relative z-10 shadow-inner">
-                   <span className="material-symbols-outlined text-5xl text-primary animate-pulse">hourglass_top</span>
+                 <div className="w-32 h-32 rounded-full border-4 border-primary/20 flex items-center justify-center bg-surface-container-high/50 backdrop-blur-md relative z-10 shadow-inner">
+                   <span className="material-symbols-outlined text-5xl text-primary">hourglass_top</span>
                  </div>
               </div>
               
               <div className="space-y-4">
                 <h2 className="font-headline text-3xl font-bold text-on-surface">Physician Notified</h2>
                 <div className="flex items-center justify-center gap-3">
-                   <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse" />
+                   <span className="w-2 h-2 rounded-full bg-tertiary" />
                    <p className="font-label text-[10px] text-tertiary uppercase tracking-[0.2em] font-black">Encrypted Line Active</p>
                 </div>
               </div>

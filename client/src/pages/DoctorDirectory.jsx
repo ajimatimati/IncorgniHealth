@@ -40,12 +40,11 @@ function DoctorCard({ doctor, onConsult }) {
             <AvatarGenerator seed={doctor.avatar || doctor.publicId} size="lg" />
           </div>
           {doctor.isOnline ? (
-            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border border-black/50"></span>
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400 border border-black/80 shadow-sm" />
             </span>
           ) : (
-            <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-outline/40 border border-black/50" />
+            <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-neutral-600 border border-black/80" />
           )}
         </div>
 
@@ -166,10 +165,7 @@ export default function DoctorDirectory() {
           </div>
           
           <div className="bg-white/[0.02] border border-white/5 rounded-2xl px-4 py-2.5 flex items-center gap-3 self-start sm:self-auto">
-            <div className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </div>
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
             <span className="font-mono text-[10px] text-emerald-400 uppercase tracking-widest font-bold">{onlineCount} Practitioners active</span>
           </div>
         </header>
@@ -212,7 +208,7 @@ export default function DoctorDirectory() {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[1,2,3,4].map(i => (
-                <div key={i} className="h-72 rounded-3xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/5 animate-pulse flex flex-col justify-between p-6">
+                <div key={i} className="h-72 rounded-3xl bg-gradient-to-b from-white/[0.02] to-transparent border border-white/5 flex flex-col justify-between p-6">
                   <div className="flex gap-4">
                     <div className="w-16 h-16 rounded-2xl bg-white/5" />
                     <div className="flex-1 space-y-3 py-1">

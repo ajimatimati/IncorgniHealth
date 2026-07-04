@@ -100,7 +100,7 @@ export default function PostConsultationReview() {
             Your feedback helps us provide better, more private care to everyone on the platform.
           </p>
         </div>
-        <span className="font-label text-[9px] text-outline uppercase tracking-widest animate-pulse">Returning to dashboard...</span>
+        <span className="font-label text-[9px] text-outline uppercase tracking-widest">Returning to dashboard...</span>
       </motion.div>
     </div>
   );

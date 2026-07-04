@@ -185,7 +185,7 @@ export default function AdminDashboard() {
                 {/* Audit Mini */}
                 <div className="bg-surface-container-low rounded-[32px] border border-outline-variant/10 p-6">
                    <div className="flex items-center gap-2 mb-4">
-                     <span className="w-2 h-2 rounded-full bg-error animate-pulse" />
+                     <span className="w-2 h-2 rounded-full bg-error" />
                      <h3 className="font-headline text-sm font-bold text-on-surface">Live Ledger</h3>
                    </div>
                    <div className="space-y-4 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-outline-variant/20 before:to-transparent">
@@ -243,27 +243,24 @@ export default function AdminDashboard() {
                     <tbody className="divide-y divide-outline-variant/5">
                       {loading ? (
                         [...Array(5)].map((_, i) => (
-                           <tr key={i}><td colSpan="5" className="px-6 py-4"><div className="h-10 bg-surface-container rounded-lg animate-pulse" /></td></tr>
+                           <tr key={i}><td colSpan="5" className="px-6 py-4"><div className="h-10 bg-surface-container rounded-lg" /></td></tr>
                         ))
                       ) : filteredUsers.length === 0 ? (
                         <tr>
                           <td colSpan="5" className="p-16 text-center">
-                            <span className="material-symbols-outlined text-4xl text-outline mb-3">folder_off</span>
-                            <p className="font-body text-sm text-on-surface-variant opacity-70">Query returned zero matching entities.</p>
+                            <span className="material-symbols-outlined text-4xl text-outline opacity-40 mb-2">find_in_page</span>
+                            <p className="font-headline text-sm font-bold text-on-surface">No Identity Nodes Match Filter</p>
                           </td>
                         </tr>
                       ) : (
-                        filteredUsers.map((u, i) => (
-                          <motion.tr 
-                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
-                            key={u.id} className="hover:bg-surface-container/50 transition-colors group cursor-pointer"
-                          >
+                        filteredUsers.map(u => (
+                          <tr key={u.id} className="hover:bg-surface-container-high/50 transition-colors">
                             <td className="px-6 py-3">
-                              <div className="flex items-center gap-4">
-                                <AvatarGenerator seed={u.publicId} size="md" />
+                              <div className="flex items-center gap-3">
+                                <AvatarGenerator seed={u.avatar || u.publicId} size="xs" />
                                 <div>
-                                  <p className="font-headline text-sm font-bold text-on-surface group-hover:text-primary transition-colors">{u.publicId}</p>
-                                  <p className="font-body text-[11px] text-on-surface-variant opacity-70 truncate max-w-[150px]">{u.nickname || 'Ghost Identity'}</p>
+                                  <p className="font-mono text-xs font-bold text-on-surface">{u.nickname || u.publicId}</p>
+                                  <p className="font-mono text-[9px] text-outline">{u.publicId}</p>
                                 </div>
                               </div>
                             </td>
@@ -275,7 +272,6 @@ export default function AdminDashboard() {
                             <td className="px-6 py-3">
                               <div className="flex items-center gap-2">
                                 <span className="relative flex h-2.5 w-2.5">
-                                  {u.isOnline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-50"></span>}
                                   <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${u.isOnline ? 'bg-primary' : 'bg-outline-variant/40'}`}></span>
                                 </span>
                                 <span className="font-body text-xs text-on-surface-variant opacity-80">{u.isOnline ? 'Online' : 'Offline'}</span>
@@ -291,7 +287,7 @@ export default function AdminDashboard() {
                                 <span className="material-symbols-outlined text-[20px]">more_vert</span>
                               </button>
                             </td>
-                          </motion.tr>
+                          </tr>
                         ))
                       )}
                     </tbody>

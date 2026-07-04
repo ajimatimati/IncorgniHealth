@@ -26,9 +26,6 @@ const BodyDot = ({ color = 'primary', label, severity = 'normal' }) => {
 
   return (
     <div className="relative group/dot cursor-pointer select-none" style={{ width: 16, height: 16 }}>
-      {severity === 'warning' && (
-        <span className={`absolute inset-0 rounded-full ${c.bg} opacity-50 animate-ping`} />
-      )}
       <div className={`absolute inset-0 rounded-full ${c.bg} flex items-center justify-center border border-white/5`}>
         <span className={`w-2 h-2 rounded-full ${c.dot} shadow-sm`} />
       </div>
@@ -70,7 +67,7 @@ const DiagnosticOverview = ({
               ? 'bg-primary/10 text-primary border border-primary/20'
               : 'bg-warning/10 text-warning border border-warning/20'
           }`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${vitals.status === 'Optimal' ? 'bg-primary' : 'bg-warning'} animate-pulse`} />
+            <span className={`w-1.5 h-1.5 rounded-full ${vitals.status === 'Optimal' ? 'bg-primary' : 'bg-warning'}`} />
             {vitals.status}
           </div>
         </div>

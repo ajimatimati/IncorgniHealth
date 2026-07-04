@@ -86,7 +86,7 @@ function StatCard({ icon, label, value, sub, color = 'text-white' }) {
           <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>{icon}</span>
         </div>
         {label === 'Consultations' && (
-          <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          <div className="w-1.5 h-1.5 rounded-sm bg-sky-400" />
         )}
       </div>
       <div className="mt-4">
@@ -312,9 +312,9 @@ export default function Dashboard() {
                       </div>
                       <p className="font-mono text-[9px] text-white/40 uppercase tracking-[0.25em] font-semibold">Care Wallet</p>
                     </div>
-                    <div className="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full border border-white/10">
-                      <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                      <p className="font-mono text-[8px] text-white/50 uppercase tracking-widest">Available</p>
+                    <div className="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-lg border border-white/10">
+                      <div className="w-1.5 h-1.5 rounded-sm bg-emerald-400" />
+                      <p className="font-mono text-[8px] text-white/70 uppercase tracking-widest font-semibold">Available</p>
                     </div>
                   </div>
                   

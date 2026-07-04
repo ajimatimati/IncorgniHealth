@@ -220,7 +220,7 @@ export default function ChatRoom() {
                 </h2>
                 <p className="font-mono text-[8px] text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
                   {user.role === 'DOCTOR' ? 'Client' : 'Case Physician'}
-                  {typing && <span className="text-white/80 lowercase tracking-normal animate-pulse font-semibold">typing...</span>}
+                  {typing && <span className="text-white/80 lowercase tracking-normal font-semibold">typing...</span>}
                 </p>
               </div>
             </div>

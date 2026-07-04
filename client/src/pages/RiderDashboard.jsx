@@ -124,7 +124,7 @@ export default function RiderDashboard() {
         <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-background via-background/80 to-transparent z-0 hidden lg:block"></div>
         
         {/* Mock Map Pins */}
-        <div className="absolute top-1/3 right-1/4 w-4 h-4 bg-primary rounded-full shadow-[0_0_20px_rgba(208,188,255,0.8)] animate-pulse hidden lg:block"></div>
+        <div className="absolute top-1/3 right-1/4 w-3 h-3 bg-primary rounded-full shadow-[0_0_20px_rgba(208,188,255,0.8)] hidden lg:block"></div>
         <div className="absolute bottom-1/3 right-1/3 w-3 h-3 bg-tertiary rounded-full shadow-[0_0_15px_rgba(255,180,171,0.6)] hidden lg:block"></div>
         
         <div className="relative z-0 text-outline-variant/40 font-headline font-bold text-4xl lg:text-7xl opacity-50 select-none pointer-events-none text-center">
@@ -141,7 +141,7 @@ export default function RiderDashboard() {
           <header className="mb-6 flex items-start justify-between">
             <div>
               <p className="font-label text-[10px] text-primary uppercase tracking-[0.2em] flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
                 Live Routing Protocol
               </p>
               <h1 className="font-headline text-2xl lg:text-3xl font-bold text-on-surface mt-1">Logistics Terminal</h1>
@@ -178,7 +178,7 @@ export default function RiderDashboard() {
         <div className="flex-1 overflow-y-auto p-6 lg:p-8 bg-gradient-to-b from-transparent to-background/50 custom-scrollbar pb-32 lg:pb-8">
           {loading ? (
             <div className="space-y-4">
-              {[1,2,3].map(i => <div key={i} className="h-40 rounded-2xl bg-surface-container-high/50 animate-pulse border border-outline-variant/5" />)}
+              {[1,2,3].map(i => <div key={i} className="h-40 rounded-2xl bg-surface-container-high/50 border border-outline-variant/5" />)}
             </div>
           ) : showOrders.length === 0 ? (
             <div className="text-center py-20 bg-surface-container border border-outline-variant/5 rounded-3xl">
