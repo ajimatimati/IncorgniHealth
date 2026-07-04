@@ -36,21 +36,23 @@ const NotFound              = lazy(() => import('./pages/NotFound'));
 const PharmacyShop          = lazy(() => import('./pages/PharmacyShop'));
 const SarcOfficerDashboard  = lazy(() => import('./pages/SarcOfficerDashboard'));
 const CoachingHub           = lazy(() => import('./pages/CoachingHub'));
+const SpecializedHub        = lazy(() => import('./pages/SpecializedHub'));
 
 // ─── Loading fallback ─────────────────────────────────────────────────────────
 function PageLoader() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-background z-50">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative w-12 h-12">
-          <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
-          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#010101] z-[9999] select-none pointer-events-none">
+      <div className="flex flex-col items-center gap-6">
+        <div className="w-12 h-12 rounded-full border border-white/5 flex items-center justify-center relative">
+          <div className="absolute inset-0 rounded-full border border-white/20 animate-ping" style={{ animationDuration: '3s' }} />
+          <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
         </div>
-        <p className="font-label text-[10px] text-primary uppercase tracking-[0.2em]">Loading…</p>
+        <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-white/40">IncogniCare</p>
       </div>
     </div>
   );
 }
+
 
 // ─── Auth gate: redirect already-authenticated users away from /auth ──────────
 function AuthGate({ children }) {
@@ -99,6 +101,8 @@ function InnerRoutes() {
               element={<ProtectedRoute roles={['PATIENT']}><PostConsultationReview /></ProtectedRoute>} />
             <Route path="/coaching"
               element={<ProtectedRoute roles={['PATIENT']}><CoachingHub /></ProtectedRoute>} />
+            <Route path="/specialized"
+              element={<ProtectedRoute roles={['PATIENT']}><SpecializedHub /></ProtectedRoute>} />
 
             {/* ── Doctor-only ── */}
             <Route path="/doctor-dashboard"
@@ -128,6 +132,8 @@ function InnerRoutes() {
             <Route path="/chat/:id"
               element={<ProtectedRoute roles={['PATIENT', 'DOCTOR']}><ChatRoom /></ProtectedRoute>} />
             <Route path="/consult/:id"
+              element={<ProtectedRoute roles={['PATIENT', 'DOCTOR']}><VideoConsultation /></ProtectedRoute>} />
+            <Route path="/video/:id"
               element={<ProtectedRoute roles={['PATIENT', 'DOCTOR']}><VideoConsultation /></ProtectedRoute>} />
 
             {/* ── Any authenticated user ── */}

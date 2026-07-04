@@ -291,13 +291,23 @@ export default function Profile() {
                       </div>
                     </div>
 
-                    <div className="pt-2">
+                    <div className="pt-2 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-outline-variant/5 mt-4">
                       <button
                         onClick={handleSave}
                         disabled={saving}
                         className="w-full lg:w-auto px-8 btn-primary h-14 text-[11px]"
                       >
                         {saving ? 'Saving Changes...' : 'Save Identity Preferences'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          localStorage.removeItem('dashboard_tour_completed');
+                          toast.success('Onboarding tour has been reset. Return home to launch.');
+                        }}
+                        className="w-full lg:w-auto px-6 h-14 bg-surface-container border border-outline-variant/10 text-on-surface hover:bg-surface-container-high rounded-full font-label text-[10px] uppercase tracking-wider font-bold transition-all"
+                      >
+                        Reset Tour Guide
                       </button>
                     </div>
                   </div>
@@ -450,10 +460,41 @@ export default function Profile() {
 function DepositModal({ isOpen, onClose, onDepositSuccess }) {
   const [amount, setAmount] = useState('');
   const [voucherCode, setVoucherCode] = useState('');
-  const [method, setMethod] = useState('card'); // 'card', 'bank', or 'voucher'
+  const [method, setMethod] = useState('moniepoint'); // 'moniepoint', 'card', 'bank', or 'voucher'
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState('input'); // 'input', 'verifying', 'success'
   const toast = useToast();
+
+  const [mpSubMethod, setMpSubMethod] = useState('transfer'); // 'transfer', 'ussd', 'card_popup'
+  const [mpAccountNum, setMpAccountNum] = useState('');
+  const [mpTimeLeft, setMpTimeLeft] = useState(600);
+  const [isMpPopupOpen, setIsMpPopupOpen] = useState(false);
+  const [mpOtpCode, setMpOtpCode] = useState('');
+  const [mpPopupStep, setMpPopupStep] = useState('card_input'); // 'card_input', 'otp_input', 'success'
+
+  useEffect(() => {
+    if (isOpen) {
+      setMpAccountNum('8039' + Math.floor(100000 + Math.random() * 900000));
+      setMpTimeLeft(600);
+      setIsMpPopupOpen(false);
+      setMpPopupStep('card_input');
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && mpTimeLeft > 0) {
+      const t = setInterval(() => {
+        setMpTimeLeft(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(t);
+    }
+  }, [isOpen, mpTimeLeft]);
+
+  const formatTime = (sec) => {
+    const mins = Math.floor(sec / 60);
+    const secs = sec % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handlePay = async (e) => {
     e.preventDefault();
@@ -559,11 +600,20 @@ function DepositModal({ isOpen, onClose, onDepositSuccess }) {
                 )}
 
                 {/* Tabs for payment method */}
-                <div className="flex bg-surface-container rounded-xl p-1">
+                <div className="grid grid-cols-4 bg-surface-container rounded-xl p-1 gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setMethod('moniepoint')}
+                    className={`py-2 rounded-lg font-label text-[8px] uppercase tracking-wider transition-all font-bold ${
+                      method === 'moniepoint' ? 'bg-[#008b5e] text-white shadow-sm' : 'text-outline hover:text-on-surface'
+                    }`}
+                  >
+                    Moniepoint
+                  </button>
                   <button
                     type="button"
                     onClick={() => setMethod('card')}
-                    className={`flex-1 py-2.5 rounded-lg font-label text-[10px] uppercase tracking-widest transition-all ${
+                    className={`py-2 rounded-lg font-label text-[8px] uppercase tracking-wider transition-all font-bold ${
                       method === 'card' ? 'bg-background text-on-surface shadow-sm' : 'text-outline hover:text-on-surface'
                     }`}
                   >
@@ -572,7 +622,7 @@ function DepositModal({ isOpen, onClose, onDepositSuccess }) {
                   <button
                     type="button"
                     onClick={() => setMethod('bank')}
-                    className={`flex-1 py-2.5 rounded-lg font-label text-[10px] uppercase tracking-widest transition-all ${
+                    className={`py-2 rounded-lg font-label text-[8px] uppercase tracking-wider transition-all font-bold ${
                       method === 'bank' ? 'bg-background text-on-surface shadow-sm' : 'text-outline hover:text-on-surface'
                     }`}
                   >
@@ -581,13 +631,112 @@ function DepositModal({ isOpen, onClose, onDepositSuccess }) {
                   <button
                     type="button"
                     onClick={() => setMethod('voucher')}
-                    className={`flex-1 py-2.5 rounded-lg font-label text-[10px] uppercase tracking-widest transition-all ${
+                    className={`py-2 rounded-lg font-label text-[8px] uppercase tracking-wider transition-all font-bold ${
                       method === 'voucher' ? 'bg-background text-on-surface shadow-sm' : 'text-outline hover:text-on-surface'
                     }`}
                   >
                     Voucher
                   </button>
                 </div>
+
+                {method === 'moniepoint' && (
+                  <div className="space-y-4 p-4 rounded-2xl bg-surface-container border border-outline-variant/10">
+                    <div className="flex items-center gap-2 border-b border-outline-variant/5 pb-3 mb-2">
+                      <div className="w-6 h-6 rounded-md bg-[#008b5e] flex items-center justify-center font-bold text-white text-[10px]">M</div>
+                      <p className="font-headline text-xs font-bold text-on-surface">Moniepoint Secure Checkout</p>
+                    </div>
+
+                    {/* Moniepoint inner tabs */}
+                    <div className="flex bg-background rounded-lg p-1 gap-1">
+                      {[
+                        { id: 'transfer', label: 'Transfer' },
+                        { id: 'card_popup', label: 'Card' },
+                        { id: 'ussd', label: 'USSD Code' }
+                      ].map(sub => (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          onClick={() => setMpSubMethod(sub.id)}
+                          className={`flex-1 py-1.5 rounded font-label text-[8px] uppercase tracking-wider transition-all font-bold ${
+                            mpSubMethod === sub.id
+                              ? 'bg-[#008b5e] text-white shadow-sm'
+                              : 'text-outline hover:text-[#008b5e]'
+                          }`}
+                        >
+                          {sub.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {mpSubMethod === 'transfer' && (
+                      <div className="space-y-3 font-mono text-[10px] text-on-surface">
+                        <div className="flex justify-between items-center bg-background p-3 rounded-xl border border-outline-variant/5">
+                          <span className="text-outline">Bank:</span>
+                          <span className="font-bold text-right">Moniepoint MFB</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-background p-3 rounded-xl border border-outline-variant/5">
+                          <span className="text-outline">Account:</span>
+                          <span className="font-bold text-right tracking-widest flex items-center gap-1.5">
+                            {mpAccountNum}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(mpAccountNum);
+                                toast.success('Account number copied.');
+                              }}
+                              className="material-symbols-outlined text-[12px] text-[#ffcb05] hover:scale-105 active:scale-95"
+                            >
+                              content_copy
+                            </button>
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center bg-background p-3 rounded-xl border border-outline-variant/5">
+                          <span className="text-outline">Timer:</span>
+                          <span className="font-bold text-right text-amber-400">{formatTime(mpTimeLeft)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {mpSubMethod === 'ussd' && (
+                      <div className="p-3 bg-background border border-outline-variant/5 rounded-xl text-center space-y-2">
+                        <p className="font-body text-[10px] text-outline">Dial the shortcode below on your registered phone number:</p>
+                        <p className="font-mono text-base font-black text-[#ffcb05] tracking-wide mt-1.5">
+                          *5573*1*{amount || '5000'}#
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => toast.success('USSD string copied.')}
+                          className="font-mono text-[8px] text-[#008b5e] uppercase tracking-widest font-bold hover:underline"
+                        >
+                          Copy USSD Code
+                        </button>
+                      </div>
+                    )}
+
+                    {mpSubMethod === 'card_popup' && (
+                      <div className="text-center p-4 bg-background border border-outline-variant/5 rounded-xl space-y-3">
+                        <span className="material-symbols-outlined text-3xl text-[#008b5e]">credit_card</span>
+                        <p className="font-body text-[10px] text-outline leading-relaxed">
+                          Securely input credentials using Moniepoint's dynamic web portal gateway.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!amount || Number(amount) <= 0) {
+                              toast.error('Please enter a valid amount first.');
+                              return;
+                            }
+                            setIsMpPopupOpen(true);
+                            setMpPopupStep('card_input');
+                          }}
+                          className="w-full bg-[#008b5e] hover:bg-[#00744f] text-white text-[10px] uppercase tracking-wider font-bold py-2.5 rounded-lg active:scale-95 transition-all shadow"
+                        >
+                          Launch Moniepoint Portal
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {method === 'card' && (
                   <div className="space-y-3 p-4 rounded-2xl bg-surface-container border border-outline-variant/5">
@@ -657,7 +806,7 @@ function DepositModal({ isOpen, onClose, onDepositSuccess }) {
                   className="w-full h-14 rounded-2xl bg-primary text-on-primary font-headline font-bold text-[12px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined text-base">lock</span>
-                  {method === 'voucher' ? 'Redeem Voucher' : `Pay ₦${amount ? Number(amount).toLocaleString() : '0'}`}
+                  {method === 'voucher' ? 'Redeem Voucher' : method === 'moniepoint' ? 'Confirm I\'ve Sent Transfer' : `Pay ₦${amount ? Number(amount).toLocaleString() : '0'}`}
                 </button>
 
                 <p className="font-label text-[8px] text-outline text-center uppercase tracking-wider opacity-60">
@@ -684,6 +833,133 @@ function DepositModal({ isOpen, onClose, onDepositSuccess }) {
               </div>
             )}
           </div>
+
+          {/* Moniepoint Checkout Popup Overlay */}
+          <AnimatePresence>
+            {isMpPopupOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-20 bg-black/80 flex items-center justify-center p-6"
+              >
+                <div className="bg-[#0c0c0c] border border-white/10 w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between" style={{ minHeight: '320px' }}>
+                  <div className="bg-[#008b5e] p-4 text-white flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-[#ffcb05]">shield</span>
+                      <span className="font-mono text-[9px] uppercase tracking-widest font-black">Moniepoint Checkout</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsMpPopupOpen(false)}
+                      className="material-symbols-outlined text-sm text-white/80 hover:text-white"
+                    >
+                      close
+                    </button>
+                  </div>
+
+                  <div className="p-6 flex-1 flex flex-col justify-center">
+                    {mpPopupStep === 'card_input' && (
+                      <div className="space-y-4 text-left">
+                        <div className="text-center mb-2">
+                          <p className="font-mono text-[8px] text-white/40 uppercase tracking-widest">Amount to Pay</p>
+                          <p className="font-sans text-xl font-black text-white mt-1">₦{Number(amount).toLocaleString()}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="font-mono text-[7px] text-white/40 uppercase tracking-wider">Card Number</label>
+                          <input
+                            type="text"
+                            placeholder="5061 2938 4810 2938"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#008b5e]"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="font-mono text-[7px] text-white/40 uppercase tracking-wider">Expiry</label>
+                            <input
+                              type="text"
+                              placeholder="08/29"
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="font-mono text-[7px] text-white/40 uppercase tracking-wider">CVV</label>
+                            <input
+                              type="password"
+                              maxLength={3}
+                              placeholder="•••"
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setMpPopupStep('otp_input')}
+                          className="w-full h-11 bg-[#008b5e] hover:bg-[#00744f] text-white font-sans text-xs font-bold rounded-xl active:scale-[0.98] transition-all mt-4"
+                        >
+                          Pay ₦{Number(amount).toLocaleString()}
+                        </button>
+                      </div>
+                    )}
+
+                    {mpPopupStep === 'otp_input' && (
+                      <div className="space-y-4 text-left">
+                        <div className="text-center mb-2">
+                          <p className="font-mono text-[8px] text-white/40 uppercase tracking-widest">Enter 6-Digit OTP</p>
+                          <p className="font-mono text-[8px] text-[#ffcb05] uppercase tracking-wider mt-1">Simulated Code: 123456</p>
+                        </div>
+                        <input
+                          type="text"
+                          value={mpOtpCode}
+                          onChange={(e) => setMpOtpCode(e.target.value)}
+                          placeholder="••••••"
+                          maxLength={6}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 text-center text-lg font-mono tracking-widest text-white focus:outline-none focus:border-[#008b5e]"
+                        />
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (mpOtpCode === '123456') {
+                              setMpPopupStep('success');
+                              try {
+                                await api.post('/payments/deposit', { amount: Number(amount) });
+                                setTimeout(() => {
+                                  setIsMpPopupOpen(false);
+                                  onDepositSuccess();
+                                  onClose();
+                                  setAmount('');
+                                  setStep('input');
+                                }, 1500);
+                              } catch (e) {
+                                toast.error('Simulation ledger write failed.');
+                                setMpPopupStep('card_input');
+                              }
+                            } else {
+                              toast.error('Invalid OTP. Try 123456');
+                            }
+                          }}
+                          className="w-full h-11 bg-[#008b5e] hover:bg-[#00744f] text-white font-sans text-xs font-bold rounded-xl active:scale-[0.98] transition-all"
+                        >
+                          Authorize Transaction
+                        </button>
+                      </div>
+                    )}
+
+                    {mpPopupStep === 'success' && (
+                      <div className="py-6 flex flex-col items-center justify-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-[#008b5e]/20 flex items-center justify-center text-[#008b5e] animate-bounce">
+                          <span className="material-symbols-outlined text-2xl font-bold">check</span>
+                        </div>
+                        <p className="font-sans text-sm font-bold text-white">Payment Authorized!</p>
+                        <p className="font-sans text-[10px] text-white/50">Processing escrow credit...</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
         </motion.div>
       </div>
     </AnimatePresence>

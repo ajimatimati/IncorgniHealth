@@ -20,6 +20,7 @@ const NAV = {
   PATIENT: [
     { to: '/dashboard',       label: 'Home',            icon: 'home_health'      },
     { to: '/directory',       label: 'Find a Doctor',   icon: 'stethoscope'      },
+    { to: '/specialized',     label: 'Specialized Care', icon: 'medical_information' },
     { to: '/mental-wellness', label: 'Mental Wellness', icon: 'self_improvement' },
     { to: '/sexual-health',   label: 'Sexual Health',   icon: 'health_and_safety'},
     { to: '/safe-haven',      label: 'Safe Haven',      icon: 'shield_with_heart'},
@@ -59,32 +60,40 @@ const NAV = {
   ],
 };
 
-/* ── Single nav item ──────────────────────────────────────────────────────── */
+/* ── Single nav item with sliding indicator ───────────────────────────────── */
 function NavItem({ item, onClick }) {
+  const location = useLocation();
+  const isActive = location.pathname === item.to;
+
   return (
     <NavLink
       to={item.to}
       onClick={onClick}
-      className={({ isActive }) =>
-        `group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 relative
+      className={
+        `group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 relative select-none
          ${isActive
-           ? 'bg-primary/10 text-primary border-l-2 border-primary ml-0 pl-[10px]'
-           : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface border-l-2 border-transparent'
+           ? 'text-white font-bold'
+           : 'text-white/40 hover:text-white'
          }`
       }
     >
-      {({ isActive }) => (
-        <>
-          <span
-            className={`material-symbols-outlined text-[18px] shrink-0 transition-all
-              ${isActive ? 'text-primary' : 'text-on-surface-variant group-hover:text-on-surface'}`}
-            style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
-          >
-            {item.icon}
-          </span>
-          <span className="font-label text-[13px] tracking-wide truncate">{item.label}</span>
-        </>
+      {/* Sliding background capsule active indicator */}
+      {isActive && (
+        <motion.div
+          layoutId="active-indicator"
+          className="absolute inset-0 bg-white/5 border border-white/10 rounded-xl -z-10 shadow-sm"
+          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+        />
       )}
+      
+      <span
+        className={`material-symbols-outlined text-[18px] shrink-0 transition-colors duration-300
+          ${isActive ? 'text-white' : 'text-white/40 group-hover:text-white'}`}
+        style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+      >
+        {item.icon}
+      </span>
+      <span className="font-sans text-[12px] tracking-wide truncate">{item.label}</span>
     </NavLink>
   );
 }
@@ -105,70 +114,74 @@ function SidebarContent({ onClose }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background border-r border-outline-variant/10">
-      {/* Brand */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-outline-variant/10 shrink-0">
-        <span
-          className="material-symbols-outlined text-primary text-2xl"
-          style={{ fontVariationSettings: "'FILL' 1" }}
-        >
-          shield_with_heart
-        </span>
+    <div className="flex flex-col h-full bg-[#010101]/40 backdrop-blur-3xl border-r border-white/5 relative z-25">
+      {/* Brand logo header */}
+      <div className="flex items-center gap-3 px-6 py-6 border-b border-white/5 shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 shadow-md">
+          <span
+            className="material-symbols-outlined text-white text-base"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            shield_with_heart
+          </span>
+        </div>
         <div className="min-w-0">
-          <h1 className="font-headline text-base font-bold text-on-surface tracking-wide truncate">
+          <h1 className="font-sans text-xs font-black text-white tracking-[0.1em] uppercase truncate">
             IncogniCare
           </h1>
-          <p className="font-label text-[9px] text-primary uppercase tracking-[0.2em]">
-            {roleLabel} Portal
+          <p className="font-mono text-[8px] text-white/40 uppercase tracking-[0.2em] font-semibold mt-0.5">
+            {roleLabel} Enclave
           </p>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto no-scrollbar">
+      {/* Navigation container */}
+      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto no-scrollbar">
         {items.map(item => (
           <NavItem key={item.to} item={item} onClick={onClose} />
         ))}
       </nav>
 
-      {/* Footer: support + logout + user chip */}
-      <div className="px-3 pb-4 pt-3 border-t border-outline-variant/10 space-y-1 shrink-0">
+      {/* Footer controls: Contact support, log out, user chip */}
+      <div className="px-4 pb-6 pt-4 border-t border-white/5 space-y-1.5 shrink-0">
         <button
           onClick={() => {
             onClose?.();
             window.dispatchEvent(new Event('open-support'));
           }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/40 hover:bg-white/5 hover:text-white transition-all font-sans text-xs"
         >
-          <span className="material-symbols-outlined text-[18px] shrink-0">help</span>
-          <span className="font-label text-[13px]">Contact Support</span>
+          <span className="material-symbols-outlined text-[16px] shrink-0">help</span>
+          <span className="font-sans text-[11px] tracking-wide">Support Line</span>
         </button>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-on-surface-variant hover:bg-error/10 hover:text-error transition-all"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/40 hover:bg-red-500/10 hover:text-red-400 transition-all font-sans text-xs border border-transparent hover:border-red-500/15"
         >
-          <span className="material-symbols-outlined text-[18px] shrink-0">logout</span>
-          <span className="font-label text-[13px]">Sign Out</span>
+          <span className="material-symbols-outlined text-[16px] shrink-0">logout</span>
+          <span className="font-sans text-[11px] tracking-wide">De-authorize Session</span>
         </button>
 
-        {/* User chip */}
-        <div className="flex items-center gap-3 px-3 pt-3 mt-1 border-t border-outline-variant/10">
-          <div className="shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
+        {/* Custom Luxury User Chip with breathing ring */}
+        <div className="flex items-center gap-3 px-3 py-3 mt-2 border-t border-white/5 bg-white/[0.02] border border-white/5 rounded-2xl relative group overflow-hidden">
+          <div className="shrink-0 rounded-full overflow-hidden border border-white/20 shadow-sm relative z-10">
             <AvatarGenerator seed={user?.avatar || user?.publicId} size="sm" />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-headline text-sm font-semibold text-on-surface truncate">
+          <div className="min-w-0 flex-1 relative z-10">
+            <p className="font-sans text-xs font-bold text-white truncate leading-none">
               {user?.nickname || 'Anonymous'}
             </p>
-            <p className="font-label text-[10px] text-outline truncate">{user?.publicId}</p>
+            <p className="font-mono text-[8px] text-white/45 truncate mt-1">ID // {user?.publicId?.substring(0, 12)}...</p>
           </div>
+          {/* Subtle hover background sweep */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
         </div>
       </div>
     </div>
   );
 }
 
-/* ── Main Sidebar component ───────────────────────────────────────────────── */
+/* ── Main Sidebar Navigation component ─────────────────────────────────────── */
 export default function Sidebar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { user } = useAuth();
@@ -208,24 +221,24 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ── Desktop: fixed left sidebar ── */}
-      <aside className="hidden lg:flex w-56 shrink-0 h-screen sticky top-0">
+      {/* ── Desktop: Fixed sticky sidebar ── */}
+      <aside className="hidden lg:flex w-60 shrink-0 h-screen sticky top-0 bg-[#010101] border-r border-white/5 z-20">
         <SidebarContent />
       </aside>
 
-      {/* ── Mobile & Tablet Navigation ── */}
+      {/* ── Mobile & Tablet Layout ── */}
       {!isFullScreen && (
         <>
           {/* Mobile top bar */}
-          <div className="lg:hidden fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-4 bg-background/90 backdrop-blur-md border-b border-outline-variant/10">
+          <div className="lg:hidden fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-5 bg-[#010101]/40 backdrop-blur-xl border-b border-white/5">
             <div className="flex items-center gap-2">
               <span
-                className="material-symbols-outlined text-primary text-xl"
+                className="material-symbols-outlined text-white text-base"
                 style={{ fontVariationSettings: "'FILL' 1" }}
               >
                 shield_with_heart
               </span>
-              <span className="font-headline text-sm font-bold text-on-surface tracking-wide">IncogniCare</span>
+              <span className="font-sans text-xs font-black text-white uppercase tracking-wider">IncogniCare</span>
             </div>
             
             {/* Quick Actions (SOS & Panic/Exit) */}
@@ -233,11 +246,11 @@ export default function Sidebar() {
               {role === 'PATIENT' && (
                 <button
                   onClick={() => window.dispatchEvent(new Event('open-sos'))}
-                  className="px-3 py-1 flex items-center gap-1.5 rounded-full bg-error/15 border border-error/30 text-error hover:bg-error/25 active:scale-95 transition-all"
+                  className="px-3.5 py-1.5 flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 active:scale-95 transition-all"
                   style={{ height: '32px' }}
                 >
                   <span className="material-symbols-outlined text-sm animate-pulse">emergency</span>
-                  <span className="font-label text-[10px] font-bold tracking-widest uppercase">SOS</span>
+                  <span className="font-mono text-[9px] font-bold tracking-widest uppercase">SOS</span>
                 </button>
               )}
               <button
@@ -246,10 +259,10 @@ export default function Sidebar() {
                   sessionStorage.clear();
                   window.location.replace('https://weather.com');
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-container-low border border-outline-variant/10 text-outline hover:text-on-surface hover:border-outline-variant/30 active:scale-95 transition-all"
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white active:scale-95 transition-all"
                 title="Quick Exit"
               >
-                <span className="material-symbols-outlined text-[18px]">exit_to_app</span>
+                <span className="material-symbols-outlined text-[16px]">exit_to_app</span>
               </button>
             </div>
           </div>
@@ -257,66 +270,81 @@ export default function Sidebar() {
           {/* Mobile spacer */}
           <div className="lg:hidden h-14 shrink-0" />
 
-          {/* Mobile bottom navigation bar */}
-          <nav className="bottom-nav lg:hidden">
-            {bottomNavItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-              >
-                {({ isActive }) => (
-                  <>
-                    <span
-                      className="material-symbols-outlined text-[20px]"
-                      style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
-                    >
-                      {item.icon}
-                    </span>
-                    <span className="font-label text-[9px] uppercase tracking-wider">{item.label}</span>
-                  </>
-                )}
-              </NavLink>
-            ))}
+          {/* Mobile bottom floating glass navigation bar */}
+          <nav className="fixed bottom-4 inset-x-4 h-16 bg-[#010101]/55 backdrop-blur-2xl border border-white/5 rounded-full lg:hidden flex justify-around items-center px-4 z-40 shadow-2xl">
+            {bottomNavItems.map((item) => {
+              const isActive = location.pathname === item.to;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className="flex flex-col items-center justify-center w-12 h-12 rounded-full relative"
+                >
+                  <span
+                    className={`material-symbols-outlined text-[18px] transition-colors duration-300 ${
+                      isActive ? 'text-white' : 'text-white/40'
+                    }`}
+                    style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                  >
+                    {item.icon}
+                  </span>
+                  <span className={`font-sans text-[8px] uppercase tracking-wider mt-0.5 transition-colors duration-300 ${
+                    isActive ? 'text-white font-bold' : 'text-white/40'
+                  }`}>
+                    {item.label.split(' ')[0]}
+                  </span>
+                  {isActive && (
+                    <motion.div
+                      layoutId="mobile-indicator"
+                      className="absolute -bottom-1 w-1 h-1 bg-white rounded-full"
+                      transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                    />
+                  )}
+                </NavLink>
+              );
+            })}
+            
             {/* Drawer menu toggle button */}
             <button
               onClick={() => setDrawerOpen(true)}
-              className={`nav-item ${drawerOpen ? 'active' : ''}`}
+              className={`flex flex-col items-center justify-center w-12 h-12 rounded-full transition-colors ${
+                drawerOpen ? 'text-white' : 'text-white/40'
+              }`}
             >
               <span
-                className="material-symbols-outlined text-[20px]"
+                className="material-symbols-outlined text-[18px]"
                 style={{ fontVariationSettings: drawerOpen ? "'FILL' 1" : "'FILL' 0" }}
               >
                 menu
               </span>
-              <span className="font-label text-[9px] uppercase tracking-wider">Menu</span>
+              <span className="font-sans text-[8px] uppercase tracking-wider mt-0.5">Menu</span>
             </button>
           </nav>
         </>
       )}
 
-      {/* ── Mobile: slide-in drawer ── */}
+      {/* ── Mobile Drawer ── */}
       <AnimatePresence>
         {drawerOpen && (
           <>
-            {/* Backdrop */}
+            {/* Backdrop overlay */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-45 bg-[#010101]/60 backdrop-blur-md"
               onClick={() => setDrawerOpen(false)}
             />
-            {/* Drawer */}
+            {/* Slide-in sidebar panel */}
             <motion.aside
               key="drawer"
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="fixed left-0 top-0 bottom-0 w-72 z-50"
+              className="fixed left-0 top-0 bottom-0 w-72 z-50 bg-[#010101]"
             >
               <SidebarContent onClose={() => setDrawerOpen(false)} />
             </motion.aside>

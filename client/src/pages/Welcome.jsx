@@ -2,11 +2,10 @@ import React, { useRef, useEffect, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, useGLTF } from '@react-three/drei';
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import lottie from 'lottie-web';
+import LivingBackground from '../components/LivingBackground';
 
 // Register GSAP ScrollTrigger
 gsap.registerPlugin(ScrollTrigger);
@@ -31,34 +30,31 @@ function ProductZeroModel() {
 
   return (
     <group ref={groupRef}>
-      {/* Outer sleek dark glassmorphic box */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[1.5, 2.2, 0.7]} />
         <meshPhysicalMaterial
-          color="#1c1b1b"
-          roughness={0.1}
-          metalness={0.9}
+          color="#0a0a0a"
+          roughness={0.05}
+          metalness={0.95}
           clearcoat={1.0}
-          clearcoatRoughness={0.1}
-          transmission={0.4}
+          clearcoatRoughness={0.05}
+          transmission={0.6}
           thickness={0.8}
           transparent
-          opacity={0.8}
+          opacity={0.85}
         />
       </mesh>
 
-      {/* Internal glowing elements (representing the medicine pack) */}
       <mesh position={[0, 0, 0]}>
         <boxGeometry args={[1.1, 1.8, 0.3]} />
         <meshStandardMaterial
-          color="#a078ff"
-          roughness={0.4}
-          metalness={0.8}
-          emissive="#a078ff"
-          emissiveIntensity={0.2}
+          color="#ffffff"
+          roughness={0.2}
+          metalness={0.9}
+          emissive="#ffffff"
+          emissiveIntensity={0.15}
         />
       </mesh>
-
     </group>
   );
 }
@@ -69,15 +65,15 @@ function ThreeDViewer({ type = 'product' }) {
     <div className="w-full h-full relative min-h-[300px]">
       <Suspense fallback={
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <div className="w-10 h-10 border-2 border-outline-variant/20 border-t-primary rounded-full animate-spin" />
-          <p className="font-label text-[9px] uppercase tracking-widest text-outline">
-            Loading 3D {type === 'product' ? 'Product...' : 'Anatomy...'}
+          <div className="w-6 h-6 border border-white/20 border-t-white rounded-full animate-spin" />
+          <p className="font-mono text-[9px] uppercase tracking-widest text-white/40">
+            Resolving 3D {type === 'product' ? 'Product' : 'Anatomy'}
           </p>
         </div>
       }>
         <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-          <ambientLight intensity={1.5} />
-          <pointLight position={[10, 10, 10]} intensity={1.5} />
+          <ambientLight intensity={1.8} />
+          <pointLight position={[10, 10, 10]} intensity={1.8} />
           <directionalLight position={[-10, -10, -10]} intensity={0.5} />
           {type === 'product' ? <ProductZeroModel /> : <AnatomyModel />}
           <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.8} />
@@ -115,8 +111,8 @@ function LedgerModel() {
       {points.map((p, i) => (
         <group key={i} position={p}>
           <mesh>
-            <sphereGeometry args={[0.07, 16, 16]} />
-            <meshBasicMaterial color={i === 5 ? "#d0bcff" : "#8ccdff"} />
+            <sphereGeometry args={[0.05, 16, 16]} />
+            <meshBasicMaterial color="#ffffff" />
           </mesh>
         </group>
       ))}
@@ -133,7 +129,7 @@ function LedgerModel() {
                   args={[new Float32Array([...p1, ...p2]), 3]}
                 />
               </bufferGeometry>
-              <lineBasicMaterial color="#494454" linewidth={1} transparent opacity={0.6} />
+              <lineBasicMaterial color="#ffffff" linewidth={0.5} transparent opacity={0.15} />
             </line>
             <line>
               <bufferGeometry attach="geometry">
@@ -142,7 +138,7 @@ function LedgerModel() {
                   args={[new Float32Array([...p1, ...p3]), 3]}
                 />
               </bufferGeometry>
-              <lineBasicMaterial color="#494454" linewidth={1} transparent opacity={0.6} />
+              <lineBasicMaterial color="#ffffff" linewidth={0.5} transparent opacity={0.15} />
             </line>
           </group>
         );
@@ -156,8 +152,8 @@ function LedgerViewer() {
   return (
     <div className="w-full h-full relative select-none">
       <div className="absolute inset-x-6 top-6 flex flex-col gap-1 z-10 pointer-events-none">
-        <span className="font-label text-[9px] text-tertiary uppercase tracking-widest text-left">GHOST-ID LEDGER</span>
-        <p className="font-body text-[10px] text-on-surface-variant opacity-80 text-left">De-identified transaction logs map to temporary, random security hash codes.</p>
+        <span className="font-mono text-[9px] text-white/50 uppercase tracking-widest text-left">GHOST-ID LEDGER</span>
+        <p className="font-sans text-[10px] text-white/60 opacity-80 text-left">De-identified transaction logs map to temporary, random security hash codes.</p>
       </div>
       <div className="w-full h-full absolute inset-0 opacity-70">
         <Canvas camera={{ position: [0, 0, 4.5], fov: 45 }}>
@@ -165,9 +161,9 @@ function LedgerViewer() {
           <LedgerModel />
         </Canvas>
       </div>
-      <div className="absolute inset-x-6 bottom-6 flex items-center justify-between border-t border-outline-variant/10 pt-4 z-10 pointer-events-none">
-        <span className="font-mono text-[9px] text-outline">HASH // 0x4f92...a811</span>
-        <span className="font-label text-[8px] text-success uppercase tracking-widest">Ledger Synced</span>
+      <div className="absolute inset-x-6 bottom-6 flex items-center justify-between border-t border-white/5 pt-4 z-10 pointer-events-none">
+        <span className="font-mono text-[9px] text-white/30">HASH // 0x4f92...a811</span>
+        <span className="font-mono text-[8px] text-white/60 uppercase tracking-widest">Ledger Synced</span>
       </div>
     </div>
   );
@@ -233,22 +229,22 @@ function DuressDemo() {
   }, []);
 
   return (
-    <div className="w-full h-full p-6 flex flex-col justify-between bg-background/20 rounded-[2rem] border border-outline-variant/10">
+    <div className="w-full h-full p-6 flex flex-col justify-between bg-black/40 backdrop-blur-md rounded-[2rem] border border-white/5">
       <div className="text-center py-1">
-        <p className="font-label text-[8px] uppercase tracking-widest text-outline">{status}</p>
+        <p className="font-mono text-[8px] uppercase tracking-widest text-white/40">{status}</p>
         <div className="flex justify-center gap-3 my-2.5">
           {[...Array(4)].map((_, idx) => (
             <div
               key={idx}
-              className={`w-3 h-3 rounded-full border border-primary/30 flex items-center justify-center transition-all duration-200 ${
-                pin.length > idx ? 'bg-primary shadow-sm shadow-primary/40' : 'bg-transparent'
+              className={`w-2.5 h-2.5 rounded-full border border-white/20 flex items-center justify-center transition-all duration-200 ${
+                pin.length > idx ? 'bg-white shadow-sm shadow-white/40' : 'bg-transparent'
               }`}
             />
           ))}
         </div>
       </div>
 
-      <div className="flex-1 min-h-[120px] flex items-center justify-center bg-background/50 rounded-2xl border border-outline-variant/5 p-4 overflow-hidden relative">
+      <div className="flex-1 min-h-[120px] flex items-center justify-center bg-black/60 rounded-2xl border border-white/5 p-4 overflow-hidden relative">
         <AnimatePresence mode="wait">
           {vaultType === 'locked' && (
             <motion.div
@@ -258,8 +254,8 @@ function DuressDemo() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="text-center space-y-2"
             >
-              <span className="material-symbols-outlined text-outline text-2xl animate-pulse">lock</span>
-              <p className="font-body text-[10px] text-outline">Encrypted Journal Locked</p>
+              <span className="material-symbols-outlined text-white/30 text-xl animate-pulse">lock</span>
+              <p className="font-sans text-[10px] text-white/40">Encrypted Journal Locked</p>
             </motion.div>
           )}
 
@@ -271,13 +267,13 @@ function DuressDemo() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="w-full space-y-2 text-left"
             >
-              <div className="flex items-center gap-2 text-primary border-b border-primary/20 pb-1.5 mb-1.5">
+              <div className="flex items-center gap-2 text-white border-b border-white/10 pb-1.5 mb-1.5">
                 <span className="material-symbols-outlined text-xs">decrypted</span>
-                <span className="font-label text-[8px] uppercase tracking-wider">Private Secure Log</span>
+                <span className="font-mono text-[8px] uppercase tracking-wider">Private Secure Log</span>
               </div>
-              <div className="space-y-1.5 font-body text-[9px] text-on-surface-variant leading-relaxed">
-                <p className="bg-primary/5 p-1.5 rounded border border-primary/10">*"Met SARC advisor. Safe housing confirmed."*</p>
-                <p className="bg-primary/5 p-1.5 rounded border border-primary/10">*"Prescription filled under Ghost ID."*</p>
+              <div className="space-y-1.5 font-sans text-[9px] text-white/80 leading-relaxed">
+                <p className="bg-white/5 p-1.5 rounded border border-white/5">*"Met SARC advisor. Safe housing confirmed."*</p>
+                <p className="bg-white/5 p-1.5 rounded border border-white/5">*"Prescription filled under Ghost ID."*</p>
               </div>
             </motion.div>
           )}
@@ -290,13 +286,13 @@ function DuressDemo() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="w-full space-y-2 text-left"
             >
-              <div className="flex items-center gap-2 text-tertiary border-b border-tertiary/20 pb-1.5 mb-1.5">
+              <div className="flex items-center gap-2 text-white/40 border-b border-white/10 pb-1.5 mb-1.5">
                 <span className="material-symbols-outlined text-xs">visibility</span>
-                <span className="font-label text-[8px] uppercase tracking-wider text-tertiary">Biology Class Study Notes</span>
+                <span className="font-mono text-[8px] uppercase tracking-wider">Biology Class Study Notes</span>
               </div>
-              <div className="space-y-1 font-body text-[9px] text-on-surface-variant opacity-85 leading-relaxed">
-                <p className="border-b border-outline-variant/5 pb-1">1. Cellular respiration pathways (ATP, Krebs)</p>
-                <p className="border-b border-outline-variant/5 pb-1">2. DNA replication & transcription enzymes</p>
+              <div className="space-y-1 font-sans text-[9px] text-white/60 leading-relaxed">
+                <p className="border-b border-white/5 pb-1">1. Cellular respiration pathways (ATP, Krebs)</p>
+                <p className="border-b border-white/5 pb-1">2. DNA replication & transcription enzymes</p>
                 <p>3. Mendelian genetics laws and cross charts</p>
               </div>
             </motion.div>
@@ -304,16 +300,16 @@ function DuressDemo() {
         </AnimatePresence>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mt-4 max-w-[160px] mx-auto w-full">
+      <div className="grid grid-cols-3 gap-1.5 mt-4 max-w-[140px] mx-auto w-full">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, '*', 0, '#'].map((k) => {
           const isPressed = pin.charAt(pin.length - 1) === String(k);
           return (
             <div
               key={k}
-              className={`w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-label border transition-all duration-150 select-none ${
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-mono border transition-all duration-150 select-none ${
                 isPressed
-                  ? 'bg-primary text-on-primary border-primary scale-90 shadow-sm'
-                  : 'bg-surface-container-high border-outline-variant/10 text-on-surface-variant'
+                  ? 'bg-white text-black border-white scale-95 shadow-sm'
+                  : 'bg-white/5 border-white/5 text-white/70'
               }`}
             >
               {k}
@@ -406,27 +402,27 @@ function InfiniteProductScroll() {
       {triplicatedProducts.map((p, i) => (
         <div
           key={i}
-          className="snap-center shrink-0 w-[290px] sm:w-[330px] bg-surface-container-low border border-outline-variant/10 rounded-[2rem] p-6 flex flex-col justify-between hover:border-primary/30 transition-all duration-300 shadow-sm"
+          className="snap-center shrink-0 w-[290px] sm:w-[330px] bg-black/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-6 flex flex-col justify-between hover:border-white/20 transition-all duration-300 shadow-xl"
         >
           <div className="space-y-4">
             <div className="flex justify-between items-start">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white">
                 <span className="material-symbols-outlined text-lg">{p.icon}</span>
               </div>
-              <span className="font-label text-[8px] uppercase tracking-widest px-2 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary">
+              <span className="font-mono text-[8px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white">
                 {p.badge}
               </span>
             </div>
             <div>
-              <h3 className="font-headline text-base font-bold text-on-surface">{p.name}</h3>
-              <p className="font-body text-xs text-on-surface-variant opacity-75 leading-relaxed mt-1">{p.desc}</p>
+              <h3 className="font-sans text-base font-bold text-white">{p.name}</h3>
+              <p className="font-sans text-xs text-white/60 leading-relaxed mt-1">{p.desc}</p>
             </div>
           </div>
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-outline-variant/5">
-            <span className="font-headline text-base font-black text-on-surface">{p.price}</span>
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5">
+            <span className="font-mono text-base font-bold text-white">{p.price}</span>
             <button
               onClick={() => navigate('/auth')}
-              className="btn btn-secondary h-8 min-h-0 px-4 text-[9px]"
+              className="btn btn-secondary h-8 min-h-0 px-4 text-[9px] rounded-full"
             >
               Order
             </button>
@@ -443,29 +439,98 @@ export default function Welcome() {
   const navigate = useNavigate();
   const pinnedRef = useRef(null);
   const rightPinRef = useRef(null);
+  const cardsGridRef = useRef(null);
+  const storiesGridRef = useRef(null);
   const lottieRef = useRef(null);
+  
   const [modelType, setModelType] = useState('product'); // 'product' or 'anatomy'
   const [activeFeature, setActiveFeature] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isWelcomeLoading, setIsWelcomeLoading] = useState(true);
+  
   const featureRefs = useRef([]);
 
-  // Initialize Lottie animation dynamically on slide 0
+  // Welcome Loader sequence
   useEffect(() => {
-    if (activeFeature !== 0 || !lottieRef.current) return;
-    const anim = lottie.loadAnimation({
-      container: lottieRef.current,
-      renderer: 'svg',
-      loop: true,
-      autoplay: true,
-      path: '/shield-pulse.json'
-    });
-    return () => anim.destroy();
-  }, [activeFeature]);
+    const timer = setTimeout(() => {
+      gsap.to(".welcome-loader", {
+        opacity: 0,
+        duration: 0.8,
+        ease: "power2.out",
+        onComplete: () => setIsWelcomeLoading(false)
+      });
+    }, 1800);
+    return () => clearTimeout(timer);
+  }, []);
 
-  // Initialize GSAP pinning and slide scroll triggers
+  // Initialize Scroll Video Scrubbing
   useEffect(() => {
-    if (!pinnedRef.current || !rightPinRef.current) return;
+    const video = document.getElementById("welcome-scroll-video");
+    if (!video) return;
+
+    const initVideoScrub = () => {
+      const duration = video.duration;
+      if (isNaN(duration)) return;
+
+      ScrollTrigger.create({
+        trigger: "body",
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 0.5,
+        onUpdate: (self) => {
+          video.currentTime = self.progress * duration;
+        }
+      });
+    };
+
+    if (video.readyState >= 1) {
+      initVideoScrub();
+    } else {
+      video.addEventListener("loadedmetadata", initVideoScrub);
+    }
+
+    return () => {
+      video.removeEventListener("loadedmetadata", initVideoScrub);
+    };
+  }, []);
+
+  // Initialize GSAP card gradient masking scroll reveals
+  useEffect(() => {
+    if (isWelcomeLoading) return;
+
+    const setupMaskReveal = (gridRef) => {
+      if (!gridRef.current) return;
+      ScrollTrigger.create({
+        trigger: gridRef.current,
+        start: "top bottom-=50",
+        end: "bottom top+=50",
+        scrub: true,
+        onUpdate: (self) => {
+          const progress = self.progress;
+          const grid = gridRef.current;
+          if (!grid) return;
+          const revealPct = progress * 130;
+          const isMobile = window.innerWidth < 768;
+          if (isMobile) {
+            grid.style.maskImage = `linear-gradient(to bottom, black ${revealPct}%, transparent ${revealPct + 25}%)`;
+            grid.style.webkitMaskImage = `linear-gradient(to bottom, black ${revealPct}%, transparent ${revealPct + 25}%)`;
+          } else {
+            grid.style.maskImage = `linear-gradient(to right, black ${revealPct}%, transparent ${revealPct + 15}%)`;
+            grid.style.webkitMaskImage = `linear-gradient(to right, black ${revealPct}%, transparent ${revealPct + 15}%)`;
+          }
+        }
+      });
+    };
+
+    setupMaskReveal(cardsGridRef);
+    setupMaskReveal(storiesGridRef);
+  }, [isWelcomeLoading]);
+
+  // Pinning & individual features transitions
+  useEffect(() => {
+    if (isWelcomeLoading || !pinnedRef.current || !rightPinRef.current) return;
+    
     const ctx = gsap.context(() => {
-      // General section pinning
       ScrollTrigger.create({
         trigger: pinnedRef.current,
         start: 'top top+=80',
@@ -474,164 +539,191 @@ export default function Welcome() {
         scrub: true,
       });
 
-      // Individual slide detectors
       featureRefs.current.forEach((el, index) => {
         if (!el) return;
         ScrollTrigger.create({
           trigger: el,
-          start: 'top center+=150',
-          end: 'bottom center+=150',
+          start: 'top center+=100',
+          end: 'bottom center+=100',
           onEnter: () => setActiveFeature(index),
           onEnterBack: () => setActiveFeature(index),
         });
       });
     });
     return () => ctx.revert();
-  }, []);
+  }, [isWelcomeLoading]);
 
   return (
-    <div className="min-h-screen bg-background text-on-surface font-sans overflow-x-hidden bg-dots relative flex flex-col justify-between">
+    <div className="min-h-screen text-white font-sans overflow-x-hidden bg-dots relative flex flex-col justify-between">
       
-      {/* Premium Ambient Glow Orbs (Disabled) */}
-      <div className="hidden absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/8 rounded-full blur-[120px] pointer-events-none animate-pulse" />
-      <div className="hidden absolute bottom-[20%] right-[-15%] w-[60%] h-[60%] bg-tertiary/6 rounded-full blur-[140px] pointer-events-none" />
+      {/* ── Background Engine (Scroll Mode) ── */}
+      <LivingBackground mode="scroll" />
 
-      {/* ── Navbar ────────────────────────────────────────────────────────── */}
-      <nav className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-6 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-md">
-            <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
-              shield_with_heart
-            </span>
+      {/* ── Welcome Animated Loader ── */}
+      {isWelcomeLoading && (
+        <div className="welcome-loader fixed inset-0 flex flex-col items-center justify-center bg-[#010101] z-[99999] select-none">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col items-center gap-6"
+          >
+            <div className="w-10 h-10 border border-white/10 border-t-white rounded-full animate-spin" />
+            <span className="font-mono text-[9px] uppercase tracking-[0.4em] text-white/50 animate-pulse">Establishing Enclave</span>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ── Header / Glass Nav ── */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#010101]/40 backdrop-blur-xl border-b border-white/5 px-6 sm:px-10 py-5 flex items-center justify-between">
+        <div className="flex items-center gap-2.5 interactive" onClick={() => navigate('/')}>
+          <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center shadow-lg">
+            <span className="material-symbols-outlined text-white text-base">shield_with_heart</span>
           </div>
-          <span className="text-lg font-headline font-black text-on-surface tracking-tight uppercase">
-            IncogniCare
-          </span>
+          <span className="text-sm font-mono font-bold tracking-[0.12em] uppercase">IncogniCare</span>
         </div>
 
-        <div className="flex items-center gap-6">
-          <a href="#features" className="hidden md:block font-label text-[10px] text-on-surface-variant hover:text-primary uppercase tracking-widest transition-colors">
-            Services
-          </a>
-          <a href="#showcase" className="hidden md:block font-label text-[10px] text-on-surface-variant hover:text-primary uppercase tracking-widest transition-colors">
-            Discreet Products
-          </a>
-          <a href="#protocol" className="hidden md:block font-label text-[10px] text-on-surface-variant hover:text-primary uppercase tracking-widest transition-colors">
-            Security Protocol
-          </a>
+        {/* Desktop Navigation Links */}
+        <div className="hidden md:flex items-center gap-8">
+          <a href="#features" className="font-mono text-[9px] text-white/50 hover:text-white uppercase tracking-widest transition-all">Services</a>
+          <a href="#showcase" className="font-mono text-[9px] text-white/50 hover:text-white uppercase tracking-widest transition-all">Discreet Products</a>
+          <a href="#protocol" className="font-mono text-[9px] text-white/50 hover:text-white uppercase tracking-widest transition-all">Security Protocol</a>
           <button
             onClick={() => navigate('/auth')}
-            className="btn btn-secondary h-10 min-h-0 px-6 text-[9px]"
+            className="btn btn-secondary h-9 min-h-0 px-5 text-[9px] rounded-full border-white/10"
           >
-            Sign In
+            Auth Terminal
           </button>
         </div>
+
+        {/* Mobile Hamburger Trigger */}
+        <button 
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="md:hidden w-8 h-8 flex items-center justify-center text-white/70 hover:text-white"
+        >
+          <span className="material-symbols-outlined">{menuOpen ? "close" : "menu"}</span>
+        </button>
+
+        {/* Mobile Fullscreen Glass Overlay */}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="absolute top-full left-0 right-0 bg-[#010101]/95 backdrop-blur-2xl border-b border-white/5 py-8 px-6 flex flex-col gap-6"
+            >
+              <a href="#features" onClick={() => setMenuOpen(false)} className="font-mono text-[10px] text-white/60 hover:text-white uppercase tracking-widest py-2">Services</a>
+              <a href="#showcase" onClick={() => setMenuOpen(false)} className="font-mono text-[10px] text-white/60 hover:text-white uppercase tracking-widest py-2">Discreet Products</a>
+              <a href="#protocol" onClick={() => setMenuOpen(false)} className="font-mono text-[10px] text-white/60 hover:text-white uppercase tracking-widest py-2">Security Protocol</a>
+              <button
+                onClick={() => { setMenuOpen(false); navigate('/auth'); }}
+                className="btn btn-primary w-full text-[10px] py-3 rounded-full"
+              >
+                Sign In to Terminal
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
-      {/* ── Hero Section (with 3D rotatable model) ────────────────────────── */}
-      <main className="flex-1 flex flex-col justify-center relative z-10">
-        <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-12 lg:py-20 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+      {/* ── Hero Section ── */}
+      <main className="flex-1 flex flex-col justify-center relative z-10 pt-28">
+        <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-12 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
           
-          {/* Hero Left Column (Copy + CTA) */}
           <div className="lg:col-span-7 space-y-8 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="font-label text-[9px] uppercase tracking-[0.15em] text-primary">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              <span className="font-mono text-[8px] uppercase tracking-[0.15em] text-white/60">
                 Interactive 3D Diagnostics Active
               </span>
             </div>
 
-            <h1 className="font-headline text-4xl sm:text-5xl lg:text-7xl font-black text-on-surface leading-[1.02] tracking-tighter">
-              Healthcare that<br />
-              respects your<br />
-              <span className="bg-gradient-to-r from-primary via-primary-container to-tertiary bg-clip-text text-transparent">
-                confidentiality.
-              </span>
+            <h1 className="leading-[0.98] tracking-tighter">
+              Healthcare<br />
+              designed around<br />
+              <span className="text-white/40">your privacy.</span>
             </h1>
 
-            <p className="font-body text-base sm:text-lg text-on-surface-variant max-w-xl leading-relaxed opacity-95">
+            <p className="font-sans text-base sm:text-lg text-white/60 max-w-xl leading-relaxed">
               Consult with top medical professionals, request lab tests, and receive prescriptions in plain, unmarked packaging. No judgment, no social exposure, absolute peace of mind.
             </p>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
               <button
                 onClick={() => navigate('/auth')}
-                className="btn btn-primary w-full sm:w-auto h-14 min-h-0 px-8 text-xs flex items-center justify-center gap-2"
+                className="btn btn-primary w-full sm:w-auto h-12 rounded-full px-8 text-xs flex items-center justify-center gap-2"
               >
                 <span>Get Started</span>
-                <span className="material-symbols-outlined text-base">arrow_forward</span>
+                <span className="material-symbols-outlined text-sm">arrow_forward</span>
               </button>
               <a
                 href="#features"
-                className="btn btn-secondary w-full sm:w-auto h-14 min-h-0 px-6 text-xs flex items-center justify-center gap-2"
+                className="btn btn-secondary w-full sm:w-auto h-12 rounded-full px-6 text-xs flex items-center justify-center gap-2"
               >
-                <span className="material-symbols-outlined text-base">explore</span>
+                <span className="material-symbols-outlined text-sm">explore</span>
                 View Services
               </a>
             </div>
 
             {/* Trust Ribbon */}
-            <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-outline-variant/10">
+            <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-white/5">
               {[
                 { icon: 'lock', label: 'Secure Enclave' },
                 { icon: 'package_2', label: 'Plain Packaging' },
                 { icon: 'verified_user', label: 'Licensed Doctors' },
                 { icon: 'crisis_hotline', label: '24/7 Crisis Help' },
               ].map((badge, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-outline-variant">
-                  <span className="material-symbols-outlined text-primary text-base" style={{ fontVariationSettings: "'FILL' 1" }}>{badge.icon}</span>
-                  <span className="font-label text-[9px] uppercase tracking-wider text-outline font-bold">
-                    {badge.label}
-                  </span>
+                <div key={idx} className="flex items-center gap-2 text-white/40">
+                  <span className="material-symbols-outlined text-white text-base">{badge.icon}</span>
+                  <span className="font-mono text-[8px] uppercase tracking-wider font-semibold">{badge.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Hero Right Column (Three.js 360 rotatable zero product canvas) */}
+          {/* Hero Right Column (3D interactive model wrapper) */}
           <div className="lg:col-span-5 flex justify-center">
-            <div className="relative w-full max-w-md aspect-[4/5] rounded-[2.5rem] p-4 bg-surface-container-low/40 border border-outline-variant/15 bento-glass overflow-hidden shadow-2xl flex flex-col justify-between group hover:border-primary/25 transition-all duration-500">
-              {/* Decorative light reflection */}
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <div className="relative w-full max-w-md aspect-[4/5] rounded-[2.5rem] p-4 bg-black/40 border border-white/5 bento-glass overflow-hidden shadow-2xl flex flex-col justify-between group hover:border-white/20 transition-all duration-500">
               
-              <div className="p-3 flex items-center justify-between border-b border-outline-variant/10 bg-background/20 rounded-2xl">
-                <div className="flex gap-1.5">
+              <div className="p-2 flex items-center justify-between border-b border-white/5 bg-white/5 rounded-2xl">
+                <div className="flex gap-1">
                   <button
                     onClick={() => setModelType('product')}
-                    className={`h-7 px-3 rounded-lg font-label text-[8px] uppercase tracking-wider transition-all ${
+                    className={`h-7 px-3 rounded-lg font-mono text-[8px] uppercase tracking-wider transition-all ${
                       modelType === 'product'
-                        ? 'bg-primary text-on-primary font-bold'
-                        : 'text-outline hover:text-on-surface'
+                        ? 'bg-white text-black font-bold'
+                        : 'text-white/40 hover:text-white'
                     }`}
                   >
                     Care Pack
                   </button>
                   <button
                     onClick={() => setModelType('anatomy')}
-                    className={`h-7 px-3 rounded-lg font-label text-[8px] uppercase tracking-wider transition-all ${
+                    className={`h-7 px-3 rounded-lg font-mono text-[8px] uppercase tracking-wider transition-all ${
                       modelType === 'anatomy'
-                        ? 'bg-primary text-on-primary font-bold'
-                        : 'text-outline hover:text-on-surface'
+                        ? 'bg-white text-black font-bold'
+                        : 'text-white/40 hover:text-white'
                     }`}
                   >
                     Body Map
                   </button>
                 </div>
-                <span className="font-mono text-[8px] text-tertiary uppercase tracking-widest">
+                <span className="font-mono text-[8px] text-white/40 uppercase tracking-widest">
                   {modelType === 'product' ? 'Product Zero' : 'Anatomy'}
                 </span>
               </div>
 
-              {/* Three.js canvas replaces static image */}
-              <div className="flex-1 my-4 rounded-2xl overflow-hidden bg-background/30 border border-outline-variant/5 flex items-center justify-center relative select-none">
+              <div className="flex-1 my-4 rounded-2xl overflow-hidden bg-black/50 border border-white/5 flex items-center justify-center relative select-none">
                 <ThreeDViewer type={modelType} />
               </div>
 
-              <div className="p-4 bg-background/40 rounded-2xl space-y-2 border border-outline-variant/5">
-                <p className="font-headline text-xs font-bold text-on-surface">
+              <div className="p-4 bg-black/60 rounded-2xl space-y-2 border border-white/5">
+                <p className="font-sans text-xs font-bold text-white">
                   {modelType === 'product' ? 'Interactive 3D Care Pack' : '3D Anatomical Body Mapping'}
                 </p>
-                <p className="font-body text-[11px] text-on-surface-variant leading-relaxed opacity-80">
+                <p className="font-sans text-[11px] text-white/50 leading-relaxed">
                   {modelType === 'product'
                     ? 'Examine our unmarked, tamper-evident 3D package (Product Zero). Real-time 360° inspection shows secure handover seals.'
                     : 'Drag with your cursor to rotate the clinical wireframe. Track diagnostics and mark symptom regions in real-time.'}
@@ -642,68 +734,55 @@ export default function Welcome() {
         </div>
       </main>
 
-      {/* ── Services Section ─────────────────────────────────────────────── */}
-      <section id="features" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 lg:py-32 border-t border-outline-variant/10 relative z-10">
+      {/* ── Services Section ── */}
+      <section id="features" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 lg:py-32 border-t border-white/5 relative z-10">
         <header className="text-center max-w-2xl mx-auto mb-20 space-y-4">
-          <p className="font-label text-[10px] uppercase tracking-[0.2em] text-primary">Confidential Services</p>
-          <h2 className="font-headline text-3xl sm:text-5xl font-black text-on-surface tracking-tight">
-            Healthcare designed around <span className="text-primary">your dignity</span>
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">Confidential Services</p>
+          <h2 className="font-sans text-3xl sm:text-5xl font-black text-white tracking-tight">
+            Healthcare designed around your dignity
           </h2>
-          <p className="font-body text-base text-on-surface-variant opacity-85">
+          <p className="font-sans text-base text-white/60">
             A comprehensive suite of medical and counseling services built with end-to-end client confidentiality at the core.
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* cardsGridRef is used by GSAP for the linear-gradient scroll masking */}
+        <div ref={cardsGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 transition-all duration-300">
           {[
             {
               icon: 'video_camera_front',
               title: 'Private Telehealth',
               desc: 'Book secure video or text chat sessions with verified physicians and SARC counselors.',
-              color: 'text-primary',
-              bg: 'bg-primary/10',
-              border: 'border-primary/20',
             },
             {
               icon: 'local_pharmacy',
               title: 'Discreet Delivery',
               desc: 'Prescriptions filled by partner stores and delivered in plain, unmarked packages with secure PIN verification.',
-              color: 'text-tertiary',
-              bg: 'bg-tertiary/10',
-              border: 'border-tertiary/20',
             },
             {
               icon: 'biotech',
               title: 'Home Lab Testing',
               desc: 'STI & HIV testing kits shipped anonymously. Get fast results sent securely to your log.',
-              color: 'text-secondary',
-              bg: 'bg-secondary/10',
-              border: 'border-secondary/20',
             },
             {
               icon: 'shield_with_heart',
               title: 'Safe Haven Log',
               desc: 'A local client-side encrypted journal with Duress PIN locks to hide sensitive evidence safely.',
-              color: 'text-error',
-              bg: 'bg-error/10',
-              border: 'border-error/20',
             },
           ].map((service, idx) => (
             <div
               key={idx}
-              className="bg-surface-container-low border border-outline-variant/10 rounded-[2.25rem] p-8 flex flex-col justify-between hover:border-outline-variant/30 hover:bg-surface-container transition-all duration-300 group cursor-default shadow-sm hover:shadow-md"
+              className="card p-8 flex flex-col justify-between hover:border-white/20 transition-all duration-300 group cursor-default shadow-sm"
             >
               <div className="space-y-8">
-                <div className={`w-14 h-14 rounded-[20px] ${service.bg} border ${service.border} flex items-center justify-center ${service.color}`}>
-                  <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    {service.icon}
-                  </span>
+                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white">
+                  <span className="material-symbols-outlined text-xl">{service.icon}</span>
                 </div>
                 <div className="space-y-3">
-                  <h3 className="font-headline text-lg font-bold text-on-surface group-hover:text-primary transition-colors">
+                  <h3 className="font-sans text-lg font-bold text-white group-hover:text-white/80 transition-colors">
                     {service.title}
                   </h3>
-                  <p className="font-body text-xs text-on-surface-variant leading-relaxed opacity-75">
+                  <p className="font-sans text-xs text-white/50 leading-relaxed">
                     {service.desc}
                   </p>
                 </div>
@@ -713,19 +792,20 @@ export default function Welcome() {
         </div>
       </section>
 
-      {/* ── Empowerment & Care Stories Gallery ────────────────────────────── */}
-      <section className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-16 border-t border-outline-variant/10 relative z-10">
+      {/* ── Patient Stories Gallery ── */}
+      <section className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-16 border-t border-white/5 relative z-10">
         <header className="max-w-2xl mx-auto text-center mb-16 space-y-4">
-          <p className="font-label text-[10px] uppercase tracking-[0.2em] text-tertiary">Real Patient Journeys</p>
-          <h2 className="font-headline text-3xl sm:text-4xl font-black text-on-surface tracking-tight">
-            Empowerment through <span className="text-tertiary">Compassionate Care</span>
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">Real Patient Journeys</p>
+          <h2 className="font-sans text-3xl sm:text-4xl font-black text-white tracking-tight">
+            Empowerment through Compassionate Care
           </h2>
-          <p className="font-body text-sm text-on-surface-variant opacity-85">
+          <p className="font-sans text-sm text-white/60">
             Discover how IncogniCare works behind the scenes to support survivors, manage chronic health challenges, and ensure complete clinical confidentiality.
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* storiesGridRef is used by GSAP for the linear-gradient scroll masking */}
+        <div ref={storiesGridRef} className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             {
               src: '/story_1.png',
@@ -746,23 +826,23 @@ export default function Welcome() {
               desc: 'Unmarked packaging, duress lock keypads, and de-identified medical ledgers ensure your privacy is fiercely protected at every single step.'
             }
           ].map((story, idx) => (
-            <div key={idx} className="bg-surface-container-low border border-outline-variant/10 rounded-[2rem] overflow-hidden flex flex-col hover:border-tertiary/20 hover:bg-surface-container transition-all duration-300 group shadow-lg">
-              <div className="aspect-[4/3] w-full overflow-hidden bg-background/50 relative">
+            <div key={idx} className="card overflow-hidden flex flex-col hover:border-white/20 transition-all duration-300 group shadow-lg">
+              <div className="aspect-[4/3] w-full overflow-hidden bg-black relative">
                 <img 
                   src={story.src} 
                   alt={story.title} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-80" 
                 />
-                <span className="absolute top-4 left-4 bg-tertiary text-on-tertiary font-label text-[9px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full">
+                <span className="absolute top-4 left-4 bg-white text-black font-mono text-[9px] uppercase tracking-wider font-semibold px-3 py-1 rounded-full">
                   {story.tag}
                 </span>
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                 <div className="space-y-2">
-                  <h3 className="font-headline text-lg font-bold text-on-surface group-hover:text-tertiary transition-colors">
+                  <h3 className="font-sans text-lg font-bold text-white group-hover:text-white/80 transition-colors">
                     {story.title}
                   </h3>
-                  <p className="font-body text-xs text-on-surface-variant leading-relaxed opacity-80">
+                  <p className="font-sans text-xs text-white/50 leading-relaxed">
                     {story.desc}
                   </p>
                 </div>
@@ -772,14 +852,14 @@ export default function Welcome() {
         </div>
       </section>
 
-      {/* ── CSS Scroll-Snap Product Showcase ──────────────────────────────── */}
-      <section id="showcase" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-16 border-t border-outline-variant/10 relative z-10">
+      {/* ── CSS Scroll-Snap Product Showcase ── */}
+      <section id="showcase" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-16 border-t border-white/5 relative z-10">
         <header className="mb-10 text-left">
-          <p className="font-label text-[10px] uppercase tracking-[0.2em] text-tertiary">Product Showcase</p>
-          <h2 className="font-headline text-2xl sm:text-3xl font-black text-on-surface mt-2">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">Product Showcase</p>
+          <h2 className="font-sans text-2xl sm:text-3xl font-black text-white mt-2">
             Discreet Clinical Diagnostics & Care
           </h2>
-          <p className="font-body text-xs text-on-surface-variant opacity-80 mt-1">
+          <p className="font-sans text-xs text-white/50 mt-1">
             Swipe or scroll horizontally. Cards snap automatically to center. Plain, unmarked packaging guaranteed.
           </p>
         </header>
@@ -787,17 +867,17 @@ export default function Welcome() {
         <InfiniteProductScroll />
       </section>
 
-      {/* ── GSAP ScrollTrigger Pinned Feature Showcase ────────────────────── */}
-      <section ref={pinnedRef} className="pinned-container max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 border-t border-outline-variant/10 relative z-10 flex flex-col lg:flex-row gap-12 items-start">
+      {/* ── GSAP ScrollTrigger Pinned Feature Showcase ── */}
+      <section ref={pinnedRef} className="pinned-container max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 border-t border-white/5 relative z-10 flex flex-col lg:flex-row gap-12 items-start">
         
         {/* Left scrolling copy column */}
         <div className="w-full lg:w-1/2 space-y-24 py-10">
           <div className="space-y-4">
-            <p className="font-label text-[10px] uppercase tracking-[0.2em] text-primary">Securing Your Space</p>
-            <h2 className="font-headline text-3xl sm:text-4xl font-black text-on-surface">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">Securing Your Space</p>
+            <h2 className="font-sans text-3xl sm:text-4xl font-black text-white">
               Next-generation privacy mechanics
             </h2>
-            <p className="font-body text-sm text-on-surface-variant leading-relaxed">
+            <p className="font-sans text-sm text-white/50 leading-relaxed">
               Scroll down to inspect our defense-in-depth measures designed to protect patients from exposure, coercion, and metadata tracking.
             </p>
           </div>
@@ -819,19 +899,19 @@ export default function Welcome() {
             <div
               key={idx}
               ref={el => featureRefs.current[idx] = el}
-              className="space-y-4 border-l-2 border-primary/20 pl-6 py-2 hover:border-primary transition-colors"
+              className="space-y-4 border-l border-white/20 pl-6 py-2 hover:border-white transition-colors"
             >
-              <h3 className="font-headline text-lg sm:text-xl font-bold text-on-surface">{item.title}</h3>
-              <p className="font-body text-sm text-on-surface-variant leading-relaxed opacity-80">{item.desc}</p>
+              <h3 className="font-sans text-lg sm:text-xl font-bold text-white">{item.title}</h3>
+              <p className="font-sans text-sm text-white/60 leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>
 
         {/* Right pinned Lottie preview column */}
-        <div ref={rightPinRef} className="pinned-right w-full lg:w-1/2 h-[350px] lg:h-[480px] rounded-[2.5rem] bg-surface-container-low/40 border border-outline-variant/10 bento-glass flex items-center justify-center relative overflow-hidden self-start">
+        <div ref={rightPinRef} className="pinned-right w-full lg:w-1/2 h-[350px] lg:h-[480px] rounded-[2.5rem] bg-black/40 border border-white/5 bento-glass flex items-center justify-center relative overflow-hidden self-start">
           <div className="absolute top-4 left-6 flex items-center gap-2 z-20">
-            <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
-            <p className="font-label text-[8px] uppercase tracking-widest text-outline">
+            <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+            <p className="font-mono text-[8px] uppercase tracking-widest text-white/50">
               {activeFeature === 0 ? 'Active Security Enclave' : activeFeature === 1 ? 'Coercion Detection Engine' : 'Anonymous Data Ledger'}
             </p>
           </div>
@@ -845,9 +925,9 @@ export default function Welcome() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.3 }}
-                  className="w-[200px] sm:w-[260px] aspect-square flex items-center justify-center"
+                  className="w-[200px] sm:w-[260px] aspect-square flex items-center justify-center bg-white/5 border border-white/5 rounded-full"
                 >
-                  <div ref={lottieRef} className="w-full h-full" />
+                  <span className="material-symbols-outlined text-white text-5xl animate-pulse">shield</span>
                 </motion.div>
               )}
 
@@ -878,44 +958,40 @@ export default function Welcome() {
               )}
             </AnimatePresence>
           </div>
-          
-          <div className="absolute inset-0 bg-radial-gradient from-primary/5 to-transparent pointer-events-none" />
         </div>
       </section>
 
-      {/* ── Humanitarian quote block ─────────────────────────────────────── */}
+      {/* ── Humanitarian quote block ── */}
       <section className="max-w-4xl mx-auto w-full px-6 sm:px-10 py-12 lg:py-16 relative z-10">
         <div className="text-center space-y-6">
-          <span className="material-symbols-outlined text-primary text-3xl opacity-60">format_quote</span>
-          <blockquote className="font-headline text-xl sm:text-2xl font-medium text-on-surface italic leading-relaxed">
+          <span className="material-symbols-outlined text-white/50 text-3xl">format_quote</span>
+          <blockquote className="font-sans text-xl sm:text-2xl font-medium text-white italic leading-relaxed">
             "Clinical confidentiality is not just a technology protocol — it is a basic human safeguard that restores choice, safety, and dignity to patients when they need it most."
           </blockquote>
           <div className="flex items-center justify-center gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-            <p className="font-label text-[9px] uppercase tracking-widest text-outline">Advocacy and Care Support Board</p>
+            <div className="w-1.5 h-1.5 rounded-full bg-white" />
+            <p className="font-mono text-[9px] uppercase tracking-widest text-white/50">Advocacy and Care Support Board</p>
           </div>
         </div>
       </section>
 
-      {/* ── Sponsoring section (NGO Fundable Feature) ───────────────────────── */}
-      <section id="protocol" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 lg:py-32 border-t border-outline-variant/10 relative z-10">
-        <div className="bg-gradient-to-br from-surface-container-low/40 to-surface-container-low/80 border border-outline-variant/15 rounded-[2.5rem] p-8 sm:p-12 lg:p-16 relative overflow-hidden bento-glass">
-          <div className="absolute top-[-30%] right-[-10%] w-[60%] h-[60%] bg-tertiary/5 rounded-full blur-[100px] pointer-events-none" />
-          
+      {/* ── Sponsoring section (NGO Fundable Feature) ── */}
+      <section id="protocol" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 lg:py-32 border-t border-white/5 relative z-10">
+        <div className="bg-black/40 border border-white/5 rounded-[2.5rem] p-8 sm:p-12 lg:p-16 relative overflow-hidden bento-glass">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-surface-container border border-outline-variant/15">
-                <span className="material-symbols-outlined text-tertiary text-xs">verified</span>
-                <span className="font-label text-[9px] uppercase tracking-wider text-tertiary font-bold">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-white/5 border border-white/10">
+                <span className="material-symbols-outlined text-white text-xs">verified</span>
+                <span className="font-mono text-[9px] uppercase tracking-wider text-white/70 font-bold">
                   NGO & Government Alignment
                 </span>
               </div>
 
-              <h2 className="font-headline text-3xl sm:text-4xl lg:text-5xl font-black text-on-surface leading-[1.1] tracking-tight">
-                Aligning with international standards for <span className="text-tertiary">human rights protection</span>
+              <h2 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-[1.1] tracking-tight">
+                Aligning with international standards for human rights protection
               </h2>
 
-              <p className="font-body text-sm leading-relaxed text-on-surface-variant opacity-90">
+              <p className="font-sans text-sm leading-relaxed text-white/60">
                 IncogniCare's technical protocols are engineered to support survivors of domestic abuse, gender-based violence (GBV), and marginalized groups. We decouple identities from health data, enforce browser-only storage locks, and support stealth interfaces to protect users at risk of coercion.
               </p>
 
@@ -926,10 +1002,10 @@ export default function Welcome() {
                   { title: 'Decoupled Consultation Ledger', desc: 'Medical records are indexed under random public Ghost IDs, protecting patient metadata.' }
                 ].map((item, idx) => (
                   <div key={idx} className="flex gap-4">
-                    <span className="w-1.5 h-1.5 rounded-full bg-tertiary mt-2 shrink-0 animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-white mt-2 shrink-0 animate-pulse" />
                     <div>
-                      <h4 className="font-headline text-xs font-bold text-on-surface">{item.title}</h4>
-                      <p className="font-body text-xs text-on-surface-variant opacity-75 mt-0.5">{item.desc}</p>
+                      <h4 className="font-sans text-xs font-bold text-white">{item.title}</h4>
+                      <p className="font-sans text-xs text-white/50 mt-0.5">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -937,18 +1013,18 @@ export default function Welcome() {
             </div>
 
             <div className="lg:col-span-5 flex justify-center">
-              <div className="p-6 rounded-3xl bg-background/50 border border-outline-variant/10 space-y-6 w-full max-w-sm">
+              <div className="p-6 rounded-3xl bg-black/40 border border-white/5 space-y-6 w-full max-w-sm">
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-primary text-2xl">health_and_safety</span>
-                  <h3 className="font-headline text-sm font-bold text-on-surface">Humanitarian Support</h3>
+                  <span className="material-symbols-outlined text-white text-xl">health_and_safety</span>
+                  <h3 className="font-sans text-sm font-bold text-white">Humanitarian Support</h3>
                 </div>
-                <div className="h-0.5 w-full bg-outline-variant/10" />
-                <p className="font-body text-xs text-on-surface-variant leading-relaxed opacity-85">
+                <div className="h-[1px] w-full bg-white/5" />
+                <p className="font-sans text-xs text-white/60 leading-relaxed">
                   Are you an NGO partner, health officer, or clinical agency representative? Contact our partnership board to explore clinic integrations, custom crisis hubs, and secure voucher funding methods.
                 </p>
                 <button
                   onClick={() => navigate('/auth')}
-                  className="btn btn-secondary w-full text-[10px]"
+                  className="btn btn-secondary w-full text-[10px] rounded-full border-white/10"
                 >
                   Request Integration Guide
                 </button>
@@ -958,26 +1034,24 @@ export default function Welcome() {
         </div>
       </section>
 
-      {/* ── Footer ────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-outline-variant/10 py-10 bg-background/60 backdrop-blur-md relative z-10">
+      {/* ── Footer ── */}
+      <footer className="border-t border-white/5 py-10 bg-black/60 backdrop-blur-md relative z-10">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-              shield_with_heart
-            </span>
-            <span className="font-label text-[10px] text-on-surface-variant tracking-wider uppercase font-bold">
+            <span className="material-symbols-outlined text-white text-sm">shield_with_heart</span>
+            <span className="font-mono text-[10px] text-white/60 tracking-wider uppercase font-bold">
               IncogniCare
             </span>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-6 text-[10px] font-label text-outline uppercase tracking-wider font-bold">
-            <a href="#features" className="hover:text-primary transition-colors">Services</a>
-            <a href="#showcase" className="hover:text-primary transition-colors">Discreet Products</a>
-            <a href="#protocol" className="hover:text-primary transition-colors">Security Protocol</a>
-            <button onClick={() => navigate('/auth')} className="hover:text-primary transition-colors">Auth Terminal</button>
+          <div className="flex flex-wrap justify-center gap-6 text-[10px] font-mono text-white/50 uppercase tracking-wider font-bold">
+            <a href="#features" className="hover:text-white transition-colors">Services</a>
+            <a href="#showcase" className="hover:text-white transition-colors">Discreet Products</a>
+            <a href="#protocol" className="hover:text-white transition-colors">Security Protocol</a>
+            <button onClick={() => navigate('/auth')} className="hover:text-white transition-colors bg-transparent border-none cursor-pointer">Auth Terminal</button>
           </div>
 
-          <p className="font-label text-[9px] text-outline/50 tracking-wider uppercase">
+          <p className="font-mono text-[9px] text-white/30 tracking-wider uppercase">
             © {new Date().getFullYear()} IncogniCare. Empowering survivors with confidential care.
           </p>
         </div>

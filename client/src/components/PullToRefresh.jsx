@@ -64,7 +64,7 @@ export default function PullToRefresh({ onRefresh, children }) {
         style={{ height: refreshing ? 48 : pullDistance > 10 ? pullDistance : 0 }}
       >
         <div
-          className={`w-6 h-6 border-2 border-action/40 border-t-action rounded-full ${refreshing ? 'animate-spin' : ''}`}
+          className={`w-6 h-6 border-2 border-white/15 border-t-white rounded-full ${refreshing ? 'animate-spin' : ''}`}
           style={{
             opacity: Math.min(pullDistance / THRESHOLD, 1),
             transform: `rotate(${pullDistance * 3}deg)`,

@@ -34,6 +34,31 @@ export default function VideoConsultation() {
   const socketRef = useRef(null);
   const [cameraActive, setCameraActive] = useState(false);
 
+  // Mic/Cam Toggles
+  const [micMuted, setMicMuted] = useState(false);
+  const [camOff, setCamOff] = useState(false);
+  const [showWorkspace, setShowWorkspace] = useState(true);
+
+  const toggleMic = () => {
+    if (localVideoRef.current?.srcObject) {
+      localVideoRef.current.srcObject.getAudioTracks().forEach(track => {
+        track.enabled = !track.enabled;
+      });
+      setMicMuted(!micMuted);
+      toast.success(micMuted ? "Microphone active" : "Microphone muted");
+    }
+  };
+
+  const toggleCam = () => {
+    if (localVideoRef.current?.srcObject) {
+      localVideoRef.current.srcObject.getVideoTracks().forEach(track => {
+        track.enabled = !track.enabled;
+      });
+      setCamOff(!camOff);
+      toast.success(camOff ? "Camera active" : "Camera muted");
+    }
+  };
+
   useEffect(() => {
     // 1. Initialize WebRTC Signaling Channel via Supabase Realtime
     const channel = supabase.channel(`webrtc-${id}`);
@@ -123,7 +148,7 @@ export default function VideoConsultation() {
     if (user?.role === 'PATIENT') {
       navigate(`/review/${id}`);
     } else {
-      navigate('/doctor/dashboard');
+      navigate('/doctor-dashboard');
     }
   };
 
@@ -180,29 +205,20 @@ export default function VideoConsultation() {
   };
 
   return (
-    <div className="h-screen w-full bg-background flex flex-col md:flex-row overflow-hidden relative">
-      {/* Immersive HUD Overlay Items */}
-      <div className="absolute top-6 left-6 z-50 flex items-center gap-3">
-        <div className="bg-surface-container-low/60 backdrop-blur-md border border-outline-variant/10 px-4 py-2 rounded-full flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span className="font-label text-[10px] text-on-surface uppercase tracking-[0.2em]">P2P Secure Stream</span>
+    <div className="h-screen w-full bg-[#010101] flex flex-col md:flex-row overflow-hidden relative select-none">
+      
+      {/* Immersive HUD Overlay Title */}
+      <div className="absolute top-6 left-6 z-40 flex items-center gap-3">
+        <div className="bg-[#010101]/60 backdrop-blur-xl border border-white/5 px-4 py-2 rounded-full flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          <span className="font-mono text-[9px] text-white/50 uppercase tracking-[0.2em] font-semibold">P2P Encrypted Tunnel</span>
         </div>
       </div>
 
-      <div className="absolute top-6 right-6 md:right-[420px] z-50">
-        <button 
-          onClick={endSession}
-          className="bg-error/10 hover:bg-error text-error hover:text-white border border-error/20 px-6 py-2 rounded-full font-label text-[10px] uppercase tracking-widest transition-all shadow-lg"
-        >
-          End Consult
-        </button>
-      </div>
-
-      {/* Main Video Stage (Native WebRTC) */}
-      <main className="flex-1 relative bg-surface-container-lowest flex items-center justify-center p-4 lg:p-12 overflow-hidden">
-        
-        {/* Remote Video Container */}
-        <div className="relative w-full h-full max-w-6xl mx-auto rounded-[32px] overflow-hidden bg-black shadow-2xl shadow-primary/5 flex items-center justify-center border border-outline-variant/10">
+      {/* Main FaceTime-style stream stage */}
+      <main className="flex-1 relative bg-black flex items-center justify-center p-4 overflow-hidden h-full">
+        {/* Remote full viewport video */}
+        <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-black flex items-center justify-center border border-white/5 shadow-2xl">
           <video 
             ref={remoteVideoRef} 
             autoPlay 
@@ -210,15 +226,17 @@ export default function VideoConsultation() {
             className="w-full h-full object-cover opacity-90"
           />
           {!remoteVideoRef.current?.srcObject && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="material-symbols-outlined text-outline text-6xl opacity-30 animate-pulse">videocam_off</span>
-              <p className="font-label text-xs text-outline uppercase tracking-[0.3em] mt-4 opacity-70">Awaiting Peer Connection</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4">
+              <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center animate-pulse">
+                <span className="material-symbols-outlined text-white/30 text-2xl">videocam_off</span>
+              </div>
+              <p className="font-mono text-[9px] text-white/40 uppercase tracking-[0.3em]">Awaiting clinical peer connection</p>
             </div>
           )}
         </div>
 
-        {/* Local Picture-in-Picture */}
-        <div className="absolute bottom-8 right-8 lg:right-16 lg:bottom-12 w-32 h-48 md:w-48 md:h-72 bg-surface-container-low rounded-2xl overflow-hidden border-2 border-primary/20 shadow-xl z-30">
+        {/* Local Feed PIP (floating rounded capsule) */}
+        <div className="absolute bottom-6 right-6 w-28 h-40 md:w-44 md:h-64 rounded-3xl overflow-hidden border border-white/15 shadow-2xl z-30 bg-black">
           <video 
             ref={localVideoRef} 
             autoPlay 
@@ -227,167 +245,229 @@ export default function VideoConsultation() {
             className="w-full h-full object-cover transform scale-x-[-1]" 
           />
           {!cameraActive && (
-             <div className="absolute inset-0 bg-surface-container-highest flex items-center justify-center">
-               <span className="material-symbols-outlined text-outline text-2xl animate-spin">sync</span>
+             <div className="absolute inset-0 bg-[#010101]/80 flex flex-col items-center justify-center gap-2">
+               <div className="w-5 h-5 border border-white/20 border-t-white rounded-full animate-spin" />
+               <span className="font-mono text-[8px] text-white/40 uppercase tracking-wider">Syncing feed</span>
              </div>
           )}
         </div>
       </main>
 
-      {/* Doctor Workspace Sidebar */}
+      {/* Doctor Floating Case Management Sidebar */}
       {user?.role === 'DOCTOR' && (
-        <aside className="w-full md:w-[400px] bg-surface-container-low border-l border-outline-variant/10 flex flex-col h-[60vh] md:h-full shrink-0 z-40 relative">
-          <header className="p-6 border-b border-outline-variant/5">
-            <h2 className="font-label text-[10px] text-primary uppercase tracking-[0.2em] mb-1">Clinical Workspace</h2>
-            <p className="font-headline text-lg font-bold text-on-surface">Case Management</p>
-          </header>
-
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
-            {/* Notes */}
-            <section className="space-y-3">
-              <label className="font-label text-[9px] text-outline uppercase tracking-widest pl-1">Consultation Notes</label>
-              <textarea
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                placeholder="Brief clinical observations..."
-                className="w-full h-32 bg-surface-container border border-outline-variant/10 rounded-2xl p-4 text-sm text-on-surface focus:border-primary/40 focus:outline-none transition-all resize-none shadow-inner"
-              />
-            </section>
-
-            {/* Prescriptions */}
-            <section className="bg-surface-container p-5 rounded-2xl border border-outline-variant/10 space-y-5">
-              <div className="flex items-center gap-3 border-b border-outline-variant/5 pb-3">
-                <span className="material-symbols-outlined text-tertiary">pill</span>
-                <h3 className="font-label text-[10px] text-tertiary uppercase tracking-widest font-black">Issue Medication</h3>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="font-label text-[8px] text-outline uppercase tracking-widest">Medication</label>
-                  <input
-                    type="text"
-                    value={rxName}
-                    onChange={e => setRxName(e.target.value)}
-                    placeholder="e.g. Amoxicillin"
-                    className="w-full bg-surface-container-low border border-outline-variant/10 rounded-xl px-4 py-2.5 text-xs text-on-surface focus:border-tertiary/40"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="font-label text-[8px] text-outline uppercase tracking-widest">Dosage Protocol</label>
-                  <input
-                    type="text"
-                    value={rxDosage}
-                    onChange={e => setRxDosage(e.target.value)}
-                    placeholder="e.g. 500mg BID x 7"
-                    className="w-full bg-surface-container-low border border-outline-variant/10 rounded-xl px-4 py-2.5 text-xs text-on-surface focus:border-tertiary/40 font-mono"
-                  />
-                </div>
-                <button
-                  onClick={handleSendRx}
-                  disabled={rxLoading || rxSent || !rxName.trim()}
-                  className={`w-full h-11 rounded-xl font-label text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2
-                    ${rxSent ? 'bg-primary/20 text-primary' : 'bg-tertiary text-on-tertiary'}`}
-                >
-                  {rxSent ? 'Transmitted' : 'Authorize Rx'}
-                </button>
-              </div>
-            </section>
-
-            {/* Lab Investigations */}
-            <section className="bg-surface-container p-5 rounded-2xl border border-outline-variant/10 space-y-5">
-              <div className="flex items-center gap-3 border-b border-outline-variant/5 pb-3">
-                <span className="material-symbols-outlined text-info text-[#4fd1c5]">biotech</span>
-                <h3 className="font-label text-[10px] text-[#4fd1c5] uppercase tracking-widest font-black">Order Diagnostics</h3>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="font-label text-[8px] text-outline uppercase tracking-widest">Test / Panel Name</label>
-                  <input
-                    type="text"
-                    value={testName}
-                    onChange={e => setTestName(e.target.value)}
-                    placeholder="e.g. Comprehensive Metabolic Panel"
-                    className="w-full bg-surface-container-low border border-outline-variant/10 rounded-xl px-4 py-2.5 text-xs text-on-surface focus:border-[#4fd1c5]/40"
-                  />
-                </div>
-                <button
-                  onClick={handleSendInv}
-                  disabled={invLoading || invSent || !testName.trim()}
-                  className={`w-full h-11 rounded-xl font-label text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2
-                    ${invSent ? 'bg-primary/20 text-primary' : 'bg-[#4fd1c5] text-background'}`}
-                >
-                  {invSent ? 'Ordered' : 'Send to Lab'}
-                </button>
-              </div>
-            </section>
-
-            {/* AI Assistant */}
-            <section className={`bg-surface-container-highest/20 p-5 rounded-2xl border transition-all ${showAi ? 'border-primary/30' : 'border-outline-variant/10'}`}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-lg">auto_awesome</span>
-                  <p className="font-label text-[10px] text-primary uppercase tracking-widest font-black">Clinical Synthesis</p>
-                </div>
-                <button onClick={() => setShowAi(!showAi)} className="font-label text-[8px] text-outline uppercase hover:text-on-surface transition-colors">
-                  {showAi ? 'Hide' : 'Reveal'}
-                </button>
-              </div>
-
-              {showAi ? (
-                <div className="space-y-4">
-                  <textarea
-                    value={aiSymptoms}
-                    onChange={e => setAiSymptoms(e.target.value)}
-                    className="w-full h-24 bg-surface-container-low border border-outline-variant/10 rounded-xl p-3 text-xs text-on-surface focus:border-primary/40 focus:outline-none resize-none"
-                    placeholder="Enter observations..."
-                  />
-                  <button
-                    onClick={handleAiAnalyze}
-                    disabled={aiLoading || !aiSymptoms.trim()}
-                    className="w-full h-11 bg-primary text-on-primary rounded-xl text-[10px] font-label uppercase tracking-widest"
-                  >
-                    {aiLoading ? 'Synthesizing...' : 'Run Synthesis'}
-                  </button>
-
-                  <AnimatePresence>
-                    {aiResult && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-4 mt-4 border-t border-outline-variant/5 space-y-4">
-                        <div className="flex justify-between items-start">
-                          <p className="text-sm font-bold text-on-surface leading-tight">{aiResult.diagnosis}</p>
-                          <span className="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">
-                            {(aiResult.confidence * 100).toFixed(0)}% Match
-                          </span>
-                        </div>
-                        <ul className="space-y-2">
-                          {aiResult.suggestions?.map((s, idx) => (
-                            <li key={idx} className="text-[11px] text-on-surface-variant flex items-start gap-2 leading-relaxed italic">
-                              <span className="text-primary mt-1">•</span> {s}
-                            </li>
-                          ))}
-                        </ul>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <button onClick={() => setShowAi(true)} className="w-full py-4 border border-dashed border-outline-variant/20 rounded-xl font-label text-[9px] text-outline uppercase tracking-widest hover:bg-surface-container transition-all">
-                  Initialize Synthesis
-                </button>
-              )}
-            </section>
-          </div>
-
-          <footer className="p-6 border-t border-outline-variant/5">
-            <button
-               onClick={endSession}
-               className="w-full h-12 bg-surface-container-highest text-on-surface font-label text-[9px] uppercase tracking-[0.2em] rounded-xl hover:bg-error/10 hover:text-error transition-all"
+        <AnimatePresence>
+          {showWorkspace && (
+            <motion.aside 
+              initial={{ x: '100%', opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              className="absolute right-6 top-24 bottom-24 w-[380px] bg-black/40 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] flex flex-col h-[70vh] md:h-auto shrink-0 z-40 shadow-2xl overflow-hidden bento-glass"
             >
-               Conclude Consult
-            </button>
-          </footer>
-        </aside>
+              <header className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                <div>
+                  <h2 className="font-mono text-[9px] text-white/40 uppercase tracking-[0.2em] font-semibold mb-0.5">Clinical Desk</h2>
+                  <p className="font-sans text-sm font-bold text-white">Case Management</p>
+                </div>
+                <button onClick={() => setShowWorkspace(false)} className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white transition-colors">
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              </header>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+                {/* Observations Note */}
+                <section className="space-y-2">
+                  <label className="font-mono text-[9px] text-white/40 uppercase tracking-widest font-semibold">Consultation Log Notes</label>
+                  <textarea
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                    placeholder="Document diagnostic notes..."
+                    className="input-field h-24 py-3 text-xs resize-none"
+                  />
+                </section>
+
+                {/* Medication Prescribe */}
+                <section className="bg-white/[0.02] border border-white/5 p-5 rounded-[2rem] space-y-4">
+                  <div className="flex items-center gap-2 border-b border-white/5 pb-2.5">
+                    <span className="material-symbols-outlined text-white/50 text-sm">pill</span>
+                    <h3 className="font-mono text-[9px] text-white/50 uppercase tracking-widest font-bold">Authorize Medication</h3>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="font-mono text-[8px] text-white/40 uppercase tracking-widest">Medication Name</label>
+                      <input
+                        type="text"
+                        value={rxName}
+                        onChange={e => setRxName(e.target.value)}
+                        placeholder="e.g. Amoxicillin"
+                        className="input-field py-2 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-mono text-[8px] text-white/40 uppercase tracking-widest">Dosage Routine</label>
+                      <input
+                        type="text"
+                        value={rxDosage}
+                        onChange={e => setRxDosage(e.target.value)}
+                        placeholder="e.g. 500mg BID x 7"
+                        className="input-field py-2 text-xs font-mono"
+                      />
+                    </div>
+                    <button
+                      onClick={handleSendRx}
+                      disabled={rxLoading || rxSent || !rxName.trim()}
+                      className={`w-full h-10 rounded-full font-sans text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2
+                        ${rxSent ? 'bg-white/10 text-white border border-white/20' : 'bg-white text-black hover:bg-white/95'}`}
+                    >
+                      {rxSent ? 'Transmitted' : 'Authorize Prescription'}
+                    </button>
+                  </div>
+                </section>
+
+                {/* Diagnostic Tests */}
+                <section className="bg-white/[0.02] border border-white/5 p-5 rounded-[2rem] space-y-4">
+                  <div className="flex items-center gap-2 border-b border-white/5 pb-2.5">
+                    <span className="material-symbols-outlined text-white/50 text-sm">biotech</span>
+                    <h3 className="font-mono text-[9px] text-white/50 uppercase tracking-widest font-bold">Order Diagnostic Lab</h3>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="font-mono text-[8px] text-white/40 uppercase tracking-widest">Panel / Test Name</label>
+                      <input
+                        type="text"
+                        value={testName}
+                        onChange={e => setTestName(e.target.value)}
+                        placeholder="e.g. STI Blood Panel"
+                        className="input-field py-2 text-xs"
+                      />
+                    </div>
+                    <button
+                      onClick={handleSendInv}
+                      disabled={invLoading || invSent || !testName.trim()}
+                      className={`w-full h-10 rounded-full font-sans text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2
+                        ${invSent ? 'bg-white/10 text-white border border-white/20' : 'bg-white text-black hover:bg-white/95'}`}
+                    >
+                      {invSent ? 'Ordered' : 'Send directive to Lab'}
+                    </button>
+                  </div>
+                </section>
+
+                {/* AI Assistant */}
+                <section className={`bg-white/[0.02] border p-5 rounded-[2rem] space-y-4 transition-all ${showAi ? 'border-white/20' : 'border-white/5'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-white text-sm">auto_awesome</span>
+                      <p className="font-mono text-[9px] text-white uppercase tracking-widest font-bold">Clinical Synthesis</p>
+                    </div>
+                    <button onClick={() => setShowAi(!showAi)} className="font-mono text-[8px] text-white/50 uppercase hover:text-white transition-colors">
+                      {showAi ? 'Hide' : 'Reveal'}
+                    </button>
+                  </div>
+
+                  {showAi ? (
+                    <div className="space-y-3">
+                      <textarea
+                        value={aiSymptoms}
+                        onChange={e => setAiSymptoms(e.target.value)}
+                        className="input-field h-20 py-2.5 text-xs resize-none"
+                        placeholder="Describe observations..."
+                      />
+                      <button
+                        onClick={handleAiAnalyze}
+                        disabled={aiLoading || !aiSymptoms.trim()}
+                        className="w-full h-10 bg-white text-black font-sans text-[10px] font-bold uppercase tracking-wider rounded-full hover:bg-white/95"
+                      >
+                        {aiLoading ? 'Synthesizing...' : 'Run Synthesis'}
+                      </button>
+
+                      <AnimatePresence>
+                        {aiResult && (
+                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-3 border-t border-white/5 space-y-3">
+                            <div className="flex justify-between items-start">
+                              <p className="text-xs font-bold text-white leading-tight">{aiResult.diagnosis}</p>
+                              <span className="text-[8px] font-mono bg-white/10 text-white px-2 py-0.5 rounded-full border border-white/20">
+                                {(aiResult.confidence * 100).toFixed(0)}% Match
+                              </span>
+                            </div>
+                            <ul className="space-y-1.5">
+                              {aiResult.suggestions?.map((s, idx) => (
+                                <li key={idx} className="text-[10px] text-white/60 flex items-start gap-2 leading-relaxed">
+                                  <span className="text-white mt-1">•</span> {s}
+                                </li>
+                              ))}
+                            </ul>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ) : (
+                    <button onClick={() => setShowAi(true)} className="w-full py-3.5 border border-dashed border-white/15 hover:border-white/30 rounded-2xl font-mono text-[8px] text-white/40 uppercase tracking-widest hover:bg-white/5 transition-all">
+                      Initialize AI Assistant
+                    </button>
+                  )}
+                </section>
+              </div>
+
+              <footer className="p-6 border-t border-white/5">
+                <button
+                   onClick={endSession}
+                   className="w-full h-12 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-sans text-xs font-bold uppercase tracking-wider rounded-full transition-all"
+                >
+                   Conclude Session
+                </button>
+              </footer>
+            </motion.aside>
+          )}
+        </AnimatePresence>
       )}
+
+      {/* Floating FaceTime HUD bar */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-[#010101]/60 backdrop-blur-xl border border-white/5 px-6 py-3.5 rounded-full shadow-2xl">
+        <button 
+          onClick={toggleMic} 
+          className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${
+            micMuted 
+              ? 'bg-red-500/15 border-red-500/30 text-red-400' 
+              : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
+          }`}
+        >
+          <span className="material-symbols-outlined text-base">{micMuted ? 'mic_off' : 'mic'}</span>
+        </button>
+
+        <button 
+          onClick={toggleCam} 
+          className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${
+            camOff 
+              ? 'bg-red-500/15 border-red-500/30 text-red-400' 
+              : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
+          }`}
+        >
+          <span className="material-symbols-outlined text-base">{camOff ? 'videocam_off' : 'videocam'}</span>
+        </button>
+
+        {user?.role === 'DOCTOR' && (
+          <button 
+            onClick={() => setShowWorkspace(!showWorkspace)} 
+            className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${
+              showWorkspace 
+                ? 'bg-white border-white text-black' 
+                : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">clinical_feasibility</span>
+          </button>
+        )}
+
+        <button 
+          onClick={endSession} 
+          className="w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white transition-all shadow-lg active:scale-95 border border-red-500/30"
+        >
+          <span className="material-symbols-outlined text-base">call_end</span>
+        </button>
+      </div>
+
     </div>
   );
 }

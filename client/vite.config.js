@@ -29,8 +29,8 @@ export default defineConfig({
         description: "Anonymous healthcare built on zero-knowledge identity. Your health, your secret.",
         start_url: "/",
         display: "standalone",
-        background_color: "#0a0a1a",
-        theme_color: "#7c3aed",
+        background_color: "#010101",
+        theme_color: "#010101",
         orientation: "portrait-primary",
         icons: [
           {

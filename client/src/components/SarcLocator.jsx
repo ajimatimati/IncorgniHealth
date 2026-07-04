@@ -90,16 +90,16 @@ export default function SarcLocator() {
   };
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       {/* Search */}
       <div className="relative">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-base">search</span>
+        <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-white/40 text-sm">search</span>
         <input
           type="text"
           placeholder="Search by name, city or country…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full bg-surface-container-high border border-outline-variant/10 rounded-xl pl-11 pr-5 py-3 font-body text-sm text-on-surface outline-none focus:border-primary transition-all"
+          className="input-field pl-11 py-3 text-xs"
         />
       </div>
 
@@ -109,10 +109,10 @@ export default function SarcLocator() {
           <button
             key={key}
             onClick={() => setActiveRegion(key)}
-            className={`px-3 py-1.5 rounded-full font-label text-[11px] uppercase tracking-wider transition-all ${
+            className={`px-4 py-2 rounded-full font-mono text-[9px] uppercase tracking-widest transition-all ${
               activeRegion === key
-                ? 'bg-primary text-on-primary'
-                : 'bg-surface-container-high border border-outline-variant/10 text-on-surface-variant hover:text-on-surface'
+                ? 'bg-white text-black font-bold shadow'
+                : 'bg-white/5 border border-white/10 text-white/40 hover:text-white'
             }`}
           >
             {label}
@@ -121,34 +121,34 @@ export default function SarcLocator() {
       </div>
 
       {/* Map + list layout */}
-      <div className="flex flex-col lg:flex-row gap-4" style={{ height: '500px' }}>
+      <div className="flex flex-col lg:flex-row gap-5" style={{ height: '480px' }}>
         {/* List panel */}
-        <div className="lg:w-72 shrink-0 overflow-y-auto space-y-2 pr-1 no-scrollbar">
+        <div className="lg:w-80 shrink-0 overflow-y-auto space-y-2 pr-1 no-scrollbar select-none">
           {filtered.length === 0 && (
-            <div className="text-center text-on-surface-variant font-label text-xs py-10 opacity-50">No centres match your search.</div>
+            <div className="text-center text-white/40 font-mono text-[9px] py-10 uppercase tracking-widest">No centres match search.</div>
           )}
           {filtered.map(center => (
             <button
               key={center.id}
               onClick={() => handleSelect(center)}
-              className={`w-full text-left p-4 rounded-xl border transition-all ${
+              className={`w-full text-left p-4 rounded-3xl border transition-all ${
                 selected?.id === center.id
-                  ? 'border-primary bg-primary/10'
-                  : 'bg-surface-container-low border-outline-variant/10 hover:bg-surface-container-high'
+                  ? 'border-white bg-white/10'
+                  : 'bg-white/[0.02] border-white/5 hover:border-white/10'
               }`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ background: REGION_COLORS[center.region] || '#aaa' }} />
-                <span className="font-label text-[10px] text-outline uppercase tracking-wider">{center.country}</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: REGION_COLORS[center.region] || '#aaa' }} />
+                <span className="font-mono text-[8px] text-white/40 uppercase tracking-widest font-semibold">{center.country}</span>
               </div>
-              <p className="font-headline text-sm font-semibold text-on-surface leading-snug mb-0.5">{center.name}</p>
-              <p className="font-body text-xs text-on-surface-variant opacity-70">{center.city}</p>
+              <p className="font-sans text-xs font-bold text-white leading-snug mb-0.5">{center.name}</p>
+              <p className="font-sans text-[10px] text-white/50">{center.city}</p>
             </button>
           ))}
         </div>
 
         {/* Leaflet map */}
-        <div className="flex-1 rounded-2xl overflow-hidden border border-outline-variant/10">
+        <div className="flex-1 rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl relative bg-[#010101]">
           <MapContainer center={[20, 5]} zoom={2} style={{ height: '100%', width: '100%', zIndex: 1 }} zoomControl>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -180,32 +180,32 @@ export default function SarcLocator() {
         </div>
       </div>
 
-      {/* Selected centre detail */}
+      {/* Selected centre detail overlay card */}
       {selected && (
-        <div className="bg-surface-container-low border border-outline-variant/10 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="bg-[#010101]/40 backdrop-blur-3xl border border-white/5 rounded-[2rem] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 bento-glass shadow-2xl animate-fadeIn">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: REGION_COLORS[selected.region] || '#aaa' }} />
-              <span className="font-label text-[10px] text-outline uppercase tracking-wider">{selected.country}</span>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse shrink-0" style={{ background: REGION_COLORS[selected.region] || '#aaa' }} />
+              <span className="font-mono text-[8px] text-white/40 uppercase tracking-widest font-semibold">{selected.country}</span>
             </div>
-            <h3 className="font-headline text-base font-bold text-on-surface">{selected.name}</h3>
-            <p className="font-body text-sm text-on-surface-variant mt-1 opacity-70">{selected.address}</p>
-            <p className="font-label text-[10px] text-outline uppercase tracking-widest mt-1.5">⏰ {selected.hours}</p>
+            <h3 className="font-sans text-sm font-bold text-white">{selected.name}</h3>
+            <p className="font-sans text-xs text-white/50 mt-1">{selected.address}</p>
+            <p className="font-mono text-[8px] text-white/40 uppercase tracking-widest mt-2 font-semibold">⏰ {selected.hours}</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 shrink-0">
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${selected.lat},${selected.lng}`}
               target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-surface-container-high border border-outline-variant/10 text-on-surface font-label text-xs uppercase tracking-widest hover:bg-surface-container-highest transition-all"
+              className="flex items-center justify-center gap-2.5 h-10 px-5 rounded-full bg-white/5 border border-white/10 text-white font-mono text-[9px] uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95"
             >
-              <span className="material-symbols-outlined text-base">map</span>
+              <span className="material-symbols-outlined text-sm">map</span>
               Maps
             </a>
             <a
               href={`tel:${selected.phone}`}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-primary text-on-primary font-label text-xs uppercase tracking-widest hover:brightness-110 transition-all"
+              className="flex items-center justify-center gap-2.5 h-10 px-5 rounded-full bg-white text-black font-sans font-bold text-xs uppercase tracking-wider hover:bg-white/95 transition-all active:scale-95 shadow"
             >
-              <span className="material-symbols-outlined text-base">call</span>
+              <span className="material-symbols-outlined text-sm">call</span>
               Call Now
             </a>
           </div>
@@ -213,13 +213,13 @@ export default function SarcLocator() {
       )}
 
       {/* Global helpline banner */}
-      <div className="p-4 rounded-xl bg-tertiary/5 border border-tertiary/15 text-center">
-        <p className="font-body text-sm text-on-surface-variant opacity-80">
-          <strong className="font-semibold text-tertiary">Global Helpline:</strong> If your country isn't listed,{' '}
-          <a href="https://www.rainn.org/get-help" target="_blank" rel="noopener noreferrer" className="underline text-primary">
+      <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-center">
+        <p className="font-sans text-xs text-white/50 leading-relaxed">
+          <strong className="font-bold text-white/80">Universal Helpline:</strong> If you are located outside these coordinates,{' '}
+          <a href="https://www.rainn.org/get-help" target="_blank" rel="noopener noreferrer" className="underline text-white hover:text-white/85">
             visit RAINN
           </a>{' '}
-          or call your national emergency number. You are not alone.
+          or contact your national helpline dispatcher.
         </p>
       </div>
     </div>

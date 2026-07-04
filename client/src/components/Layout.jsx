@@ -8,15 +8,12 @@ import { motion } from 'framer-motion';
 
 function PageLoader() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-background z-50">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative w-12 h-12">
-          <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
-          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
-        </div>
-        <div className="text-center">
-          <p className="font-headline text-sm text-on-surface">IncogniCare</p>
-          <p className="font-label text-[10px] text-primary uppercase tracking-[0.2em] mt-1">Loading session…</p>
+    <div className="fixed inset-0 flex items-center justify-center bg-[#010101] z-[9999]">
+      <div className="flex flex-col items-center gap-6">
+        <div className="w-10 h-10 border border-white/10 border-t-white rounded-full animate-spin" />
+        <div className="text-center space-y-1">
+          <p className="font-sans text-xs font-black tracking-[0.1em] text-white uppercase">IncogniCare Enclave</p>
+          <p className="font-mono text-[9px] text-white/40 uppercase tracking-widest animate-pulse">Decrypting session state…</p>
         </div>
       </div>
     </div>

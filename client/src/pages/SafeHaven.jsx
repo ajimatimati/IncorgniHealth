@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import PanicButton from '../components/PanicButton';
@@ -7,11 +7,11 @@ import CryptoJS from 'crypto-js';
 const TABS = ['Emergency Support', 'Clinical Protocols', 'Private Secure Log'];
 
 const EMERGENCY = [
-  { icon: 'local_hospital', title: 'Find a SARC', desc: 'Locate the nearest Sexual Assault Referral Centre. Open 24/7, staffed by specialist clinical nurses.', actionName: 'Find SARC', color: 'text-error', bg: 'bg-error/10', border: 'border-error/20',
+  { icon: 'local_hospital', title: 'Find a SARC', desc: 'Locate the nearest Sexual Assault Referral Centre. Open 24/7, staffed by specialist clinical nurses.', actionName: 'Find SARC', color: 'text-white', bg: 'bg-white/5', border: 'border-white/10',
     action: (navigate) => navigate('/sarc') },
-  { icon: 'call', title: 'Crisis Line', desc: 'Speak to a trained crisis counsellor right now. Anonymous, free, and available around the clock.', actionName: 'Call Now', color: 'text-tertiary', bg: 'bg-tertiary/10', border: 'border-tertiary/20',
+  { icon: 'call', title: 'Crisis Line', desc: 'Speak to a trained crisis counsellor right now. Anonymous, free, and available around the clock.', actionName: 'Call Now', color: 'text-white/60', bg: 'bg-white/5', border: 'border-white/10',
     action: () => window.dispatchEvent(new Event('open-crisis-line')) },
-  { icon: 'emergency', title: 'Emergency Services', desc: 'Contact emergency medical services for immediate physical care.', actionName: '999 / 112', color: 'text-error', bg: 'bg-error/10', border: 'border-error/20',
+  { icon: 'emergency', title: 'Emergency Services', desc: 'Contact emergency medical services for immediate physical care.', actionName: '999 / 112', color: 'text-white', bg: 'bg-white/5', border: 'border-white/10',
     action: () => window.dispatchEvent(new Event('open-sos')) },
 ];
 
@@ -29,6 +29,39 @@ const LOG_PROMPTS = [
   'What do you need most in this moment?',
   'What felt safe or comforting today?',
 ];
+
+// ── Text Decryption Scrambler Micro-animation ──────────────────────────────
+function DecryptText({ text, active, onComplete }) {
+  const [display, setDisplay] = useState(text);
+
+  useEffect(() => {
+    if (!active) return;
+    let iterations = 0;
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@$&*";
+    const interval = setInterval(() => {
+      setDisplay(
+        text
+          .split("")
+          .map((char, index) => {
+            if (index < iterations) return text[index];
+            if (char === " ") return " ";
+            return chars[Math.floor(Math.random() * chars.length)];
+          })
+          .join("")
+      );
+
+      if (iterations >= text.length) {
+        clearInterval(interval);
+        if (onComplete) onComplete();
+      }
+      iterations += 1 / 2;
+    }, 40);
+
+    return () => clearInterval(interval);
+  }, [active, text, onComplete]);
+
+  return <span className="font-mono tracking-wider">{display}</span>;
+}
 
 export default function SafeHaven() {
   const navigate = useNavigate();
@@ -52,6 +85,8 @@ export default function SafeHaven() {
   // Lock fields
   const [enteredPin, setEnteredPin] = useState('');
   const [pinError, setPinError] = useState('');
+  const [decrypting, setDecrypting] = useState(false);
+  const [decryptTarget, setDecryptTarget] = useState(null);
 
   // Decrypted contents
   const [logsList, setLogsList] = useState([]);
@@ -60,7 +95,7 @@ export default function SafeHaven() {
   const DURESS_DEFAULT_LOGS = [
     { id: '1', date: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(), text: 'Review biology chapter 4 questions. Focus on cellular respiration definitions and diagram labeling.' },
     { id: '2', date: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(), text: 'Grocery shopping list: Oats, skimmed milk, Greek yoghurt, almond butter, spinach, multi-vitamin supplements.' },
-    { id: '3', date: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(), text: 'SARC general emergency contact helpline numbers copied from standard Nigerian government clinical guides.' }
+    { id: '3', date: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(), text: 'SARC general emergency contact helpline numbers copied from Nigerian government clinical guides.' }
   ];
 
   // Initialize secure enclave
@@ -100,6 +135,23 @@ export default function SafeHaven() {
     setSetupConfirm('');
   };
 
+  // Trigger Decryption Overlay prior to unlocking
+  const startDecryptionSequence = (mode, logs, pin = '') => {
+    setDecrypting(true);
+    setDecryptTarget({ mode, logs, pin });
+  };
+
+  const resolveDecryption = () => {
+    if (!decryptTarget) return;
+    setLogsList(decryptTarget.logs);
+    setCurrentPin(decryptTarget.pin);
+    setUnlockMode(decryptTarget.mode);
+    setIsUnlocked(true);
+    setDecrypting(false);
+    setDecryptTarget(null);
+    setEnteredPin('');
+  };
+
   // Unlock secure enclave
   const handleUnlock = (pinToSubmit = enteredPin) => {
     setPinError('');
@@ -119,11 +171,7 @@ export default function SafeHaven() {
           throw new Error('Failed decryption');
         }
         const parsed = JSON.parse(decryptedText);
-        setLogsList(parsed);
-        setCurrentPin(pinToSubmit);
-        setUnlockMode('REAL');
-        setIsUnlocked(true);
-        setEnteredPin('');
+        startDecryptionSequence('REAL', parsed, pinToSubmit);
       } catch {
         setPinError('Decryption failed. Secure enclave compromised.');
       }
@@ -131,10 +179,7 @@ export default function SafeHaven() {
       // Unlock Duress Mode
       const rawDuress = localStorage.getItem('_app_metrics_cache');
       const parsed = rawDuress ? JSON.parse(rawDuress) : DURESS_DEFAULT_LOGS;
-      setLogsList(parsed);
-      setUnlockMode('DURESS');
-      setIsUnlocked(true);
-      setEnteredPin('');
+      startDecryptionSequence('DURESS', parsed);
     } else {
       setPinError('Invalid PIN code. Access denied.');
       setEnteredPin('');
@@ -197,64 +242,91 @@ export default function SafeHaven() {
     const nextPin = enteredPin + digit;
     setEnteredPin(nextPin);
     if (nextPin.length === 4) {
-      // Auto submit
       setTimeout(() => handleUnlock(nextPin), 150);
     }
   };
 
   return (
-    <div className="bg-background text-on-background min-h-full">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 lg:py-10 space-y-8">
+    <div className="bg-[#010101] text-white min-h-screen relative select-none">
+      
+      {/* Immersive Decryption Overlay Screen */}
+      <AnimatePresence>
+        {decrypting && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-[#010101] z-[9999] flex flex-col items-center justify-center select-none"
+          >
+            <div className="text-center space-y-4">
+              <div className="w-14 h-14 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-2 shadow-lg">
+                <span className="material-symbols-outlined text-white text-xl animate-pulse">lock_open</span>
+              </div>
+              <h2 className="text-sm font-mono uppercase tracking-[0.25em]">
+                <DecryptText
+                  text="DECRYPTING LOCAL VAULT PAYLOAD"
+                  active={decrypting}
+                  onComplete={resolveDecryption}
+                />
+              </h2>
+              <p className="font-mono text-[8px] uppercase tracking-widest text-white/40">Zeroing temporary cache registry</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="max-w-7xl mx-auto px-6 sm:px-10 py-10 lg:py-14 space-y-10">
 
         {/* Page Header */}
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-error" style={{ fontVariationSettings:"'FILL' 1" }}>shield_with_heart</span>
+            <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shadow-md">
+              <span className="material-symbols-outlined text-white text-base" style={{ fontVariationSettings: "'FILL' 1" }}>shield_with_heart</span>
+            </div>
             <div>
-              <p className="font-label text-[11px] text-error uppercase tracking-[0.2em] mb-1">Confidential Zone</p>
-              <h1 className="font-headline text-3xl lg:text-4xl font-bold text-on-surface">Safe Haven</h1>
+              <p className="font-mono text-[9px] text-white/40 uppercase tracking-[0.2em] font-semibold mb-0.5">Stealth Haven</p>
+              <h1 className="font-sans text-3xl lg:text-4xl font-black text-white tracking-tight">Safe Haven</h1>
             </div>
           </div>
           {/* Quick Exit */}
           <button
             onClick={() => window.location.replace('https://www.google.com')}
-            className="flex items-center gap-2 h-12 px-6 rounded-full bg-error text-on-error hover:brightness-110 transition-all shadow-lg shadow-error/20"
+            className="flex items-center gap-2 h-11 px-6 rounded-full bg-white text-black hover:bg-white/95 transition-all shadow-lg active:scale-95"
           >
             <span className="material-symbols-outlined text-base">exit_to_app</span>
-            <span className="font-label text-[10px] uppercase tracking-widest font-bold">Quick Exit (Esc)</span>
+            <span className="font-mono text-[9px] uppercase tracking-widest font-bold">Quick Exit</span>
           </button>
         </header>
 
-        {/* Privacy notice */}
-        <section className="bg-error/5 rounded-[24px] border border-error/20 p-5 flex items-start gap-4">
-          <span className="material-symbols-outlined text-error mt-1">gpp_maybe</span>
-          <p className="font-body text-sm text-error leading-relaxed">
-            <strong className="font-bold">End-to-End Privacy.</strong> This environment is completely isolated. No history is permanently logged on our servers or your cache. Close this tab or use the Quick Exit button to immediately scrub your session.
+        {/* Privacy alert bar */}
+        <section className="bg-white/[0.02] rounded-3xl border border-white/5 p-5 flex items-start gap-4 bento-glass">
+          <span className="material-symbols-outlined text-white/60 text-lg mt-0.5 animate-pulse">gpp_maybe</span>
+          <p className="font-sans text-xs text-white/60 leading-relaxed">
+            <strong>Client-Side Cryptography Active.</strong> This vault uses client-side encryption. Keys are derived from your Master PIN and never stored on our servers. Tapping Quick Exit redirects instantly and wipes local session variables.
           </p>
         </section>
 
-        {/* High-Density Layout */}
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+        {/* Bento Shell layout */}
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
           
-          {/* Persistent Left Nav */}
-          <nav className="w-full lg:w-64 shrink-0 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-hide">
+          {/* Left Tab Navigation */}
+          <nav className="w-full lg:w-60 shrink-0 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 no-scrollbar">
             {TABS.map((tab, idx) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex items-center justify-between h-14 lg:h-auto lg:py-4 px-6 lg:px-5 rounded-[20px] lg:rounded-2xl shrink-0 transition-all ${
-                  activeTab === tab
-                    ? 'bg-surface-container-highest text-on-surface shadow-md'
-                    : 'bg-surface-container-low border border-outline-variant/5 text-outline hover:text-on-surface hover:bg-surface-container'
-                }`}
+                className={`flex items-center justify-between h-12 lg:h-auto lg:py-3.5 px-5 rounded-full shrink-0 transition-all font-sans text-xs select-none relative
+                  ${activeTab === tab
+                    ? 'text-white font-bold bg-white/5 border border-white/10'
+                    : 'text-white/40 hover:text-white bg-transparent border border-transparent'
+                  }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-[18px]">
+                  <span className="material-symbols-outlined text-[16px]">
                     {idx === 0 ? 'medical_services' : idx === 1 ? 'account_tree' : 'lock_clock'}
                   </span>
-                  <span className="font-label text-[9px] uppercase tracking-widest text-left whitespace-nowrap">{tab}</span>
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-left whitespace-nowrap">{tab}</span>
                 </div>
-                {activeTab === tab && <span className="hidden lg:block w-1.5 h-1.5 rounded-full bg-primary" />}
               </button>
             ))}
           </nav>
@@ -262,19 +334,21 @@ export default function SafeHaven() {
           {/* Right Content Pane */}
           <div className="flex-1 w-full min-h-[500px]">
             <AnimatePresence mode="wait">
+              
+              {/* Emergency Support Tab */}
               {activeTab === TABS[0] && (
-                <motion.div key="emergency" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 columns-masonry">
+                <motion.div key="emergency" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {EMERGENCY.map((item, i) => (
-                      <div key={i} className={`bg-surface-container-low rounded-[32px] border ${item.border} p-8 flex flex-col justify-between h-full hover:shadow-lg transition-shadow`}>
-                        <div className="mb-6">
-                           <div className={`w-14 h-14 rounded-[20px] ${item.bg} flex items-center justify-center mb-6`}>
-                             <span className={`material-symbols-outlined text-[28px] ${item.color}`} style={{ fontVariationSettings:"'FILL' 1" }}>{item.icon}</span>
+                      <div key={i} className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-6 flex flex-col justify-between h-full hover:border-white/10 transition-all duration-300 bento-glass group">
+                        <div className="mb-6 space-y-4">
+                           <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white">
+                             <span className="material-symbols-outlined text-base" style={{ fontVariationSettings:"'FILL' 1" }}>{item.icon}</span>
                            </div>
-                           <h3 className="font-headline text-2xl font-bold text-on-surface mb-3">{item.title}</h3>
-                           <p className="font-body text-sm text-on-surface-variant leading-relaxed opacity-90">{item.desc}</p>
+                           <h3 className="font-sans text-lg font-bold text-white group-hover:text-white/80 transition-colors">{item.title}</h3>
+                           <p className="font-sans text-xs text-white/50 leading-relaxed">{item.desc}</p>
                         </div>
-                        <button onClick={() => item.action(navigate)} className={`w-full h-12 rounded-xl border ${item.border} ${item.color} ${item.bg} font-label text-[10px] uppercase tracking-widest hover:brightness-110 transition-all`}>
+                        <button onClick={() => item.action(navigate)} className="w-full h-10 rounded-full border border-white/10 text-white hover:bg-white/5 font-mono text-[9px] uppercase tracking-widest transition-all">
                           {item.actionName}
                         </button>
                       </div>
@@ -283,16 +357,17 @@ export default function SafeHaven() {
                 </motion.div>
               )}
 
+              {/* Protocols Tab */}
               {activeTab === TABS[1] && (
-                <motion.div key="protocol" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }}>
-                  <p className="font-label text-[9px] text-outline uppercase tracking-widest mb-6">Standard Care Pathway</p>
-                  <div className="space-y-4">
+                <motion.div key="protocol" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-4 max-w-4xl">
+                  <p className="font-mono text-[8px] text-white/40 uppercase tracking-widest font-semibold pl-1">Standard Clinical Care Pathways</p>
+                  <div className="space-y-3">
                     {PROTOCOL_STEPS.map((step, i) => (
-                      <div key={i} className="flex flex-col sm:flex-row gap-6 bg-surface-container-low hover:bg-surface-container rounded-[32px] border border-outline-variant/10 p-6 sm:p-8 transition-colors">
-                        <span className="font-headline text-4xl sm:text-5xl font-black text-outline/20 shrink-0 w-16 select-none">{step.step}</span>
+                      <div key={i} className="flex gap-6 bg-white/[0.02] border border-white/5 rounded-[2rem] p-6 bento-glass">
+                        <span className="font-sans text-3xl font-black text-white/10 shrink-0 w-12">{step.step}</span>
                         <div>
-                          <h3 className="font-headline text-lg font-bold text-on-surface mb-2">{step.title}</h3>
-                          <p className="font-body text-sm text-on-surface-variant leading-relaxed opacity-90">{step.desc}</p>
+                          <h3 className="font-sans text-sm font-bold text-white mb-1">{step.title}</h3>
+                          <p className="font-sans text-xs text-white/50 leading-relaxed">{step.desc}</p>
                         </div>
                       </div>
                     ))}
@@ -300,26 +375,26 @@ export default function SafeHaven() {
                 </motion.div>
               )}
 
+              {/* Secure Logs Vault Tab */}
               {activeTab === TABS[2] && (
-                <motion.div key="log" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.2 }} className="max-w-3xl">
+                <motion.div key="log" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="max-w-3xl">
                   
-                  {/* View 1: Setup PIN */}
+                  {/* Setup PIN Screen */}
                   {!hasSetup && (
-                    <div className="bg-surface-container-low rounded-[32px] border border-outline-variant/10 p-8 sm:p-10 shadow-lg max-w-md mx-auto">
-                      <header className="text-center mb-6">
-                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 text-primary mb-3">
-                          <span className="material-symbols-outlined text-2xl">enhanced_encryption</span>
+                    <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 sm:p-10 shadow-lg max-w-md mx-auto bento-glass">
+                      <header className="text-center mb-6 space-y-2">
+                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10 text-white mb-2">
+                          <span className="material-symbols-outlined text-xl">enhanced_encryption</span>
                         </div>
-                        <h3 className="font-headline text-xl font-bold text-on-surface">Setup Private Locker</h3>
-                        <p className="font-body text-xs text-on-surface-variant mt-1.5 opacity-80 leading-relaxed">
-                          Encrypt your journal entries locally on this device. Create PIN codes to access your vault.
+                        <h3 className="font-sans text-lg font-bold text-white">Initialize Vault Lock</h3>
+                        <p className="font-sans text-xs text-white/50 leading-relaxed">
+                          Encrypt journal entries locally. Choose private PIN keys to structure your secure space.
                         </p>
                       </header>
 
                       <form onSubmit={handleSetup} className="space-y-4">
-                        {/* Master PIN */}
                         <div className="space-y-1.5">
-                          <label className="font-label text-[9px] text-outline uppercase tracking-widest pl-1">Choose Master PIN (4 digits)</label>
+                          <label className="font-mono text-[8px] text-white/40 uppercase tracking-widest pl-1">Master PIN (4 digits)</label>
                           <input
                             type="password"
                             inputMode="numeric"
@@ -328,13 +403,12 @@ export default function SafeHaven() {
                             value={setupMaster}
                             onChange={e => setSetupMaster(e.target.value.replace(/\D/g, ''))}
                             placeholder="••••"
-                            className="w-full bg-surface-container border border-outline-variant/10 rounded-2xl px-5 py-3 text-center text-lg font-mono tracking-[0.5em] text-primary focus:border-primary/40 focus:outline-none"
+                            className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 text-center text-lg font-mono tracking-[0.5em] text-white focus:border-white/20 focus:outline-none"
                           />
                         </div>
 
-                        {/* Confirm Master PIN */}
                         <div className="space-y-1.5">
-                          <label className="font-label text-[9px] text-outline uppercase tracking-widest pl-1">Confirm Master PIN</label>
+                          <label className="font-mono text-[8px] text-white/40 uppercase tracking-widest pl-1">Confirm Master PIN</label>
                           <input
                             type="password"
                             inputMode="numeric"
@@ -343,18 +417,17 @@ export default function SafeHaven() {
                             value={setupConfirm}
                             onChange={e => setSetupConfirm(e.target.value.replace(/\D/g, ''))}
                             placeholder="••••"
-                            className="w-full bg-surface-container border border-outline-variant/10 rounded-2xl px-5 py-3 text-center text-lg font-mono tracking-[0.5em] text-primary focus:border-primary/40 focus:outline-none"
+                            className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 text-center text-lg font-mono tracking-[0.5em] text-white focus:border-white/20 focus:outline-none"
                           />
                         </div>
 
-                        {/* Duress PIN */}
-                        <div className="space-y-1.5 bg-error/5 border border-error/10 rounded-2xl p-4">
-                          <div className="flex items-center gap-2 mb-1.5 text-error">
-                            <span className="material-symbols-outlined text-sm">gpp_maybe</span>
-                            <label className="font-label text-[9px] uppercase tracking-widest">Choose Duress PIN (4 digits)</label>
+                        <div className="space-y-1.5 bg-red-500/[0.02] border border-red-500/10 rounded-2xl p-4">
+                          <div className="flex items-center gap-2 mb-1 text-red-400">
+                            <span className="material-symbols-outlined text-xs">gpp_maybe</span>
+                            <label className="font-mono text-[8px] uppercase tracking-widest font-semibold">Duress Cover PIN (4 digits)</label>
                           </div>
-                          <p className="font-body text-[10px] text-on-surface-variant/80 mb-2 leading-relaxed">
-                            Entering this PIN will unlock a fake list of benign study/grocery notes instead of your real entries. Use it if forced to open the app.
+                          <p className="font-sans text-[10px] text-white/45 mb-3 leading-relaxed">
+                            Entering this secondary PIN displays generic, benign logs (e.g. biology study notes, groceries) to hide sensitive entries under coercion.
                           </p>
                           <input
                             type="password"
@@ -364,15 +437,15 @@ export default function SafeHaven() {
                             value={setupDuress}
                             onChange={e => setSetupDuress(e.target.value.replace(/\D/g, ''))}
                             placeholder="••••"
-                            className="w-full bg-surface-container border border-outline-variant/10 rounded-2xl px-5 py-3 text-center text-lg font-mono tracking-[0.5em] text-error focus:border-error/40 focus:outline-none"
+                            className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 text-center text-lg font-mono tracking-[0.5em] text-red-400 focus:border-red-500/20 focus:outline-none"
                           />
                         </div>
 
-                        {setupError && <p className="text-error text-xs font-label text-center">{setupError}</p>}
+                        {setupError && <p className="text-red-400 text-xs font-mono text-center">{setupError}</p>}
 
                         <button
                           type="submit"
-                          className="w-full h-12 rounded-xl bg-primary text-on-primary font-headline font-bold text-[11px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all"
+                          className="w-full h-11 rounded-full bg-white text-black font-sans font-bold text-xs uppercase tracking-wider hover:bg-white/95 active:scale-[0.98] transition-all"
                         >
                           Initialize Secure Locker
                         </button>
@@ -380,38 +453,38 @@ export default function SafeHaven() {
                     </div>
                   )}
 
-                  {/* View 2: Access PIN Lock Screen */}
+                  {/* Access PIN Lock Screen */}
                   {hasSetup && !isUnlocked && (
-                    <div className="bg-surface-container-low rounded-[32px] border border-outline-variant/10 p-8 sm:p-10 shadow-lg max-w-sm mx-auto text-center">
-                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 text-primary mb-3">
-                        <span className="material-symbols-outlined text-2xl">lock</span>
+                    <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 sm:p-10 shadow-lg max-w-sm mx-auto text-center bento-glass">
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/5 border border-white/10 text-white mb-2">
+                        <span className="material-symbols-outlined text-xl">lock</span>
                       </div>
-                      <h3 className="font-headline text-xl font-bold text-on-surface">Private Secure Vault</h3>
-                      <p className="font-body text-xs text-on-surface-variant mt-1.5 opacity-80 pl-1">
-                        Enter your 4-digit PIN to decrypt entries.
+                      <h3 className="font-sans text-lg font-bold text-white">Unlock Secure Vault</h3>
+                      <p className="font-sans text-xs text-white/50 pl-1 mt-0.5">
+                        Enter your 4-digit PIN to access logs.
                       </p>
 
                       <div className="flex justify-center gap-3 my-6">
                         {[0, 1, 2, 3].map(idx => (
                           <div
                             key={idx}
-                            className={`w-4 h-4 rounded-full border border-primary/30 transition-all ${
-                              enteredPin.length > idx ? 'bg-primary scale-110 shadow-[0_0_8px_rgba(208,188,255,0.6)]' : 'bg-transparent'
+                            className={`w-3 h-3 rounded-full border border-white/20 transition-all ${
+                              enteredPin.length > idx ? 'bg-white scale-110 shadow-sm shadow-white/40' : 'bg-transparent'
                             }`}
                           />
                         ))}
                       </div>
 
-                      {pinError && <p className="text-error text-xs font-label mb-4">{pinError}</p>}
+                      {pinError && <p className="text-red-400 text-xs font-mono mb-4">{pinError}</p>}
 
-                      {/* Numeric Keypad grid */}
-                      <div className="grid grid-cols-3 gap-3 max-w-[240px] mx-auto mb-4">
+                      {/* Custom Luxury Numpad Grid */}
+                      <div className="grid grid-cols-3 gap-2.5 max-w-[210px] mx-auto">
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                           <button
                             key={num}
                             type="button"
                             onClick={() => handlePinKeyPress(String(num))}
-                            className="w-16 h-16 rounded-full bg-surface-container hover:bg-surface-container-highest border border-outline-variant/5 text-xl font-headline font-bold flex items-center justify-center active:scale-95 transition-all text-on-surface"
+                            className="w-14 h-14 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-lg font-mono flex items-center justify-center active:scale-95 transition-all text-white"
                           >
                             {num}
                           </button>
@@ -419,107 +492,108 @@ export default function SafeHaven() {
                         <button
                           type="button"
                           onClick={() => setEnteredPin('')}
-                          className="w-16 h-16 rounded-full text-xs font-label uppercase text-outline hover:text-on-surface flex items-center justify-center transition-all"
+                          className="w-14 h-14 rounded-full text-[10px] font-mono uppercase text-white/40 hover:text-white flex items-center justify-center transition-all"
                         >
                           Clear
                         </button>
                         <button
                           type="button"
                           onClick={() => handlePinKeyPress('0')}
-                          className="w-16 h-16 rounded-full bg-surface-container hover:bg-surface-container-highest border border-outline-variant/5 text-xl font-headline font-bold flex items-center justify-center active:scale-95 transition-all text-on-surface"
+                          className="w-14 h-14 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-lg font-mono flex items-center justify-center active:scale-95 transition-all text-white"
                         >
                           0
                         </button>
                         <button
                           type="button"
                           onClick={() => setEnteredPin(p => p.slice(0, -1))}
-                          className="w-16 h-16 rounded-full text-outline hover:text-on-surface flex items-center justify-center transition-all"
+                          className="w-14 h-14 rounded-full text-white/40 hover:text-white flex items-center justify-center transition-all"
                         >
-                          <span className="material-symbols-outlined">backspace</span>
+                          <span className="material-symbols-outlined text-base">backspace</span>
                         </button>
                       </div>
                     </div>
                   )}
 
-                  {/* View 3: Decrypted Vault */}
+                  {/* Decrypted Vault View */}
                   {hasSetup && isUnlocked && (
-                    <div className="space-y-6">
-                      {/* Unlocked Header */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-container-low border border-outline-variant/10 rounded-2xl p-5">
+                    <div className="space-y-6 animate-fadeIn">
+                      
+                      {/* Enclave State Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/[0.02] border border-white/5 rounded-2xl p-5 bento-glass">
                         <div className="flex items-center gap-3">
-                          <span className={`material-symbols-outlined ${unlockMode === 'DURESS' ? 'text-tertiary' : 'text-primary'}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                          <span className={`material-symbols-outlined ${unlockMode === 'DURESS' ? 'text-white/40' : 'text-white'}`} style={{ fontVariationSettings: "'FILL' 1" }}>
                             {unlockMode === 'DURESS' ? 'visibility_off' : 'lock_open'}
                           </span>
                           <div>
-                            <p className="font-label text-[9px] uppercase tracking-widest text-outline">Locker State</p>
-                            <h4 className="font-headline text-sm font-bold text-on-surface">
-                              {unlockMode === 'DURESS' ? 'Mock Mode Enabled' : 'Decrypted Local Enclave Active'}
+                            <p className="font-mono text-[8px] text-white/40 uppercase tracking-widest font-semibold">Session Status</p>
+                            <h4 className="font-sans text-xs font-bold text-white">
+                              {unlockMode === 'DURESS' ? 'Benign Mode Active' : 'Decrypted Enclave Vault Unlocked'}
                             </h4>
                           </div>
                         </div>
                         <button
                           onClick={handleLock}
-                          className="h-10 px-5 rounded-xl border border-outline-variant/20 font-label text-[9px] uppercase tracking-widest text-on-surface hover:bg-surface-container-highest transition-all flex items-center gap-2"
+                          className="h-9 px-5 rounded-full border border-white/10 font-mono text-[9px] uppercase tracking-widest text-white hover:bg-white/5 transition-all flex items-center gap-2"
                         >
-                          <span className="material-symbols-outlined text-base">lock</span>
-                          Lock Vault
+                          <span className="material-symbols-outlined text-sm">lock</span>
+                          Lock Enclave
                         </button>
                       </div>
 
-                      {/* Journal Writing Card */}
-                      <div className="bg-surface-container-low rounded-[32px] border border-outline-variant/10 p-8 sm:p-10 shadow-lg">
-                        <header className="mb-6">
-                           <p className="font-label text-[10px] text-primary flex items-center gap-2 uppercase tracking-[0.2em] mb-2">
-                              <span className="material-symbols-outlined text-[16px]">edit</span> Write Entry
+                      {/* Log Creator Form */}
+                      <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-6 sm:p-8 shadow-lg bento-glass">
+                        <header className="mb-4">
+                           <p className="font-mono text-[8px] text-white/40 flex items-center gap-1.5 uppercase tracking-[0.2em] font-semibold mb-2">
+                              <span className="material-symbols-outlined text-sm">edit</span> Create Entry
                            </p>
-                           <p className="font-body text-[15px] text-on-surface-variant italic opacity-90 leading-relaxed border-l-2 border-primary/30 pl-4 py-1">"{prompt}"</p>
+                           <p className="font-sans text-xs text-white/60 italic border-l border-white/20 pl-4 py-0.5">"{prompt}"</p>
                         </header>
                         <textarea
                           value={logText}
                           onChange={e => setLogText(e.target.value)}
-                          placeholder="Write freely. Everything is encrypted locally..."
-                          className="w-full h-44 bg-surface-container border border-outline-variant/10 rounded-2xl p-6 text-sm text-on-surface focus:border-primary/40 focus:bg-surface-container-highest focus:outline-none resize-none placeholder:text-outline leading-relaxed"
+                          placeholder="Decrypting text fields. Type freely..."
+                          className="input-field h-32 py-4 text-xs resize-none"
                         />
                         <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
                           <button
                             onClick={handleSaveLog}
                             disabled={!logText.trim()}
-                            className={`flex-1 w-full h-12 rounded-xl font-headline font-bold text-[11px] uppercase tracking-widest transition-all ${
-                              logSaved ? 'bg-success/20 text-success border border-success/30' : 'bg-primary text-on-primary disabled:opacity-30 hover:brightness-115'
+                            className={`w-full sm:w-auto h-10 px-8 rounded-full font-sans font-bold text-xs uppercase tracking-wider transition-all ${
+                              logSaved ? 'bg-white/10 text-white border border-white/20' : 'bg-white text-black hover:bg-white/95 disabled:opacity-20'
                             }`}
                           >
-                            {logSaved ? '✓ Encrypted & Saved' : 'Save Entry'}
+                            {logSaved ? '✓ Log Encrypted' : 'Commit Entry'}
                           </button>
-                          <p className="font-label text-[8px] text-outline opacity-60 max-w-[250px] text-center sm:text-left leading-normal">
-                            Saved entries are encrypted with your Master PIN and never touch our servers.
+                          <p className="font-mono text-[8px] text-white/35 max-w-[280px] text-center sm:text-left leading-normal">
+                            All journal payload states are encoded under locally randomized encryption variables.
                           </p>
                         </div>
                       </div>
 
-                      {/* Saved Entries List */}
+                      {/* Entries logs lists */}
                       <div className="space-y-4">
-                        <h4 className="font-headline text-base font-bold text-on-surface pl-1">Saved Entries ({logsList.length})</h4>
+                        <h4 className="font-sans text-sm font-bold text-white uppercase tracking-wider pl-1">Vault Logs ({logsList.length})</h4>
                         {logsList.length === 0 ? (
-                          <div className="bg-surface-container-low rounded-[24px] border border-outline-variant/10 p-10 text-center text-outline opacity-40">
-                            <span className="material-symbols-outlined text-3xl mb-2">folder_open</span>
-                            <p className="font-body text-xs">No entries saved in this vault.</p>
+                          <div className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-10 text-center text-white/30 bento-glass">
+                            <span className="material-symbols-outlined text-2xl mb-1">folder_open</span>
+                            <p className="font-sans text-xs">Zero records logged in vault.</p>
                           </div>
                         ) : (
                           <div className="space-y-4">
                             {logsList.map(log => (
-                              <div key={log.id} className="bg-surface-container-low rounded-3xl border border-outline-variant/10 p-6 space-y-4 relative group">
-                                <header className="flex items-center justify-between border-b border-outline-variant/5 pb-2">
-                                  <span className="font-label text-[9px] text-outline uppercase tracking-widest font-bold">
+                              <div key={log.id} className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-6 space-y-3 relative group bento-glass">
+                                <header className="flex items-center justify-between border-b border-white/5 pb-2">
+                                  <span className="font-mono text-[8px] text-white/40 uppercase tracking-widest font-semibold">
                                     {new Date(log.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                   <button
                                     onClick={() => handleDeleteLog(log.id)}
-                                    className="w-8 h-8 rounded-full flex items-center justify-center text-outline-variant hover:text-error hover:bg-error/10 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                    className="w-7 h-7 rounded-full flex items-center justify-center text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
                                   >
-                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                    <span className="material-symbols-outlined text-base">delete</span>
                                   </button>
                                 </header>
-                                <p className="font-body text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap pl-1">{log.text}</p>
+                                <p className="font-sans text-xs text-white/70 leading-relaxed whitespace-pre-wrap pl-1">{log.text}</p>
                               </div>
                             ))}
                           </div>

@@ -76,18 +76,17 @@ export default function ChatRoom() {
     const text = newMessage.trim();
     if (!text) return;
 
-    // Secure the payload: Encrypt the message content locally before emitting.
-    // Derive a stronger symmetric key using PBKDF2 to prevent raw database ID decryption.
+    // Secure payload: Encrypt message content locally before sending
     const chatSecret = CryptoJS.PBKDF2(consultationId, import.meta.env.VITE_APP_SECRET || 'incognicare_fallback_salt_93x', { keySize: 256/32, iterations: 1000 }).toString();
     const encryptedContent = CryptoJS.AES.encrypt(text, chatSecret).toString();
 
-    // 1. Save message to database
+    // 1. Save to DB
     api.post(`/consultation/${consultationId}/message`, { content: encryptedContent })
       .then(res => {
          const dbMessage = res.data;
-         // 2. Broadcast to other party
+         // 2. Broadcast to peer
          socketRef.current.send({ type: 'broadcast', event: 'receive_message', payload: dbMessage });
-         // 3. Add to local state manually (Supabase broadcast doesn't reflect back to sender)
+         // 3. Add to local state
          setMessages(prev => [...prev, dbMessage]);
       })
       .catch(() => toast.error('Failed to send message.'));
@@ -137,51 +136,68 @@ export default function ChatRoom() {
   const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   
   const filteredMessages = searchQuery
-    ? messages.filter(m => m.content?.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? messages.filter(m => {
+        try {
+          const chatSecret = CryptoJS.PBKDF2(consultationId, import.meta.env.VITE_APP_SECRET || 'incognicare_fallback_salt_93x', { keySize: 256/32, iterations: 1000 }).toString();
+          const bytes = CryptoJS.AES.decrypt(m.content, chatSecret);
+          const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+          const text = decryptedText ? decryptedText : m.content;
+          return text.toLowerCase().includes(searchQuery.toLowerCase());
+        } catch {
+          return m.content?.toLowerCase().includes(searchQuery.toLowerCase());
+        }
+      })
     : messages;
 
-  if (loading) return <div className="bg-background min-h-screen flex items-center justify-center"><div className="w-10 h-10 border-2 border-outline-variant/20 border-t-primary rounded-full animate-spin" /></div>;
-  if (!consultation) return <div className="bg-background min-h-screen flex items-center justify-center text-on-surface-variant">Consultation closed.</div>;
+  if (loading) {
+    return (
+      <div className="bg-[#010101] min-h-screen flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 border border-white/10 border-t-white rounded-full animate-spin" />
+        <span className="font-mono text-[9px] uppercase tracking-widest text-white/40">Synchronizing Session</span>
+      </div>
+    );
+  }
+  if (!consultation) return <div className="bg-[#010101] min-h-screen flex items-center justify-center text-white/40 font-mono text-xs">Consultation terminated.</div>;
 
   const otherPerson = user.role === 'DOCTOR' ? consultation.patient : consultation.doctor;
 
   return (
-    <div className="bg-background text-on-background h-screen flex overflow-hidden">
+    <div className="bg-[#010101] text-white h-screen flex overflow-hidden font-sans select-none relative">
       
       {/* ── Left Sidebar: Context / History (Desktop Only) ── */}
-      <aside className="w-80 border-r border-outline-variant/10 hidden lg:flex flex-col bg-surface-container-lowest shrink-0 z-10">
-        <div className="h-[72px] border-b border-outline-variant/10 flex items-center px-6 shrink-0 bg-surface-container-low">
-          <h2 className="font-headline text-lg font-bold text-on-surface">Session Context</h2>
+      <aside className="w-72 border-r border-white/5 hidden lg:flex flex-col bg-[#010101]/40 backdrop-blur-3xl shrink-0 z-10">
+        <div className="h-[72px] border-b border-white/5 flex items-center px-6 shrink-0 bg-white/5">
+          <h2 className="font-mono text-[10px] text-white/40 uppercase tracking-widest font-black">Clinical Log Context</h2>
         </div>
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-          <div className="flex flex-col items-center text-center pb-6 border-b border-outline-variant/10">
-            <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-primary/10 mb-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+          <div className="flex flex-col items-center text-center pb-6 border-b border-white/5">
+            <div className="w-16 h-16 rounded-full overflow-hidden border border-white/20 shadow-md mb-3">
               <AvatarGenerator seed={otherPerson?.avatar || otherPerson?.publicId} size="lg" />
             </div>
-            <h3 className="font-headline text-lg font-bold text-on-surface">
+            <h3 className="font-sans text-sm font-bold text-white">
               {otherPerson?.nickname || 'Confidential Client'}
             </h3>
-            <p className="font-label text-xs text-outline uppercase tracking-widest mt-1">
-              ID: {otherPerson?.publicId || 'Unknown'}
+            <p className="font-mono text-[8px] text-white/40 uppercase tracking-widest mt-1">
+              ID // {otherPerson?.publicId?.substring(0, 12)}...
             </p>
           </div>
           
           <div className="space-y-4">
-            <h4 className="font-label text-[10px] text-outline uppercase tracking-wide">Quick Info</h4>
-            <div className="bg-surface-container-low border border-outline-variant/5 rounded-2xl p-4 flex items-center gap-3">
-               <span className="material-symbols-outlined text-tertiary">verified_user</span>
+            <h4 className="font-mono text-[8px] text-white/40 uppercase tracking-widest font-semibold">Security Level</h4>
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex items-center gap-3">
+               <span className="material-symbols-outlined text-white text-base">verified_user</span>
                <div>
-                 <p className="font-headline text-sm font-semibold">End-to-End Encrypted</p>
-                 <p className="font-body text-xs text-on-surface-variant">Messages secured</p>
+                 <p className="font-sans text-xs font-bold text-white">E2E Cryptography</p>
+                 <p className="font-sans text-[10px] text-white/50 mt-0.5">Payloads encrypted locally</p>
                </div>
             </div>
           </div>
           
           <div className="space-y-4">
-            <h4 className="font-label text-[10px] text-outline uppercase tracking-wide">Session Status</h4>
-            <div className={`px-4 py-3 rounded-xl border flex items-center justify-between ${consultation.status === 'ACTIVE' ? 'bg-primary/5 border-primary/10' : 'bg-surface-container border-outline-variant/10'}`}>
-              <span className="font-headline text-sm">Status</span>
-              <span className={`font-label text-[10px] uppercase tracking-widest px-2 py-1 rounded-full ${consultation.status === 'ACTIVE' ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-outline'}`}>{consultation.status}</span>
+            <h4 className="font-mono text-[8px] text-white/40 uppercase tracking-widest font-semibold">Session Status</h4>
+            <div className={`px-4 py-3 rounded-2xl border flex items-center justify-between ${consultation.status === 'ACTIVE' ? 'bg-white/5 border-white/10' : 'bg-white/[0.02] border-white/5'}`}>
+              <span className="font-sans text-xs">Status</span>
+              <span className={`font-mono text-[8px] uppercase tracking-widest px-2.5 py-1 rounded-full font-bold ${consultation.status === 'ACTIVE' ? 'bg-white/10 text-white' : 'bg-white/[0.02] text-white/30'}`}>{consultation.status}</span>
             </div>
           </div>
         </div>
@@ -189,21 +205,22 @@ export default function ChatRoom() {
 
       {/* ── Main Chat Area ── */}
       <div className="flex-1 flex flex-col h-full relative min-w-0">
-        {/* Top Bar */}
-        <header className="top-bar glass z-50">
+        
+        {/* Top Header Panel */}
+        <header className="fixed top-0 inset-x-0 lg:left-72 h-[72px] bg-[#010101]/40 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-40 select-none">
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/10 flex items-center justify-center hover:bg-surface-container-highest transition-all lg:hidden">
-              <span className="material-symbols-outlined text-on-surface-variant">arrow_back</span>
+            <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all lg:hidden">
+              <span className="material-symbols-outlined text-white/70 text-sm">arrow_back</span>
             </button>
             <div className="flex items-center gap-3">
               <AvatarGenerator seed={otherPerson?.avatar || otherPerson?.publicId} size="sm" />
               <div>
-                <h2 className="font-headline text-sm font-bold text-on-surface">
+                <h2 className="font-sans text-xs font-bold text-white">
                   {otherPerson?.nickname || 'Confidential Client'}
                 </h2>
-                <p className="font-label text-[9px] text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                <p className="font-mono text-[8px] text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
                   {user.role === 'DOCTOR' ? 'Client' : 'Case Physician'}
-                  {typing && <span className="text-tertiary normal-case tracking-normal lowercase opacity-80">...typing</span>}
+                  {typing && <span className="text-white/80 lowercase tracking-normal animate-pulse font-semibold">typing...</span>}
                 </p>
               </div>
             </div>
@@ -212,27 +229,27 @@ export default function ChatRoom() {
           <div className="flex items-center gap-3">
             <button 
               onClick={() => { setSearchOpen(!searchOpen); setSearchQuery(''); }}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${searchOpen ? 'bg-primary text-on-primary' : 'bg-surface-container-high border border-outline-variant/10 text-on-surface-variant'}`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${searchOpen ? 'bg-white text-black' : 'bg-white/5 border border-white/10 text-white'}`}
             >
-              <span className="material-symbols-outlined text-xl">search</span>
+              <span className="material-symbols-outlined text-sm">search</span>
             </button>
             <button 
               onClick={() => navigate(`/video/${consultationId}`)}
-              className="w-10 h-10 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center hover:bg-primary/20 transition-all"
+              className="w-8 h-8 rounded-full bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 transition-all"
             >
-              <span className="material-symbols-outlined text-xl">videocam</span>
+              <span className="material-symbols-outlined text-sm">videocam</span>
             </button>
           </div>
         </header>
 
-        {/* Search Bar Flyout */}
+        {/* Search Input Bar */}
         <AnimatePresence>
           {searchOpen && (
             <motion.div 
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="bg-surface-container-low border-b border-outline-variant/10 overflow-hidden relative z-40"
+              className="absolute top-[72px] inset-x-0 bg-[#010101]/95 border-b border-white/5 overflow-hidden z-40"
             >
               <div className="px-6 py-4">
                 <input 
@@ -240,7 +257,7 @@ export default function ChatRoom() {
                   placeholder="Find in conversation history..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-surface-container border border-outline-variant/10 rounded-full px-6 py-3 text-sm focus:border-primary/40 focus:outline-none text-on-surface transition-all"
+                  className="input-field py-2.5 text-xs rounded-full"
                   autoFocus
                 />
               </div>
@@ -252,7 +269,7 @@ export default function ChatRoom() {
         <main 
           ref={scrollContainerRef} 
           onScroll={handleScroll} 
-          className="flex-1 overflow-y-auto px-6 py-8 space-y-6 no-scrollbar bg-[radial-gradient(circle_at_top_right,rgba(208,188,255,0.03),transparent_40%)]"
+          className="flex-1 overflow-y-auto px-6 pt-24 pb-32 space-y-6 no-scrollbar bg-[#010101]"
         >
           {filteredMessages.map((msg, idx) => {
             const isMe = msg.senderId === user.id;
@@ -260,35 +277,35 @@ export default function ChatRoom() {
 
             if (isSystem) {
               return (
-                <div key={msg.id || idx} className="flex justify-center">
-                  <div className="max-w-[85%] w-full bg-surface-container-low border border-outline-variant/10 rounded-2xl p-5 space-y-4 shadow-xl shadow-black/20">
+                <div key={msg.id || idx} className="flex justify-center animate-fadeIn">
+                  <div className="max-w-[85%] w-full bg-white/[0.02] border border-white/5 rounded-[2rem] p-5 space-y-3 bento-glass shadow-lg">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                        <span className="material-symbols-outlined">pill</span>
+                      <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center">
+                        <span className="material-symbols-outlined text-sm">pill</span>
                       </div>
                       <div>
-                        <span className="font-label text-[10px] text-primary uppercase tracking-[0.2em]">Clinical Rx</span>
-                        <p className="font-headline text-sm font-bold text-on-surface">Prescription Transmitted</p>
+                        <span className="font-mono text-[8px] text-white/40 uppercase tracking-[0.2em] font-semibold">Clinical Rx</span>
+                        <p className="font-sans text-xs font-bold text-white">Prescription Transmitted</p>
                       </div>
                     </div>
-                    <div className="p-4 bg-surface-container-highest/30 rounded-xl border border-outline-variant/5">
-                      <p className="font-body text-sm text-on-surface-variant leading-relaxed italic">"{msg.content}"</p>
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <p className="font-sans text-xs text-white/60 leading-relaxed italic">"{msg.content}"</p>
                     </div>
-                    <p className="font-label text-[8px] text-outline text-right uppercase tracking-widest">{formatTime(msg.createdAt)}</p>
+                    <p className="font-mono text-[8px] text-white/40 text-right uppercase tracking-widest">{formatTime(msg.createdAt)}</p>
                   </div>
                 </div>
               );
             }
 
             return (
-              <div key={msg.id || idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] space-y-1.5`}>
-                  <div className={`px-5 py-3.5 shadow-lg ${
+              <div key={msg.id || idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
+                <div className="max-w-[75%] space-y-1">
+                  <div className={`px-5 py-3 shadow-md ${
                     isMe 
-                      ? 'bg-surface-container-highest text-on-surface rounded-2xl rounded-tr-sm border border-outline-variant/10' 
-                      : 'bg-surface-container-low text-on-surface-variant rounded-2xl rounded-tl-sm border border-outline-variant/5'
+                      ? 'bg-white/10 text-white rounded-3xl rounded-tr-sm border border-white/10' 
+                      : 'bg-white/[0.02] text-white rounded-3xl rounded-tl-sm border border-white/5'
                   }`}>
-                    <p className="font-body text-[15px] leading-relaxed whitespace-pre-wrap word-break-words">
+                    <p className="font-sans text-[13px] leading-relaxed whitespace-pre-wrap break-words">
                       {(() => {
                         try {
                           const chatSecret = CryptoJS.PBKDF2(consultationId, import.meta.env.VITE_APP_SECRET || 'incognicare_fallback_salt_93x', { keySize: 256/32, iterations: 1000 }).toString();
@@ -301,10 +318,10 @@ export default function ChatRoom() {
                       })()}
                     </p>
                   </div>
-                  <div className={`flex items-center gap-2 px-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <span className="font-label text-[9px] text-outline uppercase tracking-widest">{formatTime(msg.createdAt)}</span>
+                  <div className={`flex items-center gap-1.5 px-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                    <span className="font-mono text-[8px] text-white/40 uppercase tracking-widest">{formatTime(msg.createdAt)}</span>
                     {isMe && (
-                      <span className="material-symbols-outlined text-[14px] text-primary">done_all</span>
+                      <span className="material-symbols-outlined text-[10px] text-white">done_all</span>
                     )}
                   </div>
                 </div>
@@ -314,7 +331,7 @@ export default function ChatRoom() {
           <div ref={messagesEndRef} />
         </main>
 
-        {/* Floating Scroll Down */}
+        {/* Floating Scroll to Bottom button */}
         <AnimatePresence>
           {!isAtBottom && (
             <motion.button 
@@ -322,85 +339,86 @@ export default function ChatRoom() {
               animate={{ opacity: 1, scale: 1 }} 
               exit={{ opacity: 0, scale: 0.8 }}
               onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
-              className="fixed bottom-28 right-8 w-10 h-10 bg-primary text-on-primary rounded-full shadow-lg shadow-primary/20 flex items-center justify-center z-50 hover:scale-110 active:scale-95 transition-all"
+              className="fixed bottom-24 right-6 w-9 h-9 bg-white text-black rounded-full shadow-lg flex items-center justify-center z-50 active:scale-95 hover:scale-105 transition-all"
             >
-              <span className="material-symbols-outlined">keyboard_double_arrow_down</span>
+              <span className="material-symbols-outlined text-base">keyboard_double_arrow_down</span>
             </motion.button>
           )}
         </AnimatePresence>
 
-        {/* Doctor Control Strip */}
+        {/* Doctor Action Command Strip */}
         {user.role === 'DOCTOR' && consultation.status !== 'COMPLETED' && (
-          <div className="px-6 py-4 bg-surface-container-low border-t border-outline-variant/10 flex gap-4 z-50 pb-safe">
+          <div className="absolute bottom-20 inset-x-6 flex gap-3 z-30 select-none max-w-xl mx-auto">
             <button
               onClick={() => setShowTools(showTools === 'ai' ? null : 'ai')}
-              className={`flex-1 h-12 rounded-xl flex items-center justify-center gap-3 font-label text-[10px] uppercase tracking-widest border transition-all
-                ${showTools === 'ai' ? 'bg-primary text-on-primary border-primary' : 'bg-surface-container border-outline-variant/10 text-on-surface-variant'}`}
+              className={`flex-1 h-10 rounded-full flex items-center justify-center gap-2 font-mono text-[9px] uppercase tracking-widest font-bold border transition-all
+                ${showTools === 'ai' ? 'bg-white text-black border-white' : 'bg-black/60 border-white/5 text-white/60 backdrop-blur-xl'}`}
             >
-              <span className="material-symbols-outlined text-lg">psychology</span>
+              <span className="material-symbols-outlined text-sm">psychology</span>
               Medical Intel
             </button>
             <button
               onClick={() => setShowTools(showTools === 'prescribe' ? null : 'prescribe')}
-              className={`flex-1 h-12 rounded-xl flex items-center justify-center gap-3 font-label text-[10px] uppercase tracking-widest border transition-all
-                ${showTools === 'prescribe' ? 'bg-tertiary text-on-tertiary border-tertiary' : 'bg-surface-container border-outline-variant/10 text-on-surface-variant'}`}
+              className={`flex-1 h-10 rounded-full flex items-center justify-center gap-2 font-mono text-[9px] uppercase tracking-widest font-bold border transition-all
+                ${showTools === 'prescribe' ? 'bg-white text-black border-white' : 'bg-black/60 border-white/5 text-white/60 backdrop-blur-xl'}`}
             >
-              <span className="material-symbols-outlined text-lg">medication</span>
+              <span className="material-symbols-outlined text-sm">medication</span>
               Prescribe
             </button>
           </div>
         )}
 
-        {/* Tools Flyouts */}
+        {/* Clinical Tools drawer */}
         <AnimatePresence>
           {showTools === 'ai' && (
             <motion.div 
               initial={{ y: "100%" }} 
               animate={{ y: 0 }} 
               exit={{ y: "100%" }} 
-              className="absolute inset-x-0 bottom-0 bg-surface-container p-8 rounded-t-[32px] border-t border-outline-variant/10 shadow-2xl z-50 overflow-hidden"
+              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              className="absolute inset-x-0 bottom-0 bg-black border-t border-white/5 p-6 rounded-t-[2.5rem] shadow-2xl z-50"
             >
-              <div className="max-w-xl mx-auto space-y-6">
+              <div className="max-w-xl mx-auto space-y-5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                      <span className="material-symbols-outlined">auto_awesome</span>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center">
+                      <span className="material-symbols-outlined text-base">auto_awesome</span>
                     </div>
-                    <h3 className="font-headline text-lg font-bold text-on-surface">Clinical Intelligence</h3>
+                    <h3 className="font-sans text-sm font-bold text-white uppercase tracking-wider">Clinical Intelligence</h3>
                   </div>
-                  <button onClick={() => setShowTools(null)} className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-outline">
-                    <span className="material-symbols-outlined">close</span>
+                  <button onClick={() => setShowTools(null)} className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white">
+                    <span className="material-symbols-outlined text-sm">close</span>
                   </button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <textarea 
                     value={aiSymptoms} 
                     onChange={e => setAiSymptoms(e.target.value)}
-                    placeholder="Input client symptoms for a secure diagnostic synthesis..." 
-                    className="w-full h-32 bg-surface-container-low border border-outline-variant/10 rounded-2xl p-4 text-sm focus:border-primary/40 focus:outline-none transition-all outline-none resize-none no-scrollbar"
+                    placeholder="Enter patient symptoms for secure clinical synthesis..." 
+                    className="input-field h-24 py-3 text-xs resize-none"
                   />
                   <button 
                     onClick={handleAiAnalyze} 
                     disabled={aiLoading || !aiSymptoms.trim()} 
-                    className="w-full btn-primary h-14"
+                    className="w-full h-11 bg-white text-black hover:bg-white/95 font-sans text-xs font-bold uppercase tracking-wider rounded-full"
                   >
                     {aiLoading ? 'Synthesizing...' : 'Start Analysis'}
                   </button>
                 </div>
 
                 {aiResult && (
-                  <div className="p-6 bg-surface-container-highest/30 rounded-2xl border border-outline-variant/5 space-y-4 max-h-[300px] overflow-y-auto no-scrollbar">
-                    <div className="flex items-center justify-between border-b border-outline-variant/5 pb-4">
-                      <span className="font-headline text-base font-bold text-on-surface">{aiResult.diagnosis || 'Synthesis Complete'}</span>
-                      <span className="px-3 py-1 bg-primary/10 text-primary rounded-full font-label text-[9px] uppercase tracking-widest border border-primary/20">
+                  <div className="p-5 bg-white/[0.02] border border-white/5 rounded-2xl space-y-3 max-h-[220px] overflow-y-auto no-scrollbar">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                      <span className="font-sans text-xs font-bold text-white">{aiResult.diagnosis || 'Analysis complete'}</span>
+                      <span className="px-2 py-0.5 bg-white/10 text-white rounded-full font-mono text-[8px] uppercase tracking-widest border border-white/20">
                         {(aiResult.confidence * 100).toFixed(0)}% Match
                       </span>
                     </div>
-                    <ul className="space-y-3">
+                    <ul className="space-y-2">
                       {(aiResult.suggestions || [aiResult.message]).map((s, i) => (
-                        <li key={i} className="flex gap-3 text-sm text-on-surface-variant leading-relaxed">
-                          <span className="text-secondary mt-1">•</span>
+                        <li key={i} className="flex gap-2 text-[10px] text-white/60 leading-relaxed">
+                          <span className="text-white mt-1">•</span>
                           {s}
                         </li>
                       ))}
@@ -416,102 +434,95 @@ export default function ChatRoom() {
               initial={{ y: "100%" }} 
               animate={{ y: 0 }} 
               exit={{ y: "100%" }} 
-              className="absolute inset-x-0 bottom-0 bg-surface-container p-8 rounded-t-[32px] border-t border-outline-variant/10 shadow-2xl z-50"
+              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              className="absolute inset-x-0 bottom-0 bg-black border-t border-white/5 p-6 rounded-t-[2.5rem] shadow-2xl z-50"
             >
-              <div className="max-w-xl mx-auto space-y-8">
+              <div className="max-w-xl mx-auto space-y-5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-tertiary/10 text-tertiary flex items-center justify-center">
-                      <span className="material-symbols-outlined">medication</span>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center">
+                      <span className="material-symbols-outlined text-base">medication</span>
                     </div>
-                    <h3 className="font-headline text-lg font-bold text-on-surface">Issue Secure Rx</h3>
+                    <h3 className="font-sans text-sm font-bold text-white uppercase tracking-wider">Authorize Medical Rx</h3>
                   </div>
-                  <button onClick={() => setShowTools(null)} className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-outline">
-                    <span className="material-symbols-outlined">close</span>
+                  <button onClick={() => setShowTools(null)} className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white">
+                    <span className="material-symbols-outlined text-sm">close</span>
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="font-label text-[9px] text-outline uppercase tracking-widest pl-1">Medication Name</label>
+                  <div className="space-y-1">
+                    <label className="font-mono text-[8px] text-white/40 uppercase tracking-widest pl-1">Medication Name</label>
                     <input 
                       value={prescribeForm.medication} 
                       onChange={e => setPrescribeForm({...prescribeForm, medication: e.target.value})} 
-                      placeholder="e.g. Paracetamol" 
-                      className="w-full bg-surface-container-low border border-outline-variant/10 rounded-xl px-4 py-3 text-sm focus:border-tertiary/40 focus:outline-none transition-all" 
+                      placeholder="e.g. Amoxicillin" 
+                      className="input-field py-2 text-xs" 
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="font-label text-[9px] text-outline uppercase tracking-widest pl-1">Dosage Protocol</label>
+                  <div className="space-y-1">
+                    <label className="font-mono text-[8px] text-white/40 uppercase tracking-widest pl-1">Dosage Protocol</label>
                     <input 
                       value={prescribeForm.dosage} 
                       onChange={e => setPrescribeForm({...prescribeForm, dosage: e.target.value})} 
-                      placeholder="e.g. 500mg" 
-                      className="w-full bg-surface-container-low border border-outline-variant/10 rounded-xl px-4 py-3 text-sm focus:border-tertiary/40 focus:outline-none transition-all" 
+                      placeholder="e.g. 500mg BID" 
+                      className="input-field py-2 text-xs font-mono" 
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="font-label text-[9px] text-outline uppercase tracking-widest pl-1">Clinical Instructions</label>
+                <div className="space-y-1">
+                  <label className="font-mono text-[8px] text-white/40 uppercase tracking-widest pl-1">Clinical Instructions</label>
                   <input 
                     value={prescribeForm.instructions} 
                     onChange={e => setPrescribeForm({...prescribeForm, instructions: e.target.value})} 
-                    placeholder="e.g. Twice daily after food..." 
-                    className="w-full bg-surface-container-low border border-outline-variant/10 rounded-xl px-4 py-4 text-sm focus:border-tertiary/40 focus:outline-none transition-all" 
+                    placeholder="e.g. Take twice daily after meals..." 
+                    className="input-field py-2.5 text-xs" 
                   />
                 </div>
 
                 <button 
                   onClick={handlePrescribe} 
                   disabled={!prescribeForm.medication} 
-                  className="w-full bg-tertiary text-on-tertiary font-headline h-14 rounded-full font-bold shadow-lg shadow-tertiary/20 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="w-full bg-white text-black hover:bg-white/95 font-sans h-10 rounded-full font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-20"
                 >
-                  Transmit Prescription
+                  Transmit Secure Prescription
                 </button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Input Area */}
+        {/* Input Message Area */}
         {consultation.status !== 'COMPLETED' ? (
-          <form onSubmit={handleSendMessage} className="px-6 py-4 pb-6 bg-surface-container-low border-t border-outline-variant/10 flex items-end gap-3 shrink-0 z-30 pb-safe">
+          <form onSubmit={handleSendMessage} className="absolute bottom-4 inset-x-6 h-14 bg-white/5 border border-white/5 rounded-full flex items-center px-4 z-40 shadow-2xl backdrop-blur-2xl max-w-xl mx-auto">
             <button 
               type="button" 
-              onClick={() => toast.info('Vault Attachments available soon.')}
-              className="w-12 h-12 shrink-0 flex items-center justify-center rounded-full text-outline hover:text-on-surface hover:bg-surface-container-highest/50 transition-all border border-transparent"
+              onClick={() => toast.info('Vault attachment support coming soon.')}
+              className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full text-white/40 hover:text-white transition-all"
             >
-              <span className="material-symbols-outlined text-2xl">attachment</span>
+              <span className="material-symbols-outlined text-xl">attachment</span>
             </button>
             
-            <div className="flex-1 bg-surface-container border border-outline-variant/10 rounded-[28px] focus-within:border-primary/40 focus-within:bg-surface-container-low transition-all overflow-hidden flex items-end">
-              <textarea
-                value={newMessage}
-                onChange={handleInputChange}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage(e);
-                  }
-                }}
-                placeholder="Type your message securely..."
-                className="bg-transparent border-none w-full text-[15px] focus:ring-0 px-5 py-3.5 resize-none leading-relaxed placeholder:text-outline text-on-surface custom-scrollbar"
-                rows="1"
-                style={{ minHeight: '52px', maxHeight: '120px', outline:'none' }} 
-              />
-            </div>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={handleInputChange}
+              placeholder="Type secure encrypted message..."
+              className="bg-transparent border-none w-full text-xs px-3 focus:ring-0 outline-none text-white placeholder:text-white/20 font-sans"
+              style={{ outline: 'none' }}
+            />
 
             <button 
               type="submit" 
               disabled={!newMessage.trim()}
-              className="w-12 h-12 shrink-0 flex items-center justify-center rounded-full bg-primary text-on-primary disabled:opacity-30 disabled:bg-surface-container-highest transition-all shadow-lg shadow-primary/10"
+              className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full bg-white text-black disabled:opacity-20 transition-all active:scale-95"
             >
-              <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
+              <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
             </button>
           </form>
         ) : (
-          <div className="px-6 py-6 pb-8 bg-surface-container-low border-t border-outline-variant/10 text-center pb-safe">
-            <p className="font-label text-[10px] text-outline uppercase tracking-[0.2em]">Consultation History Secured</p>
+          <div className="absolute bottom-4 inset-x-6 h-14 bg-white/[0.02] border border-white/5 rounded-full flex items-center justify-center z-40 select-none max-w-xl mx-auto">
+            <p className="font-mono text-[9px] text-white/30 uppercase tracking-[0.2em] font-semibold">Consultation History Decrypted & Locked</p>
           </div>
         )}
       </div>

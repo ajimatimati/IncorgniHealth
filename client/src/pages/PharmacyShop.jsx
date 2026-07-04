@@ -6,21 +6,21 @@ import api from '../api';
 /* ── Product data ─────────────────────────────────────────────────────────── */
 const PRODUCTS = [
   // Test Kits
-  { id: 'kit-1', category: 'Test Kits', icon: 'science', name: 'Complete STI Panel', sub: 'HIV, Chlamydia, Gonorrhoea, Syphilis', price: 12500, badge: 'Most Popular', delivery: '2–3 days', color: 'text-primary', bg: 'bg-primary/8', border: 'border-primary/20' },
-  { id: 'kit-2', category: 'Test Kits', icon: 'biotech', name: 'HIV Rapid Test Kit', sub: 'Results in 15 minutes', price: 4500, delivery: '1–2 days', color: 'text-tertiary', bg: 'bg-tertiary/8', border: 'border-tertiary/20' },
-  { id: 'kit-3', category: 'Test Kits', icon: 'water_drop', name: 'Hepatitis B & C Combo', sub: 'Dual-antibody detection panel', price: 7200, delivery: '2–3 days', color: 'text-secondary', bg: 'bg-secondary/8', border: 'border-secondary/20' },
+  { id: 'kit-1', category: 'Test Kits', icon: 'science', name: 'Complete STI Panel', sub: 'HIV, Chlamydia, Gonorrhoea, Syphilis', price: 12500, badge: 'Popular', delivery: '2–3 days', color: 'text-white', bg: 'bg-white/5', border: 'border-white/10' },
+  { id: 'kit-2', category: 'Test Kits', icon: 'biotech', name: 'HIV Rapid Test Kit', sub: 'Results in 15 minutes', price: 4500, delivery: '1–2 days', color: 'text-white/60', bg: 'bg-white/5', border: 'border-white/10' },
+  { id: 'kit-3', category: 'Test Kits', icon: 'water_drop', name: 'Hepatitis B & C Combo', sub: 'Dual-antibody detection panel', price: 7200, delivery: '2–3 days', color: 'text-white/40', bg: 'bg-white/5', border: 'border-white/10' },
   // Prescriptions
-  { id: 'rx-1', category: 'Prescriptions', icon: 'medication', name: 'PrEP (TDF/FTC)', sub: 'HIV Pre-Exposure Prophylaxis — 30-day supply', price: 18000, badge: 'Rx Required', delivery: '1–2 days', color: 'text-primary', bg: 'bg-primary/8', border: 'border-primary/20' },
-  { id: 'rx-2', category: 'Prescriptions', icon: 'pill', name: 'Emergency Contraception', sub: 'Levonorgestrel 1.5mg', price: 3500, delivery: 'Same day', color: 'text-error', bg: 'bg-error/8', border: 'border-error/20' },
-  { id: 'rx-3', category: 'Prescriptions', icon: 'local_pharmacy', name: 'Antifungal Treatment', sub: 'Fluconazole 150mg (Rx-grade)', price: 2800, delivery: '1–2 days', color: 'text-tertiary', bg: 'bg-tertiary/8', border: 'border-tertiary/20' },
+  { id: 'rx-1', category: 'Prescriptions', icon: 'medication', name: 'PrEP (TDF/FTC)', sub: 'HIV Pre-Exposure Prophylaxis — 30-day supply', price: 18000, badge: 'Rx Required', delivery: '1–2 days', color: 'text-white', bg: 'bg-white/5', border: 'border-white/10' },
+  { id: 'rx-2', category: 'Prescriptions', icon: 'pill', name: 'Emergency Contraception', sub: 'Levonorgestrel 1.5mg', price: 3500, delivery: 'Same day', color: 'text-white', bg: 'bg-white/5', border: 'border-white/10' },
+  { id: 'rx-3', category: 'Prescriptions', icon: 'local_pharmacy', name: 'Antifungal Treatment', sub: 'Fluconazole 150mg (Rx-grade)', price: 2800, delivery: '1–2 days', color: 'text-white/60', bg: 'bg-white/5', border: 'border-white/10' },
   // Wellness
-  { id: 'wl-1', category: 'Wellness', icon: 'spa', name: 'Vitamin D3 + K2 Combo', sub: '5000 IU · 90-day supply', price: 6500, delivery: '3–5 days', color: 'text-secondary', bg: 'bg-secondary/8', border: 'border-secondary/20' },
-  { id: 'wl-2', category: 'Wellness', icon: 'health_and_safety', name: 'Zinc + Selenium Bundle', sub: 'Immune and reproductive support', price: 4200, delivery: '3–5 days', color: 'text-tertiary', bg: 'bg-tertiary/8', border: 'border-tertiary/20' },
+  { id: 'wl-1', category: 'Wellness', icon: 'spa', name: 'Vitamin D3 + K2 Combo', sub: '5000 IU · 90-day supply', price: 6500, delivery: '3–5 days', color: 'text-white/40', bg: 'bg-white/5', border: 'border-white/10' },
+  { id: 'wl-2', category: 'Wellness', icon: 'health_and_safety', name: 'Zinc + Selenium Bundle', sub: 'Immune and reproductive support', price: 4200, delivery: '3–5 days', color: 'text-white/60', bg: 'bg-white/5', border: 'border-white/10' },
 ];
 
 const CATEGORIES = ['All', 'Test Kits', 'Prescriptions', 'Wellness'];
 
-/* ── Order bottom-sheet ────────────────────────────────────────────────────── */
+/* ── Order bottom-sheet ── */
 function OrderSheet({ product, onClose, onSuccess }) {
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
@@ -54,7 +54,7 @@ function OrderSheet({ product, onClose, onSuccess }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[90] bg-[#010101]/60 backdrop-blur-md"
             onClick={onClose}
           />
           <motion.div
@@ -63,50 +63,54 @@ function OrderSheet({ product, onClose, onSuccess }) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            className="fixed inset-x-0 bottom-0 z-[91] rounded-t-3xl overflow-hidden"
+            className="fixed inset-x-0 bottom-0 z-[91] rounded-t-[2.5rem] overflow-hidden"
           >
-            <div className="bg-background border-t border-outline-variant/20 shadow-2xl">
-              <div className="w-12 h-1 bg-outline-variant/30 rounded-full mx-auto mt-4 mb-0" />
-              <form onSubmit={handleOrder} className="p-6 space-y-5">
+            <div className="bg-black/40 backdrop-blur-3xl border-t border-white/5 shadow-2xl bento-glass">
+              <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mt-4 mb-0" />
+              <form onSubmit={handleOrder} className="p-6 sm:p-8 space-y-6">
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${product.bg}`}>
-                    <span className={`material-symbols-outlined text-xl ${product.color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{product.icon}</span>
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-white/5 border border-white/10`}>
+                    <span className={`material-symbols-outlined text-xl text-white`} style={{ fontVariationSettings: "'FILL' 1" }}>{product.icon}</span>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-headline text-base font-bold text-on-surface">{product.name}</h3>
-                    <p className="font-label text-[10px] text-outline uppercase tracking-widest">₦{product.price.toLocaleString()} · {product.delivery} delivery</p>
+                    <h3 className="font-sans text-base font-bold text-white">{product.name}</h3>
+                    <p className="font-mono text-[9px] text-white/40 uppercase tracking-widest font-semibold">₦{product.price.toLocaleString()} · {product.delivery} delivery</p>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant/10 space-y-1">
-                  <p className="font-label text-[9px] text-outline uppercase tracking-widest">Discreet Delivery Guarantee</p>
-                  <p className="font-body text-xs text-on-surface-variant">Plain, unmarked packaging. No brand name, no medical indicator on the parcel. Delivered by a verified IncogniCare rider.</p>
+                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
+                  <p className="font-mono text-[8px] text-white/40 uppercase tracking-widest font-semibold">Discreet Delivery Protocol</p>
+                  <p className="font-sans text-xs text-white/50 leading-relaxed">Plain, unmarked parcel wrapping. No company branding, no clinical text, no prescription details. Verified, de-identified delivery transit.</p>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="font-label text-[10px] uppercase tracking-widest text-outline" htmlFor="delivery-address">Delivery Address</label>
+                  <label className="font-mono text-[8px] uppercase tracking-widest text-white/40" htmlFor="delivery-address">Transit Destination Address</label>
                   <textarea
                     id="delivery-address"
                     value={address}
                     onChange={e => setAddress(e.target.value)}
-                    placeholder="Enter your full delivery address (stays private on your device only)"
-                    className="w-full h-24 bg-surface-container-low border border-outline-variant/20 focus:border-primary/50 rounded-xl px-4 py-3 text-sm text-on-surface placeholder:text-outline focus:outline-none resize-none"
+                    placeholder="Enter complete delivery coordinates..."
+                    className="input-field h-24 py-3 text-xs resize-none"
                   />
                 </div>
 
                 <div className="flex gap-3">
-                  <button type="button" onClick={onClose} className="flex-1 h-12 rounded-2xl border border-outline-variant/20 text-on-surface-variant font-label text-[10px] uppercase tracking-widest">
+                  <button type="button" onClick={onClose} className="flex-1 h-11 rounded-full border border-white/10 text-white hover:bg-white/5 font-mono text-[9px] uppercase tracking-widest transition-all">
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={!address.trim() || loading}
-                    className="flex-2 min-w-[160px] h-12 rounded-2xl bg-primary text-on-primary font-headline font-bold text-[12px] uppercase tracking-widest disabled:opacity-30 hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 h-11 rounded-full bg-white text-black font-sans font-bold text-xs uppercase tracking-wider disabled:opacity-20 hover:bg-white/95 active:scale-95 transition-all flex items-center justify-center gap-2 shadow"
                   >
-                    {loading
-                      ? <><span className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin" /> Placing…</>
-                      : <><span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>package_2</span> Place Order</>
-                    }
+                    {loading ? (
+                      <div className="w-4 h-4 border border-black/25 border-t-black rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-sm">package_2</span>
+                        <span>Place Order</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -118,40 +122,40 @@ function OrderSheet({ product, onClose, onSuccess }) {
   );
 }
 
-/* ── Product card ─────────────────────────────────────────────────────────── */
+/* ── Product card ── */
 function ProductCard({ product, onOrder }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-surface-container-low border ${product.border} rounded-3xl p-6 flex flex-col justify-between hover:shadow-lg transition-all group`}
+      className={`bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-6 flex flex-col justify-between hover:border-white/15 hover:shadow-lg transition-all duration-300 group bento-glass`}
     >
       <div className="space-y-4">
         <div className="flex items-start justify-between">
-          <div className={`w-12 h-12 rounded-2xl ${product.bg} flex items-center justify-center`}>
-            <span className={`material-symbols-outlined text-xl ${product.color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{product.icon}</span>
+          <div className={`w-12 h-12 rounded-[20px] bg-white/5 border border-white/10 flex items-center justify-center text-white`}>
+            <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>{product.icon}</span>
           </div>
           {product.badge && (
-            <span className="font-label text-[8px] uppercase tracking-widest px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+            <span className="font-mono text-[8px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white font-semibold">
               {product.badge}
             </span>
           )}
         </div>
         <div>
-          <h3 className="font-headline text-base font-bold text-on-surface mb-1">{product.name}</h3>
-          <p className="font-body text-sm text-on-surface-variant leading-relaxed opacity-80">{product.sub}</p>
+          <h3 className="font-sans text-base font-bold text-white mb-1">{product.name}</h3>
+          <p className="font-sans text-xs text-white/50 leading-relaxed">{product.sub}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-outline text-sm">local_shipping</span>
-          <span className="font-label text-[10px] text-outline uppercase tracking-wide">{product.delivery} · Discreet packaging</span>
+        <div className="flex items-center gap-2.5 text-white/30">
+          <span className="material-symbols-outlined text-sm">local_shipping</span>
+          <span className="font-mono text-[8px] uppercase tracking-wider font-semibold">{product.delivery} · Discreet Package</span>
         </div>
       </div>
 
       <div className="mt-6 flex items-center justify-between">
-        <span className="font-headline text-xl font-black text-on-surface">₦{product.price.toLocaleString()}</span>
+        <span className="font-sans text-lg font-black text-white">₦{product.price.toLocaleString()}</span>
         <button
           onClick={() => onOrder(product)}
-          className={`h-10 px-5 rounded-xl ${product.bg} ${product.color} border ${product.border} font-label text-[10px] uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all group-hover:shadow-md`}
+          className={`h-9 px-5 rounded-full bg-white text-black font-sans font-bold text-[10px] uppercase tracking-wider hover:bg-white/95 active:scale-95 transition-all shadow`}
         >
           Order
         </button>
@@ -160,7 +164,7 @@ function ProductCard({ product, onOrder }) {
   );
 }
 
-/* ── Main page ────────────────────────────────────────────────────────────── */
+/* ── Main page ── */
 export default function PharmacyShop() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [orderProduct, setOrderProduct] = useState(null);
@@ -169,54 +173,56 @@ export default function PharmacyShop() {
   const filtered = activeCategory === 'All' ? PRODUCTS : PRODUCTS.filter(p => p.category === activeCategory);
 
   const handleSuccess = (ref) => {
-    toast.success(`Order placed! Reference: ${ref}. Delivery tracking coming soon.`);
+    toast.success(`Order placed! Reference: ${ref}. Delivery tracking active.`);
   };
 
   return (
-    <div className="bg-background text-on-background min-h-full">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-8 lg:py-10 space-y-8">
+    <div className="bg-[#010101] text-white min-h-screen select-none">
+      <div className="max-w-7xl mx-auto px-6 sm:px-10 py-10 lg:py-14 space-y-10">
 
         {/* Header */}
-        <header>
-          <div className="flex items-center gap-3 mb-2">
-            <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>local_pharmacy</span>
+        <header className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shadow-md">
+              <span className="material-symbols-outlined text-white text-base" style={{ fontVariationSettings: "'FILL' 1" }}>local_pharmacy</span>
+            </div>
             <div>
-              <p className="font-label text-[11px] text-primary uppercase tracking-[0.2em]">Discreet Delivery</p>
-              <h1 className="font-headline text-3xl lg:text-4xl font-bold text-on-surface">Pharmacy</h1>
+              <p className="font-mono text-[9px] text-white/40 uppercase tracking-[0.2em] font-semibold mb-0.5">Discreet Dispensary</p>
+              <h1 className="font-sans text-3xl lg:text-4xl font-black text-white tracking-tight">Pharmacy</h1>
             </div>
           </div>
-          <p className="font-body text-sm text-on-surface-variant mt-2 max-w-2xl">
-            Medications, test kits, and wellness products delivered in plain, unmarked packaging. Prescription items require a valid consultation on record.
+          <p className="font-sans text-xs text-white/50 leading-relaxed max-w-2xl">
+            Request test kits, prescriptions, and wellness support products dispatched under de-identified transit parameters. Rx products require an active consultation record.
           </p>
         </header>
 
         {/* Delivery promise banner */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { icon: 'package_2', label: 'Plain Packaging', sub: 'No brand on the parcel' },
-            { icon: 'lock', label: 'Encrypted Order', sub: 'Your purchase stays private' },
-            { icon: 'local_shipping', label: 'Tracked Delivery', sub: 'Real-time rider updates' },
+            { icon: 'package_2', label: 'Plain Packaging', sub: 'No clinical branding on the parcel' },
+            { icon: 'lock', label: 'Encrypted Order Payload', sub: 'Purchase records decoupled from identity' },
+            { icon: 'local_shipping', label: 'De-identified Delivery', sub: 'Real-time de-identified rider logs' },
           ].map(f => (
-            <div key={f.label} className="flex items-center gap-4 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/10">
-              <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>{f.icon}</span>
+            <div key={f.label} className="flex items-center gap-4 p-4 rounded-3xl bg-white/[0.02] border border-white/5 bento-glass">
+              <span className="material-symbols-outlined text-white text-base" style={{ fontVariationSettings: "'FILL' 1" }}>{f.icon}</span>
               <div>
-                <p className="font-headline text-sm font-bold text-on-surface">{f.label}</p>
-                <p className="font-label text-[10px] text-outline uppercase tracking-wide">{f.sub}</p>
+                <p className="font-sans text-xs font-bold text-white">{f.label}</p>
+                <p className="font-mono text-[8px] text-white/40 uppercase tracking-wider font-semibold mt-0.5">{f.sub}</p>
               </div>
             </div>
           ))}
         </section>
 
-        {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {/* Category Filters */}
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar select-none">
           {CATEGORIES.map(cat => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`shrink-0 h-10 px-5 rounded-full font-label text-[11px] uppercase tracking-widest transition-all ${
+              className={`shrink-0 h-9 px-5 rounded-full font-mono text-[9px] uppercase tracking-widest transition-all ${
                 activeCategory === cat
-                  ? 'bg-primary text-on-primary shadow-lg shadow-primary/15'
-                  : 'bg-surface-container-low border border-outline-variant/15 text-on-surface-variant hover:text-on-surface'
+                  ? 'bg-white text-black font-bold shadow'
+                  : 'bg-white/5 border border-white/10 text-white/40 hover:text-white'
               }`}
             >
               {cat}
@@ -232,8 +238,8 @@ export default function PharmacyShop() {
         </div>
 
         {/* Rx note */}
-        <p className="text-center font-body text-xs text-outline/50 pb-4">
-          Items marked "Rx Required" will be verified against your consultation records before dispatch. Questions? Contact support.
+        <p className="text-center font-mono text-[8px] text-white/30 uppercase tracking-widest font-semibold pb-4">
+          Items marked "Rx Required" require physician authorization before packaging.
         </p>
       </div>
 
