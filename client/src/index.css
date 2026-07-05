@@ -1,5 +1,5 @@
-/* ── Google Fonts ──────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+/* ── Google Fonts (High-End Editorial & Display Typography) ───────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
 @tailwind base;
@@ -20,8 +20,9 @@
   --border-light: rgba(255, 255, 255, 0.05);
   --border-glow: rgba(140, 205, 255, 0.15);
   
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'Space Grotesk', monospace;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 /* ── Global Resets & Body ────────────────────────────────────────────────── */
@@ -65,19 +66,51 @@ body {
   vertical-align: middle;
 }
 
-/* ── Typography & Clamp Scaling ──────────────────────────────────────────── */
+/* ── High-End Fluid Typography Utilities ─────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans);
   font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.04em;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
   color: var(--primary);
   margin: 0;
 }
 
-h1 { font-size: clamp(2rem, 8vw, 4.5rem); font-weight: 900; }
-h2 { font-size: clamp(1.5rem, 5vw, 2.5rem); }
-h3 { font-size: clamp(1.125rem, 3vw, 1.5rem); font-weight: 700; }
+.text-fluid-hero {
+  font-family: var(--font-sans);
+  font-size: clamp(2.75rem, 5.5vw + 1rem, 5.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  font-weight: 800;
+}
+
+.text-fluid-title {
+  font-family: var(--font-sans);
+  font-size: clamp(2.15rem, 3.8vw + 0.5rem, 3.5rem);
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+}
+
+.font-serif-editorial {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.text-micro-caps {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-weight: 700;
+  color: var(--tertiary);
+}
+
+h1 { font-size: clamp(2.25rem, 7vw, 4.75rem); font-weight: 800; }
+h2 { font-size: clamp(1.65rem, 4.5vw, 2.75rem); font-weight: 800; }
+h3 { font-size: clamp(1.2rem, 2.5vw, 1.65rem); font-weight: 700; }
 p  { margin: 0; font-weight: 400; opacity: 0.85; }
 
 /* ── Layout Panels ───────────────────────────────────────────────────────── */

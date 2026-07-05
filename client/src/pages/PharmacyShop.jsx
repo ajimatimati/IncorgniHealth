@@ -187,12 +187,14 @@ export default function PharmacyShop() {
               <span className="material-symbols-outlined text-white text-base" style={{ fontVariationSettings: "'FILL' 1" }}>local_pharmacy</span>
             </div>
             <div>
-              <p className="font-mono text-[9px] text-white/40 uppercase tracking-[0.2em] font-semibold mb-0.5">Discreet Dispensary</p>
-              <h1 className="font-sans text-3xl lg:text-4xl font-black text-white tracking-tight">Pharmacy</h1>
+              <p className="text-micro-caps mb-0.5">Discreet Dispensary</p>
+              <h1 className="text-fluid-title text-white tracking-tight">
+                Pharmacy & <span className="font-serif-editorial text-sky-300 font-normal">Discreet Dispensary</span>
+              </h1>
             </div>
           </div>
-          <p className="font-sans text-xs text-white/50 leading-relaxed max-w-2xl">
-            Request test kits, prescriptions, and wellness support products dispatched under de-identified transit parameters. Rx products require an active consultation record.
+          <p className="font-sans text-xs text-white/70 leading-relaxed max-w-2xl">
+            Request home test kits, prescriptions, and wellness support products dispatched in plain, unmarked packages.
           </p>
         </header>
 

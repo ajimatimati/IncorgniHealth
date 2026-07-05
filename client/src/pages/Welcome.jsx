@@ -682,9 +682,9 @@ export default function Welcome() {
               </span>
             </div>
 
-            <h1 className="font-sans text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.06]">
+            <h1 className="text-fluid-hero text-white">
               Healthcare <br />
-              <span className="bg-gradient-to-r from-sky-300 via-sky-100 to-white bg-clip-text text-transparent font-serif italic font-normal">
+              <span className="font-serif-editorial bg-gradient-to-r from-sky-300 via-sky-100 to-white bg-clip-text text-transparent">
                 designed around
               </span> <br />
               your dignity.

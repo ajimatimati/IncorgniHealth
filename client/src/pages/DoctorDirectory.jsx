@@ -155,12 +155,14 @@ export default function DoctorDirectory() {
         <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/5 pb-6">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-              <p className="font-label text-[10px] text-primary uppercase tracking-[0.25em]">Specialist Network</p>
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+              <p className="text-micro-caps">Specialist Network</p>
             </div>
-            <h1 className="font-headline text-3xl sm:text-4xl font-black text-on-surface mt-1.5">Consult with verified experts</h1>
-            <p className="font-body text-xs text-outline mt-1.5 max-w-xl">
-              Connect anonymously with certified Nigerian physicians, clinical experts, and SARC trauma support specialists.
+            <h1 className="text-fluid-title text-on-surface mt-1.5">
+              Consult with <span className="font-serif-editorial text-sky-300 font-normal">verified clinical experts</span>
+            </h1>
+            <p className="font-sans text-xs text-white/70 mt-1.5 max-w-xl leading-relaxed">
+              Connect privately with certified Nigerian physicians, medical specialists, and compassionate counselors around the clock.
             </p>
           </div>
           
