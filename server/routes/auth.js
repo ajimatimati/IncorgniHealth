@@ -10,6 +10,8 @@ const validate = require('../middleware/validate');
 const { authLimiter } = require('../middleware/rateLimit');
 const auth = require('../middleware/auth');
 
+const { sendVerificationEmail } = require('../utils/email');
+
 // Memory-based verification cache for new registrations
 const otpCache = new Map();
 
@@ -35,6 +37,10 @@ const refreshSchema = z.object({
 const verify2faSchema = z.object({
   tempToken: z.string().min(1, 'Temporary token required'),
   code: z.string().length(6, 'MFA Code must be 6 digits'),
+});
+
+const resendOtpSchema = z.object({
+  email: z.string().email('Invalid email address'),
 });
 
 const ACCESS_TOKEN_EXPIRY = '15m';
@@ -108,7 +114,8 @@ async function handleAuthSuccess(user, res) {
 router.post('/signup', authLimiter, validate(signupSchema), async (req, res) => {
   try {
     const { email } = req.body;
-    const emailHash = hashData(email.toLowerCase().trim());
+    const cleanEmail = email.toLowerCase().trim();
+    const emailHash = hashData(cleanEmail);
 
     const existingUser = await prisma.user.findFirst({
       where: { dataHash: emailHash, deletedAt: null },
@@ -125,17 +132,45 @@ router.post('/signup', authLimiter, validate(signupSchema), async (req, res) => 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = Date.now() + 5 * 60 * 1000; // 5 minutes validity
     
-    otpCache.set(email.toLowerCase().trim(), { otp: otpCode, expires });
-    logger.info(`[Registration OTP] Generated for ${email}: ${otpCode}`);
+    otpCache.set(cleanEmail, { otp: otpCode, expires });
+    logger.info(`[Registration OTP] Generated for ${cleanEmail}: ${otpCode}`);
+
+    // Send actual verification email via Nodemailer / SMTP
+    const emailResult = await sendVerificationEmail(cleanEmail, otpCode);
 
     res.status(200).json({
-      msg: 'OTP sent to email.',
+      msg: 'Verification code sent to email.',
       isExisting: false,
-      // Expose the OTP in response ONLY when running tests
-      ...(process.env.NODE_ENV === 'test' && { testOtp: otpCode })
+      emailSent: emailResult.sent,
+      // Provide demo OTP only if email dispatch was not configured or in test mode
+      ...((!emailResult.sent || process.env.NODE_ENV === 'test') && { demoOtp: otpCode }),
     });
   } catch (err) {
     logger.error('Signup check error', { error: err.message });
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route   POST /api/v1/auth/resend-otp
+// Resends or issues a new 6-digit email verification code
+router.post('/resend-otp', authLimiter, validate(resendOtpSchema), async (req, res) => {
+  try {
+    const { email } = req.body;
+    const cleanEmail = email.toLowerCase().trim();
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = Date.now() + 5 * 60 * 1000;
+    otpCache.set(cleanEmail, { otp: otpCode, expires });
+
+    const emailResult = await sendVerificationEmail(cleanEmail, otpCode);
+
+    res.status(200).json({
+      msg: 'Verification code sent to email.',
+      emailSent: emailResult.sent,
+      ...((!emailResult.sent || process.env.NODE_ENV === 'test') && { demoOtp: otpCode }),
+    });
+  } catch (err) {
+    logger.error('Resend OTP error', { error: err.message });
     res.status(500).json({ msg: 'Server Error' });
   }
 });

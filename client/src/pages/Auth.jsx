@@ -61,10 +61,22 @@ export default function Auth() {
   const [isExisting, setIsExisting] = useState(false);
   const [tempCreds, setTempCreds] = useState(null);
   const [showPartnerForm, setShowPartnerForm] = useState(false);
+  const [demoCode, setDemoCode] = useState('');
+  const [resendTimer, setResendTimer] = useState(0);
+  const [resendSuccess, setResendSuccess] = useState('');
+  const [useEmailVerification, setUseEmailVerification] = useState(false);
   
   // Custom decryption states
   const [decrypting, setDecrypting] = useState(false);
   const [finalTarget, setFinalTarget] = useState(null);
+
+  useEffect(() => {
+    let timer;
+    if (resendTimer > 0) {
+      timer = setInterval(() => setResendTimer(prev => prev - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendTimer]);
 
   const handleContinue = async (e) => {
     e.preventDefault();
@@ -75,6 +87,8 @@ export default function Auth() {
     }
     setError('');
     setLoading(true);
+    setDemoCode('');
+    setResendSuccess('');
     
     try {
       const response = await api.post('/auth/signup', {
@@ -82,9 +96,32 @@ export default function Auth() {
         role: role,
       });
       setIsExisting(response.data.isExisting);
+      if (response.data.demoOtp) {
+        setDemoCode(response.data.demoOtp);
+      }
       setStep(2);
     } catch (err) {
       setError(err.response?.data?.msg || 'Failed to check email. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendTimer > 0 || loading) return;
+    setLoading(true);
+    setError('');
+    setResendSuccess('');
+
+    try {
+      const response = await api.post('/auth/resend-otp', { email: email.trim() });
+      if (response.data.demoOtp) {
+        setDemoCode(response.data.demoOtp);
+      }
+      setResendSuccess('New verification code sent to your email.');
+      setResendTimer(30);
+    } catch (err) {
+      setError(err.response?.data?.msg || 'Failed to resend verification code.');
     } finally {
       setLoading(false);
     }
@@ -462,11 +499,46 @@ export default function Auth() {
                 </header>
 
                 <form onSubmit={handleVerify} className="space-y-6">
-                  {!isExisting && (
+                  {demoCode && (
+                    <div className="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-200 text-xs flex items-center justify-between shadow-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base text-sky-400">mark_email_read</span>
+                        <span className="font-sans text-[11px]">Code: <strong className="font-mono text-white text-xs tracking-wider">{demoCode}</strong></span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const digits = demoCode.split('');
+                          setEmailOtp(digits);
+                        }}
+                        className="font-mono text-[9px] uppercase tracking-widest px-3 py-1 rounded-xl bg-sky-400 hover:bg-sky-300 text-black font-extrabold transition-all"
+                      >
+                        Auto-fill
+                      </button>
+                    </div>
+                  )}
+
+                  {resendSuccess && (
+                    <p className="text-emerald-400 text-xs font-mono bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl text-center">
+                      {resendSuccess}
+                    </p>
+                  )}
+
+                  {(!isExisting || useEmailVerification) && (
                     <div className="space-y-2">
-                      <label className="font-mono text-[9px] uppercase tracking-widest text-white/40">
-                        Email Validation Code
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="font-mono text-[9px] uppercase tracking-widest text-white/40">
+                          Email Validation Code
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleResendOtp}
+                          disabled={resendTimer > 0 || loading}
+                          className="font-mono text-[9px] uppercase tracking-widest text-sky-400 hover:text-sky-300 transition-colors disabled:opacity-40"
+                        >
+                          {resendTimer > 0 ? `Resend (${resendTimer}s)` : 'Resend Code'}
+                        </button>
+                      </div>
                       <div className="flex justify-between gap-1.5">
                         {emailOtp.map((digit, i) => (
                           <input
@@ -504,7 +576,7 @@ export default function Auth() {
                     </div>
                   </div>
 
-                  {error && <p className="text-red-400 text-xs font-mono">{error}</p>}
+                  {error && <p className="text-red-400 text-xs font-mono text-center">{error}</p>}
 
                   {/* Custom Luxury Visual Numpad Grid */}
                   <div className="grid grid-cols-3 gap-1.5 max-w-[180px] mx-auto pt-2">
