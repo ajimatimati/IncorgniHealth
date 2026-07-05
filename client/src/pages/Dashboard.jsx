@@ -429,7 +429,7 @@ export default function Dashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-white/5">
                     <div className="space-y-1">
                       <p className="font-mono text-[8px] text-white/40 uppercase tracking-widest font-semibold">
-                        {isStealthMode ? 'Mock Item Ordered' : 'Encrypted Package'}
+                        {isStealthMode ? 'Covert Order Reference' : 'Encrypted Package'}
                       </p>
                       <p className="font-sans text-xs font-bold text-white">
                         {isStealthMode ? 'Classic Cheeseburger Combo' : (activeOrder.prescription?.medications?.[0]?.name || 'Clinical Care Kit')}

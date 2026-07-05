@@ -170,6 +170,36 @@ export default function DoctorDirectory() {
           </div>
         </header>
 
+        {/* Featured Video Spotlight Card */}
+        <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-black/60 h-48 sm:h-56 flex items-center justify-between p-6 sm:p-8 bento-glass group">
+          <video
+            src="/physician_standing.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:scale-105 transition-transform duration-700 pointer-events-none"
+          />
+          <div className="relative z-10 max-w-xl space-y-2">
+            <span className="font-mono text-[9px] uppercase tracking-[0.25em] px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 font-bold inline-block">
+              Live Clinical Consultation On-Duty
+            </span>
+            <h2 className="font-sans text-xl sm:text-2xl font-black text-white">
+              Connect 1-on-1 with Certified Nigerian Physicians
+            </h2>
+            <p className="font-sans text-xs text-white/70 leading-relaxed">
+              De-identified tele-consultations, digital prescriptions, and instant lab orders without social exposure.
+            </p>
+          </div>
+          <div className="relative z-10 hidden sm:flex items-center gap-3 bg-black/60 backdrop-blur-xl border border-white/10 px-5 py-3 rounded-2xl">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+            <div className="text-left">
+              <p className="font-sans text-xs font-bold text-white">Dr. Adebayo, FWACP</p>
+              <p className="font-mono text-[9px] text-white/50 uppercase">Clinical Director</p>
+            </div>
+          </div>
+        </div>
+
         {/* Elevated Search & Filters Controls Bento */}
         <section className="bg-gradient-to-r from-white/[0.03] to-white/[0.01] border border-white/5 rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
           

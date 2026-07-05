@@ -196,6 +196,29 @@ export default function PharmacyShop() {
           </p>
         </header>
 
+        {/* Featured Video Delivery Banner */}
+        <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-black/60 h-44 sm:h-52 flex items-center justify-between p-6 sm:p-8 bento-glass group">
+          <video
+            src="/healthcare_delivery.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:scale-105 transition-transform duration-700 pointer-events-none"
+          />
+          <div className="relative z-10 max-w-xl space-y-2">
+            <span className="font-mono text-[9px] uppercase tracking-[0.25em] px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 font-bold inline-block">
+              Zero-Exposure Fulfillment Protocol
+            </span>
+            <h2 className="font-sans text-xl sm:text-2xl font-black text-white">
+              Healthcare Delivered Discreetly to Your Doorstep
+            </h2>
+            <p className="font-sans text-xs text-white/70 leading-relaxed">
+              No Rx labels visible, no clinical branding, and real-time de-identified courier tracking.
+            </p>
+          </div>
+        </div>
+
         {/* Delivery promise banner */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[

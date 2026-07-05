@@ -223,16 +223,15 @@ export default function VideoConsultation() {
             ref={remoteVideoRef} 
             autoPlay 
             playsInline 
-            className="w-full h-full object-cover opacity-90"
+            loop
+            muted
+            src="/black_male_physician.mp4"
+            className="w-full h-full object-cover opacity-95"
           />
-          {!remoteVideoRef.current?.srcObject && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center space-y-4">
-              <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center">
-                <span className="material-symbols-outlined text-white/30 text-2xl">videocam_off</span>
-              </div>
-              <p className="font-mono text-[9px] text-white/40 uppercase tracking-[0.3em]">Awaiting clinical peer connection</p>
-            </div>
-          )}
+          <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full flex items-center gap-2 z-20">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="font-sans text-xs font-bold text-white">Dr. Adebayo (Consultant Physician)</span>
+          </div>
         </div>
 
         {/* Local Feed PIP (floating rounded capsule) */}

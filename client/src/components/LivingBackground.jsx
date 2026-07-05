@@ -105,39 +105,37 @@ const LivingBackground = ({ mode = "ambient" }) => {
 
   useEffect(() => {
     // ── Video Autoplay handling ──────────────────────────────────────────────
-    if (mode === "ambient" && videoRef.current) {
+    if (videoRef.current) {
       videoRef.current.play().catch(() => {
         console.log("Autoplay blocked, waiting for user interaction");
       });
     }
   }, [mode]);
 
+  const getVideoSource = () => {
+    switch (mode) {
+      case 'ethereal': return '/bg_ethereal.mp4';
+      case 'metallic': return '/bg_light_metallic.mp4';
+      case 'scroll':   return '/welcome_hero.mp4';
+      default:         return '/bg_ethereal.mp4';
+    }
+  };
+
   return (
     <>
       {/* ── Video Background ───────────────────────────────────────────────── */}
       <div id="scroll-video-container">
-        {mode === "scroll" ? (
-          <video
-            ref={videoRef}
-            id="welcome-scroll-video"
-            src="/welcome_hero.mp4"
-            muted
-            playsInline
-            preload="auto"
-            style={{ display: "block" }}
-          />
-        ) : (
-          <video
-            ref={videoRef}
-            src="/ambient_bg.mp4"
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="opacity-[0.22] mix-blend-screen"
-            style={{ display: "block" }}
-          />
-        )}
+        <video
+          ref={videoRef}
+          id={mode === 'scroll' ? 'welcome-scroll-video' : 'ambient-video'}
+          src={getVideoSource()}
+          muted
+          loop={mode !== 'scroll'}
+          playsInline
+          preload="auto"
+          className={mode === 'scroll' ? '' : 'opacity-[0.25] mix-blend-screen object-cover w-full h-full'}
+          style={{ display: 'block' }}
+        />
         <div className="overlay" />
       </div>
 
