@@ -130,10 +130,11 @@ const LivingBackground = ({ mode = "ambient" }) => {
           id={mode === 'scroll' ? 'welcome-scroll-video' : 'ambient-video'}
           src={getVideoSource()}
           muted
-          loop={mode !== 'scroll'}
+          loop
+          autoPlay
           playsInline
           preload="auto"
-          className={mode === 'scroll' ? '' : 'opacity-[0.25] mix-blend-screen object-cover w-full h-full'}
+          className="opacity-[0.35] object-cover w-full h-full"
           style={{ display: 'block' }}
         />
         <div className="overlay" />
