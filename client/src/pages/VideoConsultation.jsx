@@ -211,7 +211,7 @@ export default function VideoConsultation() {
       <div className="absolute top-6 left-6 z-40 flex items-center gap-3">
         <div className="bg-[#010101]/60 backdrop-blur-xl border border-white/5 px-4 py-2 rounded-full flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          <span className="font-mono text-[9px] text-white/50 uppercase tracking-[0.2em] font-semibold">P2P Encrypted Tunnel</span>
+          <span className="font-sans text-[10px] text-white/70 uppercase tracking-[0.2em] font-extrabold">Secure Video Consultation</span>
         </div>
       </div>
 

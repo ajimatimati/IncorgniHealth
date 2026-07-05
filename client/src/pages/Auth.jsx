@@ -386,15 +386,15 @@ export default function Auth() {
                 className="space-y-6"
               >
                 <header className="space-y-1">
-                  <span className="font-mono text-[9px] text-white/40 uppercase tracking-[0.2em]">Secure Terminal</span>
-                  <h3 className="font-sans text-2xl font-black text-white leading-none">Welcome back</h3>
-                  <p className="font-sans text-xs text-white/50">Your health information remains safe and confidential.</p>
+                  <span className="font-sans text-[10px] text-sky-400 uppercase tracking-[0.2em] font-extrabold">Welcome to IncogniCare</span>
+                  <h3 className="font-sans text-2xl font-black text-white leading-none">Sign In or Register</h3>
+                  <p className="font-sans text-xs text-white/60">Your health information remains safe and confidential.</p>
                 </header>
 
                 <form onSubmit={handleContinue} className="space-y-6">
                   {/* Role selection */}
                   <div className="space-y-2">
-                    <label className="font-mono text-[9px] uppercase tracking-widest text-white/40">Access Level</label>
+                    <label className="font-sans text-[10px] uppercase tracking-widest text-white/50 font-bold">I am registering as a</label>
                     <div className="grid grid-cols-5 gap-1.5 p-1 bg-white/5 rounded-full border border-white/5">
                       {ROLES.map(r => (
                         <button
@@ -403,7 +403,7 @@ export default function Auth() {
                           onClick={() => setRole(r.id)}
                           className={`py-2 rounded-full font-sans text-[10px] font-bold transition-all whitespace-nowrap text-center
                             ${role === r.id
-                              ? 'bg-white text-black'
+                              ? 'bg-sky-400 text-black font-extrabold'
                               : 'text-white/50 hover:text-white'}`}
                         >
                           {r.label.split(' ')[0]}
@@ -414,7 +414,7 @@ export default function Auth() {
 
                   {/* Email Input */}
                   <div className="space-y-2">
-                    <label className="font-mono text-[9px] uppercase tracking-widest text-white/40" htmlFor="email">Email Address</label>
+                    <label className="font-sans text-[10px] uppercase tracking-widest text-white/50 font-bold" htmlFor="email">Email Address</label>
                     <div className="relative">
                       <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/30">mail</span>
                       <input
@@ -434,9 +434,9 @@ export default function Auth() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="btn btn-primary w-full text-xs font-bold py-3.5 rounded-full"
+                    className="btn btn-primary w-full text-xs font-extrabold py-3.5 rounded-full shadow-lg shadow-sky-500/20"
                   >
-                    {loading ? 'Consulting secure keys…' : 'Authenticate Credentials'}
+                    {loading ? 'Checking...' : 'Continue'}
                   </button>
 
                   {/* Divider */}
@@ -486,14 +486,14 @@ export default function Auth() {
                 className="space-y-6"
               >
                 <header className="space-y-1">
-                  <span className="font-mono text-[9px] text-white/40 uppercase tracking-[0.2em]">Encryption Key</span>
+                  <span className="font-sans text-[10px] text-sky-400 uppercase tracking-[0.2em] font-extrabold">Verification</span>
                   <h3 className="font-sans text-2xl font-black text-white leading-none">
-                    {isExisting ? 'Decryption Code' : 'Initialize Passcode'}
+                    {isExisting ? 'Enter Your PIN' : 'Create Your PIN'}
                   </h3>
-                  <p className="font-sans text-xs text-white/50">
+                  <p className="font-sans text-xs text-white/60">
                     {isExisting
-                      ? 'Enter your 6-digit passcode to unlock vault.'
-                      : 'Set a secure 6-digit PIN code to secure your data.'}
+                      ? 'Enter your 6-digit PIN code to sign in.'
+                      : 'Create a 6-digit PIN to keep your health data private.'}
                   </p>
                   <p className="font-mono text-[10px] text-white/80 mt-1 select-all">{email}</p>
                 </header>

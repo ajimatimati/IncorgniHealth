@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import PanicButton from '../components/PanicButton';
 import CryptoJS from 'crypto-js';
+import LivingBackground from '../components/LivingBackground';
 
 const TABS = ['Emergency Support', 'Clinical Protocols', 'Private Secure Log'];
 
@@ -247,9 +248,10 @@ export default function SafeHaven() {
   };
 
   return (
-    <div className="bg-[#010101] text-white min-h-screen relative select-none">
-      
-      {/* Immersive Decryption Overlay Screen */}
+    <div className="bg-[#010101] text-white min-h-screen select-none relative">
+      <LivingBackground mode="metallic" />
+
+      {/* ── Decrypting splash ── */}
       <AnimatePresence>
         {decrypting && (
           <motion.div
@@ -262,20 +264,20 @@ export default function SafeHaven() {
               <div className="w-14 h-14 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-2 shadow-lg">
                 <span className="material-symbols-outlined text-white text-xl">lock_open</span>
               </div>
-              <h2 className="text-sm font-mono uppercase tracking-[0.25em]">
+              <h2 className="text-sm font-sans font-bold uppercase tracking-[0.2em]">
                 <DecryptText
-                  text="DECRYPTING LOCAL VAULT PAYLOAD"
+                  text="Opening Private Journal"
                   active={decrypting}
                   onComplete={resolveDecryption}
                 />
               </h2>
-              <p className="font-mono text-[8px] uppercase tracking-widest text-white/40">Zeroing temporary cache registry</p>
+              <p className="font-sans text-xs text-white/50">Securing session memory</p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-10 py-10 lg:py-14 space-y-10">
+      <div className="max-w-7xl mx-auto px-6 sm:px-10 py-10 lg:py-14 space-y-10 relative z-10">
 
         {/* Page Header */}
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
@@ -284,7 +286,7 @@ export default function SafeHaven() {
               <span className="material-symbols-outlined text-white text-base" style={{ fontVariationSettings: "'FILL' 1" }}>shield_with_heart</span>
             </div>
             <div>
-              <p className="font-mono text-[9px] text-white/40 uppercase tracking-[0.2em] font-semibold mb-0.5">Stealth Haven</p>
+              <p className="font-sans text-[10px] text-sky-400 uppercase tracking-[0.2em] font-extrabold mb-0.5">Personal Care & Support</p>
               <h1 className="font-sans text-3xl lg:text-4xl font-black text-white tracking-tight">Safe Haven</h1>
             </div>
           </div>
@@ -294,15 +296,15 @@ export default function SafeHaven() {
             className="flex items-center gap-2 h-11 px-6 rounded-full bg-white text-black hover:bg-white/95 transition-all shadow-lg active:scale-95"
           >
             <span className="material-symbols-outlined text-base">exit_to_app</span>
-            <span className="font-mono text-[9px] uppercase tracking-widest font-bold">Quick Exit</span>
+            <span className="font-sans text-xs uppercase tracking-wider font-extrabold">Quick Exit</span>
           </button>
         </header>
 
         {/* Privacy alert bar */}
         <section className="bg-white/[0.02] rounded-3xl border border-white/5 p-5 flex items-start gap-4 bento-glass">
-          <span className="material-symbols-outlined text-white/60 text-lg mt-0.5">gpp_maybe</span>
-          <p className="font-sans text-xs text-white/60 leading-relaxed">
-            <strong>Client-Side Cryptography Active.</strong> This vault uses client-side encryption. Keys are derived from your Master PIN and never stored on our servers. Tapping Quick Exit redirects instantly and wipes local session variables.
+          <span className="material-symbols-outlined text-sky-400 text-lg mt-0.5">verified_user</span>
+          <p className="font-sans text-xs text-white/70 leading-relaxed">
+            <strong>Your Privacy is Guaranteed.</strong> All journal logs remain stored locally on your device. Tapping Quick Exit redirects immediately to Google and clears current view memory.
           </p>
         </section>
 

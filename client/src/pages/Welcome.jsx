@@ -59,26 +59,80 @@ function ProductZeroModel() {
   );
 }
 
-// ── 3D Canvas Container ───────────────────────────────────────────────────────
+// ── Interactive Clinical Navigator Component ─────────────────────────────────
 function ThreeDViewer({ type = 'product' }) {
+  const [activeRegion, setActiveRegion] = useState('sexual');
+  const navigate = useNavigate();
+
+  const regions = {
+    head: { title: 'Mental & Neurological Support', desc: 'Stress, trauma counseling, and anonymous therapy sessions with certified SARC officers.', action: 'Book Therapy', link: '/auth' },
+    chest: { title: 'Cardiovascular & Respiratory', desc: 'Blood pressure tracking, chest vitals, and virtual doctor consultations.', action: 'Consult Doctor', link: '/auth' },
+    abdomen: { title: 'Metabolic & Digestive Health', desc: 'Diabetes coaching, glucose test kits, and nutrition counseling.', action: 'View Test Kits', link: '/auth' },
+    sexual: { title: 'Sexual & Reproductive Health', desc: 'Anonymous STI panels, HIV rapid kits, emergency care dispatches with plain packaging.', action: 'Explore Pharmacy', link: '/auth' },
+  };
+
+  if (type === 'product') {
+    return (
+      <div className="w-full h-full relative min-h-[300px] flex flex-col justify-between p-4">
+        <Suspense fallback={
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <div className="w-6 h-6 border border-white/20 border-t-white rounded-full animate-spin" />
+            <p className="font-sans text-[10px] text-white/50">Loading 3D Product...</p>
+          </div>
+        }>
+          <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+            <ambientLight intensity={1.8} />
+            <pointLight position={[10, 10, 10]} intensity={1.8} />
+            <directionalLight position={[-10, -10, -10]} intensity={0.5} />
+            <ProductZeroModel />
+            <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.8} />
+          </Canvas>
+        </Suspense>
+      </div>
+    );
+  }
+
+  const current = regions[activeRegion];
+
   return (
-    <div className="w-full h-full relative min-h-[300px]">
-      <Suspense fallback={
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <div className="w-6 h-6 border border-white/20 border-t-white rounded-full animate-spin" />
-          <p className="font-mono text-[9px] uppercase tracking-widest text-white/40">
-            Resolving 3D {type === 'product' ? 'Product' : 'Anatomy'}
-          </p>
+    <div className="w-full h-full relative min-h-[300px] flex flex-col justify-between p-2">
+      <div className="grid grid-cols-2 gap-1.5 mb-2">
+        {[
+          { id: 'head', label: 'Mental Wellness', icon: 'psychology' },
+          { id: 'chest', label: 'Cardio & Vitals', icon: 'favorite' },
+          { id: 'abdomen', label: 'Metabolic Care', icon: 'medical_services' },
+          { id: 'sexual', label: 'Sexual Health', icon: 'shield_with_heart' },
+        ].map(r => (
+          <button
+            key={r.id}
+            type="button"
+            onClick={() => setActiveRegion(r.id)}
+            className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all ${
+              activeRegion === r.id
+                ? 'bg-sky-500/15 border-sky-400/40 text-white shadow-md'
+                : 'bg-white/5 border-white/5 text-white/60 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <span className="material-symbols-outlined text-sm text-sky-400">{r.icon}</span>
+            <span className="font-sans text-[10px] font-bold tracking-tight">{r.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-1 bg-black/60 rounded-2xl p-4 border border-white/10 flex flex-col justify-between space-y-3">
+        <div>
+          <span className="font-sans text-[9px] uppercase tracking-wider text-sky-400 font-bold">Interactive Clinical Navigator</span>
+          <h4 className="font-sans text-sm font-bold text-white mt-1">{current.title}</h4>
+          <p className="font-sans text-xs text-white/70 leading-relaxed mt-1">{current.desc}</p>
         </div>
-      }>
-        <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-          <ambientLight intensity={1.8} />
-          <pointLight position={[10, 10, 10]} intensity={1.8} />
-          <directionalLight position={[-10, -10, -10]} intensity={0.5} />
-          {type === 'product' ? <ProductZeroModel /> : <AnatomyModel />}
-          <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.8} />
-        </Canvas>
-      </Suspense>
+        <button
+          onClick={() => navigate(current.link)}
+          className="w-full py-2.5 rounded-xl bg-sky-400 hover:bg-sky-300 text-black font-sans font-extrabold text-xs transition-all shadow-lg flex items-center justify-center gap-2"
+        >
+          <span>{current.action}</span>
+          <span className="material-symbols-outlined text-sm">arrow_forward</span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -463,35 +517,23 @@ export default function Welcome() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Initialize Scroll Video Scrubbing
+  // Initialize Smooth Ambient Loop with Scroll Acceleration
   useEffect(() => {
     const video = document.getElementById("welcome-scroll-video");
     if (!video) return;
 
-    const initVideoScrub = () => {
-      const duration = video.duration;
-      if (isNaN(duration)) return;
+    video.play().catch(() => {});
 
-      ScrollTrigger.create({
-        trigger: "body",
-        start: "top top",
-        end: "bottom bottom",
-        scrub: 0.5,
-        onUpdate: (self) => {
-          video.currentTime = self.progress * duration;
-        }
-      });
-    };
-
-    if (video.readyState >= 1) {
-      initVideoScrub();
-    } else {
-      video.addEventListener("loadedmetadata", initVideoScrub);
-    }
-
-    return () => {
-      video.removeEventListener("loadedmetadata", initVideoScrub);
-    };
+    ScrollTrigger.create({
+      trigger: "body",
+      start: "top top",
+      end: "bottom bottom",
+      scrub: true,
+      onUpdate: (self) => {
+        // Accelerate playback smoothly on scroll, keeping continuous loop
+        video.playbackRate = 1.0 + self.getVelocity() * 0.0005;
+      }
+    });
   }, []);
 
   // Initialize GSAP card gradient masking scroll reveals
@@ -569,7 +611,7 @@ export default function Welcome() {
             className="flex flex-col items-center gap-6"
           >
             <div className="w-10 h-10 border border-white/10 border-t-white rounded-full animate-spin" />
-            <span className="font-mono text-[9px] uppercase tracking-[0.4em] text-white/50 animate-pulse">Establishing Enclave</span>
+            <span className="font-sans text-[11px] uppercase tracking-[0.25em] text-sky-400 font-extrabold">Welcome to IncogniCare</span>
           </motion.div>
         </div>
       )}
@@ -577,22 +619,22 @@ export default function Welcome() {
       {/* ── Header / Glass Nav ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#010101]/40 backdrop-blur-xl border-b border-white/5 px-6 sm:px-10 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2.5 interactive" onClick={() => navigate('/')}>
-          <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center shadow-lg">
-            <span className="material-symbols-outlined text-white text-base">shield_with_heart</span>
+          <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center shadow-lg bg-sky-500/10">
+            <span className="material-symbols-outlined text-sky-300 text-base">shield_with_heart</span>
           </div>
-          <span className="text-sm font-mono font-bold tracking-[0.12em] uppercase">IncogniCare</span>
+          <span className="text-sm font-sans font-black tracking-[0.12em] uppercase text-white">IncogniCare</span>
         </div>
 
         {/* Desktop Navigation Links */}
         <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="font-mono text-[9px] text-white/50 hover:text-white uppercase tracking-widest transition-all">Services</a>
-          <a href="#showcase" className="font-mono text-[9px] text-white/50 hover:text-white uppercase tracking-widest transition-all">Discreet Products</a>
-          <a href="#protocol" className="font-mono text-[9px] text-white/50 hover:text-white uppercase tracking-widest transition-all">Security Protocol</a>
+          <a href="#features" className="font-sans text-xs font-semibold text-white/70 hover:text-white transition-all">Services</a>
+          <a href="#showcase" className="font-sans text-xs font-semibold text-white/70 hover:text-white transition-all">Pharmacy & Care</a>
+          <a href="#protocol" className="font-sans text-xs font-semibold text-white/70 hover:text-white transition-all">Safety & Privacy</a>
           <button
             onClick={() => navigate('/auth')}
-            className="btn btn-secondary h-9 min-h-0 px-5 text-[9px] rounded-full border-white/10"
+            className="btn btn-secondary h-9 min-h-0 px-6 text-xs rounded-full border-white/10 hover:border-sky-400/40 transition-all font-bold"
           >
-            Auth Terminal
+            Sign In
           </button>
         </div>
 
@@ -614,14 +656,14 @@ export default function Welcome() {
               transition={{ duration: 0.3 }}
               className="absolute top-full left-0 right-0 bg-[#010101]/95 backdrop-blur-2xl border-b border-white/5 py-8 px-6 flex flex-col gap-6"
             >
-              <a href="#features" onClick={() => setMenuOpen(false)} className="font-mono text-[10px] text-white/60 hover:text-white uppercase tracking-widest py-2">Services</a>
-              <a href="#showcase" onClick={() => setMenuOpen(false)} className="font-mono text-[10px] text-white/60 hover:text-white uppercase tracking-widest py-2">Discreet Products</a>
-              <a href="#protocol" onClick={() => setMenuOpen(false)} className="font-mono text-[10px] text-white/60 hover:text-white uppercase tracking-widest py-2">Security Protocol</a>
+              <a href="#features" onClick={() => setMenuOpen(false)} className="font-sans text-sm text-white/80 hover:text-white py-2 font-bold">Services</a>
+              <a href="#showcase" onClick={() => setMenuOpen(false)} className="font-sans text-sm text-white/80 hover:text-white py-2 font-bold">Pharmacy & Care</a>
+              <a href="#protocol" onClick={() => setMenuOpen(false)} className="font-sans text-sm text-white/80 hover:text-white py-2 font-bold">Safety & Privacy</a>
               <button
                 onClick={() => { setMenuOpen(false); navigate('/auth'); }}
-                className="btn btn-primary w-full text-[10px] py-3 rounded-full"
+                className="btn btn-primary w-full text-xs py-3 rounded-full font-bold"
               >
-                Sign In to Terminal
+                Sign In
               </button>
             </motion.div>
           )}
@@ -633,51 +675,53 @@ export default function Welcome() {
         <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-12 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
           
           <div className="lg:col-span-7 space-y-8 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-sm bg-sky-400" />
-              <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/70 font-semibold">
-                Interactive 3D Diagnostics Active
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-sky-500/10 border border-sky-400/20 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-sky-400" />
+              <span className="font-sans text-xs uppercase tracking-[0.18em] text-sky-300 font-extrabold">
+                Empowering Your Health Journey
               </span>
             </div>
 
-            <h1 className="leading-[0.98] tracking-tighter">
-              Healthcare<br />
-              designed around<br />
-              <span className="text-white/40">your privacy.</span>
+            <h1 className="font-sans text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.06]">
+              Healthcare <br />
+              <span className="bg-gradient-to-r from-sky-300 via-sky-100 to-white bg-clip-text text-transparent font-serif italic font-normal">
+                designed around
+              </span> <br />
+              your dignity.
             </h1>
 
-            <p className="font-sans text-base sm:text-lg text-white/60 max-w-xl leading-relaxed">
-              Consult with top medical professionals, request lab tests, and receive prescriptions in plain, unmarked packaging. No judgment, no social exposure, absolute peace of mind.
+            <p className="font-sans text-base sm:text-lg text-white/70 max-w-xl leading-relaxed">
+              Consult with top licensed medical professionals, order home diagnostic test kits, and receive prescriptions in plain, unmarked packages. Complete confidentiality, zero judgment.
             </p>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
               <button
                 onClick={() => navigate('/auth')}
-                className="btn btn-primary w-full sm:w-auto h-12 rounded-full px-8 text-xs flex items-center justify-center gap-2"
+                className="btn btn-primary w-full sm:w-auto h-13 rounded-full px-8 text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20"
               >
-                <span>Get Started</span>
+                <span>Get Started Now</span>
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
               </button>
               <a
                 href="#features"
-                className="btn btn-secondary w-full sm:w-auto h-12 rounded-full px-6 text-xs flex items-center justify-center gap-2"
+                className="btn btn-secondary w-full sm:w-auto h-13 rounded-full px-7 text-xs font-bold flex items-center justify-center gap-2 border-white/10 hover:border-white/30"
               >
                 <span className="material-symbols-outlined text-sm">explore</span>
-                View Services
+                View Medical Services
               </a>
             </div>
 
             {/* Trust Ribbon */}
-            <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-white/5">
+            <div className="pt-8 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-white/10">
               {[
-                { icon: 'lock', label: 'Secure Enclave' },
+                { icon: 'lock', label: 'Private & Secure' },
                 { icon: 'package_2', label: 'Plain Packaging' },
                 { icon: 'verified_user', label: 'Licensed Doctors' },
-                { icon: 'crisis_hotline', label: '24/7 Crisis Help' },
+                { icon: 'crisis_hotline', label: '24/7 Care Support' },
               ].map((badge, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-white/40">
-                  <span className="material-symbols-outlined text-white text-base">{badge.icon}</span>
-                  <span className="font-mono text-[8px] uppercase tracking-wider font-semibold">{badge.label}</span>
+                <div key={idx} className="flex items-center gap-2.5 text-white/70">
+                  <span className="material-symbols-outlined text-sky-400 text-base">{badge.icon}</span>
+                  <span className="font-sans text-xs font-bold text-white/80">{badge.label}</span>
                 </div>
               ))}
             </div>

@@ -289,11 +289,11 @@ export default function DoctorDashboard() {
 
                 <div className="mt-8 pt-6 border-t border-outline-variant/10 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[9px] uppercase tracking-widest text-outline">Clinical Record Status</span>
-                    <span className="font-mono text-[9px] uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">Decrypted Session Active</span>
+                    <span className="font-sans text-[10px] uppercase tracking-widest text-white/50 font-bold">Clinical Record Status</span>
+                    <span className="font-sans text-[10px] uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded font-extrabold">Active Patient Session</span>
                   </div>
                   <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
-                    Patient consultation session initiated under de-identified protocol. All diagnostic vitals, symptoms, and medical notes are cryptographically linked to Ghost ID: <strong className="font-mono text-white">{selected.patient?.publicId}</strong>.
+                    Patient consultation session active. All diagnostic vitals, symptoms, and medical notes are securely linked to Private ID: <strong className="font-mono text-white">{selected.patient?.publicId}</strong>.
                   </p>
                 </div>
                 
