@@ -10,12 +10,6 @@ import LivingBackground from '../components/LivingBackground';
 // Register GSAP ScrollTrigger
 gsap.registerPlugin(ScrollTrigger);
 
-// ── 3D Anatomy Model Component ───────────────────────────────────────────────
-function AnatomyModel() {
-  const { scene } = useGLTF('/human_anatomy.glb');
-  return <primitive object={scene} scale={2.2} position={[0, -2, 0]} />;
-}
-
 // ── 3D Product Zero Model Component ──────────────────────────────────────────
 function ProductZeroModel() {
   const groupRef = useRef();
@@ -25,7 +19,7 @@ function ProductZeroModel() {
     const t = state.clock.getElapsedTime();
     groupRef.current.rotation.y = t * 0.45;
     groupRef.current.rotation.x = Math.sin(t * 0.3) * 0.12;
-    groupRef.current.position.y = Math.sin(t * 1.2) * 0.12; // Floating effect
+    groupRef.current.position.y = Math.sin(t * 1.2) * 0.12;
   });
 
   return (
@@ -66,18 +60,18 @@ function ThreeDViewer({ type = 'product' }) {
 
   const regions = {
     head: { title: 'Mental & Neurological Support', desc: 'Stress, trauma counseling, and anonymous therapy sessions with certified SARC officers.', action: 'Book Therapy', link: '/auth' },
-    chest: { title: 'Cardiovascular & Respiratory', desc: 'Blood pressure tracking, chest vitals, and virtual doctor consultations.', action: 'Consult Doctor', link: '/auth' },
+    chest: { title: 'Cardiovascular & Vitals', desc: 'Blood pressure tracking, chest vitals, and virtual doctor consultations.', action: 'Consult Doctor', link: '/auth' },
     abdomen: { title: 'Metabolic & Digestive Health', desc: 'Diabetes coaching, glucose test kits, and nutrition counseling.', action: 'View Test Kits', link: '/auth' },
     sexual: { title: 'Sexual & Reproductive Health', desc: 'Anonymous STI panels, HIV rapid kits, emergency care dispatches with plain packaging.', action: 'Explore Pharmacy', link: '/auth' },
   };
 
   if (type === 'product') {
     return (
-      <div className="w-full h-full relative min-h-[300px] flex flex-col justify-between p-4">
+      <div className="w-full h-full relative min-h-[280px] flex flex-col justify-between p-4">
         <Suspense fallback={
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <div className="w-6 h-6 border border-white/20 border-t-white rounded-full animate-spin" />
-            <p className="font-sans text-[10px] text-white/50">Loading 3D Product...</p>
+            <div className="w-5 h-5 border border-white/20 border-t-white animate-spin" />
+            <p className="font-mono text-[9px] text-white/50 uppercase tracking-widest">Loading 3D Model...</p>
           </div>
         }>
           <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
@@ -95,8 +89,8 @@ function ThreeDViewer({ type = 'product' }) {
   const current = regions[activeRegion];
 
   return (
-    <div className="w-full h-full relative min-h-[300px] flex flex-col justify-between p-2">
-      <div className="grid grid-cols-2 gap-1.5 mb-2">
+    <div className="w-full h-full relative min-h-[280px] flex flex-col justify-between p-2">
+      <div className="grid grid-cols-2 gap-2 mb-2">
         {[
           { id: 'head', label: 'Mental Wellness', icon: 'psychology' },
           { id: 'chest', label: 'Cardio & Vitals', icon: 'favorite' },
@@ -107,27 +101,27 @@ function ThreeDViewer({ type = 'product' }) {
             key={r.id}
             type="button"
             onClick={() => setActiveRegion(r.id)}
-            className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all ${
+            className={`p-3 border text-left flex items-center gap-2 transition-all ${
               activeRegion === r.id
-                ? 'bg-sky-500/15 border-sky-400/40 text-white shadow-md'
-                : 'bg-white/5 border-white/5 text-white/60 hover:text-white hover:bg-white/10'
+                ? 'bg-white text-black border-white'
+                : 'bg-transparent border-white/10 text-white/70 hover:text-white hover:border-white/30'
             }`}
           >
-            <span className="material-symbols-outlined text-sm text-sky-400">{r.icon}</span>
-            <span className="font-sans text-[10px] font-bold tracking-tight">{r.label}</span>
+            <span className="material-symbols-outlined text-sm">{r.icon}</span>
+            <span className="font-sans text-[11px] font-bold tracking-tight">{r.label}</span>
           </button>
         ))}
       </div>
 
-      <div className="flex-1 bg-black/60 rounded-2xl p-4 border border-white/10 flex flex-col justify-between space-y-3">
+      <div className="flex-1 bg-black/80 p-5 border border-white/10 flex flex-col justify-between space-y-3">
         <div>
-          <span className="font-sans text-[9px] uppercase tracking-wider text-sky-400 font-bold">Interactive Clinical Navigator</span>
-          <h4 className="font-sans text-sm font-bold text-white mt-1">{current.title}</h4>
+          <span className="text-micro-caps text-amber-200/80">Clinical Navigator</span>
+          <h4 className="font-serif text-lg font-normal text-white mt-1">{current.title}</h4>
           <p className="font-sans text-xs text-white/70 leading-relaxed mt-1">{current.desc}</p>
         </div>
         <button
           onClick={() => navigate(current.link)}
-          className="w-full py-2.5 rounded-xl bg-sky-400 hover:bg-sky-300 text-black font-sans font-extrabold text-xs transition-all shadow-lg flex items-center justify-center gap-2"
+          className="btn btn-primary w-full text-xs"
         >
           <span>{current.action}</span>
           <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -206,8 +200,8 @@ function LedgerViewer() {
   return (
     <div className="w-full h-full relative select-none">
       <div className="absolute inset-x-6 top-6 flex flex-col gap-1 z-10 pointer-events-none">
-        <span className="font-mono text-[9px] text-white/50 uppercase tracking-widest text-left">GHOST-ID LEDGER</span>
-        <p className="font-sans text-[10px] text-white/60 opacity-80 text-left">De-identified transaction logs map to temporary, random security hash codes.</p>
+        <span className="text-micro-caps">PRIVATE RECORD LEDGER</span>
+        <p className="font-sans text-xs text-white/60 text-left">De-identified transaction logs map to temporary, random security hash codes.</p>
       </div>
       <div className="w-full h-full absolute inset-0 opacity-70">
         <Canvas camera={{ position: [0, 0, 4.5], fov: 45 }}>
@@ -215,9 +209,9 @@ function LedgerViewer() {
           <LedgerModel />
         </Canvas>
       </div>
-      <div className="absolute inset-x-6 bottom-6 flex items-center justify-between border-t border-white/5 pt-4 z-10 pointer-events-none">
-        <span className="font-mono text-[9px] text-white/30">HASH // 0x4f92...a811</span>
-        <span className="font-mono text-[8px] text-white/60 uppercase tracking-widest">Ledger Synced</span>
+      <div className="absolute inset-x-6 bottom-6 flex items-center justify-between border-t border-white/10 pt-4 z-10 pointer-events-none">
+        <span className="font-mono text-[9px] text-white/40">HASH // 0x4f92...a811</span>
+        <span className="font-mono text-[9px] text-white/60 uppercase tracking-widest">Record Synced</span>
       </div>
     </div>
   );
@@ -283,22 +277,22 @@ function DuressDemo() {
   }, []);
 
   return (
-    <div className="w-full h-full p-6 flex flex-col justify-between bg-black/40 backdrop-blur-md rounded-[2rem] border border-white/5">
+    <div className="w-full h-full p-6 flex flex-col justify-between bg-black/80 border border-white/10">
       <div className="text-center py-1">
-        <p className="font-mono text-[8px] uppercase tracking-widest text-white/40">{status}</p>
-        <div className="flex justify-center gap-3 my-2.5">
+        <p className="text-micro-caps">{status}</p>
+        <div className="flex justify-center gap-3 my-3">
           {[...Array(4)].map((_, idx) => (
             <div
               key={idx}
-              className={`w-2.5 h-2.5 rounded-full border border-white/20 flex items-center justify-center transition-all duration-200 ${
-                pin.length > idx ? 'bg-white shadow-sm shadow-white/40' : 'bg-transparent'
+              className={`w-2.5 h-2.5 border border-white/40 flex items-center justify-center transition-all duration-200 ${
+                pin.length > idx ? 'bg-white' : 'bg-transparent'
               }`}
             />
           ))}
         </div>
       </div>
 
-      <div className="flex-1 min-h-[120px] flex items-center justify-center bg-black/60 rounded-2xl border border-white/5 p-4 overflow-hidden relative">
+      <div className="flex-1 min-h-[110px] flex items-center justify-center bg-black border border-white/10 p-4 overflow-hidden relative">
         <AnimatePresence mode="wait">
           {vaultType === 'locked' && (
             <motion.div
@@ -308,8 +302,8 @@ function DuressDemo() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="text-center space-y-2"
             >
-              <span className="material-symbols-outlined text-white/30 text-xl animate-pulse">lock</span>
-              <p className="font-sans text-[10px] text-white/40">Encrypted Journal Locked</p>
+              <span className="material-symbols-outlined text-white/40 text-xl">lock</span>
+              <p className="font-sans text-xs text-white/50">Encrypted Journal Locked</p>
             </motion.div>
           )}
 
@@ -322,12 +316,12 @@ function DuressDemo() {
               className="w-full space-y-2 text-left"
             >
               <div className="flex items-center gap-2 text-white border-b border-white/10 pb-1.5 mb-1.5">
-                <span className="material-symbols-outlined text-xs">decrypted</span>
-                <span className="font-mono text-[8px] uppercase tracking-wider">Private Secure Log</span>
+                <span className="material-symbols-outlined text-xs">lock_open</span>
+                <span className="font-mono text-[9px] uppercase tracking-wider">Private Secure Log</span>
               </div>
-              <div className="space-y-1.5 font-sans text-[9px] text-white/80 leading-relaxed">
-                <p className="bg-white/5 p-1.5 rounded border border-white/5">*"Met SARC advisor. Safe housing confirmed."*</p>
-                <p className="bg-white/5 p-1.5 rounded border border-white/5">*"Prescription filled under Ghost ID."*</p>
+              <div className="space-y-1.5 font-sans text-xs text-white/80 leading-relaxed">
+                <p className="bg-white/5 p-2 border border-white/5">*"Met SARC advisor. Safe housing confirmed."*</p>
+                <p className="bg-white/5 p-2 border border-white/5">*"Prescription filled under Private ID."*</p>
               </div>
             </motion.div>
           )}
@@ -342,9 +336,9 @@ function DuressDemo() {
             >
               <div className="flex items-center gap-2 text-white/40 border-b border-white/10 pb-1.5 mb-1.5">
                 <span className="material-symbols-outlined text-xs">visibility</span>
-                <span className="font-mono text-[8px] uppercase tracking-wider">Biology Class Study Notes</span>
+                <span className="font-mono text-[9px] uppercase tracking-wider">Biology Class Notes</span>
               </div>
-              <div className="space-y-1 font-sans text-[9px] text-white/60 leading-relaxed">
+              <div className="space-y-1 font-sans text-xs text-white/60 leading-relaxed">
                 <p className="border-b border-white/5 pb-1">1. Cellular respiration pathways (ATP, Krebs)</p>
                 <p className="border-b border-white/5 pb-1">2. DNA replication & transcription enzymes</p>
                 <p>3. Mendelian genetics laws and cross charts</p>
@@ -354,16 +348,16 @@ function DuressDemo() {
         </AnimatePresence>
       </div>
 
-      <div className="grid grid-cols-3 gap-1.5 mt-4 max-w-[140px] mx-auto w-full">
+      <div className="grid grid-cols-3 gap-2 mt-4 max-w-[150px] mx-auto w-full">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, '*', 0, '#'].map((k) => {
           const isPressed = pin.charAt(pin.length - 1) === String(k);
           return (
             <div
               key={k}
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-mono border transition-all duration-150 select-none ${
+              className={`w-9 h-9 flex items-center justify-center text-xs font-mono border transition-all duration-150 select-none ${
                 isPressed
-                  ? 'bg-white text-black border-white scale-95 shadow-sm'
-                  : 'bg-white/5 border-white/5 text-white/70'
+                  ? 'bg-white text-black border-white'
+                  : 'bg-white/5 border-white/10 text-white/70'
               }`}
             >
               {k}
@@ -395,27 +389,27 @@ function InfiniteProductScroll() {
         {duplicatedProducts.map((p, i) => (
           <div
             key={i}
-            className="shrink-0 w-[290px] sm:w-[330px] bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 flex flex-col justify-between hover:border-sky-400/40 transition-all duration-300 shadow-2xl bento-glass group"
+            className="shrink-0 w-[290px] sm:w-[340px] bg-black/90 border border-white/10 p-6 flex flex-col justify-between hover:border-white/30 transition-all duration-300 group"
           >
             <div className="space-y-4">
               <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-400/20 flex items-center justify-center text-sky-300">
+                <div className="w-9 h-9 border border-white/20 flex items-center justify-center text-white">
                   <span className="material-symbols-outlined text-lg">{p.icon}</span>
                 </div>
-                <span className="text-micro-caps text-[8px] px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white font-bold">
+                <span className="badge">
                   {p.badge}
                 </span>
               </div>
               <div>
-                <h3 className="font-sans text-base font-bold text-white group-hover:text-sky-300 transition-colors">{p.name}</h3>
-                <p className="font-sans text-xs text-white/70 leading-relaxed mt-1">{p.desc}</p>
+                <h3 className="font-serif text-lg font-normal text-white group-hover:text-amber-200 transition-colors">{p.name}</h3>
+                <p className="font-sans text-xs text-white/60 leading-relaxed mt-1">{p.desc}</p>
               </div>
             </div>
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/10">
               <span className="font-mono text-base font-bold text-white">{p.price}</span>
               <button
                 onClick={() => navigate('/auth')}
-                className="btn btn-primary h-8 min-h-0 px-5 text-[10px] rounded-full font-bold"
+                className="btn btn-secondary py-1.5 px-4 text-[10px]"
               >
                 Order Kit
               </button>
@@ -433,9 +427,6 @@ export default function Welcome() {
   const navigate = useNavigate();
   const pinnedRef = useRef(null);
   const rightPinRef = useRef(null);
-  const cardsGridRef = useRef(null);
-  const storiesGridRef = useRef(null);
-  const lottieRef = useRef(null);
   
   const [modelType, setModelType] = useState('product'); // 'product' or 'anatomy'
   const [activeFeature, setActiveFeature] = useState(0);
@@ -453,7 +444,7 @@ export default function Welcome() {
         ease: "power2.out",
         onComplete: () => setIsWelcomeLoading(false)
       });
-    }, 1800);
+    }, 1400);
     return () => clearTimeout(timer);
   }, []);
 
@@ -470,13 +461,10 @@ export default function Welcome() {
       end: "bottom bottom",
       scrub: true,
       onUpdate: (self) => {
-        // Accelerate playback smoothly on scroll, keeping continuous loop
         video.playbackRate = 1.0 + self.getVelocity() * 0.0005;
       }
     });
   }, []);
-
-  // Card scroll reveals are now clean and unmasked for full visibility
 
   // Pinning & individual features transitions
   useEffect(() => {
@@ -506,40 +494,39 @@ export default function Welcome() {
   }, [isWelcomeLoading]);
 
   return (
-    <div className="min-h-screen text-white font-sans overflow-x-hidden bg-[#010101] relative flex flex-col justify-between">
+    <div className="min-h-screen text-white font-sans overflow-x-hidden bg-black relative flex flex-col justify-between">
       
       {/* ── Welcome Animated Loader ── */}
       {isWelcomeLoading && (
-        <div className="welcome-loader fixed inset-0 flex flex-col items-center justify-center bg-[#010101] z-[99999] select-none">
+        <div className="welcome-loader fixed inset-0 flex flex-col items-center justify-center bg-black z-[99999] select-none">
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="flex flex-col items-center gap-6"
           >
-            <div className="w-10 h-10 border border-white/10 border-t-white rounded-full animate-spin" />
-            <span className="font-sans text-[11px] uppercase tracking-[0.25em] text-sky-400 font-extrabold">Welcome to IncogniCare</span>
+            <div className="w-8 h-8 border border-white/20 border-t-white animate-spin" />
+            <span className="font-mono text-xs uppercase tracking-[0.25em] text-white">IncogniCare</span>
           </motion.div>
         </div>
       )}
 
-      {/* ── Header / Glass Nav ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#010101]/60 backdrop-blur-2xl border-b border-white/5 px-6 sm:px-10 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5 interactive" onClick={() => navigate('/')}>
-          <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center shadow-lg bg-sky-500/10">
-            <span className="material-symbols-outlined text-sky-300 text-base">shield_with_heart</span>
-          </div>
-          <span className="text-sm font-sans font-black tracking-[0.12em] uppercase text-white">IncogniCare</span>
+      {/* ── Header / Minimal Nav ── */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 border-b border-white/10 px-6 sm:px-12 py-5 flex items-center justify-between">
+        <div className="flex items-center gap-3 interactive" onClick={() => navigate('/')}>
+          <span className="material-symbols-outlined text-white text-lg">shield_with_heart</span>
+          <span className="text-xs font-mono font-bold tracking-[0.2em] uppercase text-white">IncogniCare</span>
         </div>
 
         {/* Desktop Navigation Links */}
-        <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="font-sans text-xs font-semibold text-white/70 hover:text-white transition-all">Services</a>
-          <a href="#showcase" className="font-sans text-xs font-semibold text-white/70 hover:text-white transition-all">Pharmacy & Care</a>
-          <a href="#protocol" className="font-sans text-xs font-semibold text-white/70 hover:text-white transition-all">Safety & Privacy</a>
+        <div className="hidden md:flex items-center gap-10">
+          <a href="#features" className="font-sans text-xs uppercase tracking-widest text-white/70 hover:text-white transition-all">Services</a>
+          <a href="#showcase" className="font-sans text-xs uppercase tracking-widest text-white/70 hover:text-white transition-all">Pharmacy</a>
+          <a href="#protocol" className="font-sans text-xs uppercase tracking-widest text-white/70 hover:text-white transition-all">Privacy</a>
+          <a href="#contact" className="font-sans text-xs uppercase tracking-widest text-white/70 hover:text-white transition-all">Contact</a>
           <button
             onClick={() => navigate('/auth')}
-            className="btn btn-secondary h-9 min-h-0 px-6 text-xs rounded-full border-white/10 hover:border-sky-400/40 transition-all font-bold"
+            className="btn btn-secondary py-2 px-6 text-xs"
           >
             Sign In
           </button>
@@ -548,7 +535,7 @@ export default function Welcome() {
         {/* Mobile Hamburger Trigger */}
         <button 
           onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden w-8 h-8 flex items-center justify-center text-white/70 hover:text-white"
+          className="md:hidden w-8 h-8 flex items-center justify-center text-white/80 hover:text-white"
         >
           <span className="material-symbols-outlined">{menuOpen ? "close" : "menu"}</span>
         </button>
@@ -561,14 +548,15 @@ export default function Welcome() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="absolute top-full left-0 right-0 bg-[#010101]/95 backdrop-blur-2xl border-b border-white/5 py-8 px-6 flex flex-col gap-6"
+              className="absolute top-full left-0 right-0 bg-black border-b border-white/10 py-8 px-6 flex flex-col gap-6"
             >
-              <a href="#features" onClick={() => setMenuOpen(false)} className="font-sans text-sm text-white/80 hover:text-white py-2 font-bold">Services</a>
-              <a href="#showcase" onClick={() => setMenuOpen(false)} className="font-sans text-sm text-white/80 hover:text-white py-2 font-bold">Pharmacy & Care</a>
-              <a href="#protocol" onClick={() => setMenuOpen(false)} className="font-sans text-sm text-white/80 hover:text-white py-2 font-bold">Safety & Privacy</a>
+              <a href="#features" onClick={() => setMenuOpen(false)} className="font-sans text-xs uppercase tracking-widest text-white/80 hover:text-white py-2">Services</a>
+              <a href="#showcase" onClick={() => setMenuOpen(false)} className="font-sans text-xs uppercase tracking-widest text-white/80 hover:text-white py-2">Pharmacy</a>
+              <a href="#protocol" onClick={() => setMenuOpen(false)} className="font-sans text-xs uppercase tracking-widest text-white/80 hover:text-white py-2">Privacy</a>
+              <a href="#contact" onClick={() => setMenuOpen(false)} className="font-sans text-xs uppercase tracking-widest text-white/80 hover:text-white py-2">Contact</a>
               <button
                 onClick={() => { setMenuOpen(false); navigate('/auth'); }}
-                className="btn btn-primary w-full text-xs py-3 rounded-full font-bold"
+                className="btn btn-primary w-full text-xs py-3"
               >
                 Sign In
               </button>
@@ -577,285 +565,264 @@ export default function Welcome() {
         </AnimatePresence>
       </nav>
 
-      {/* ── Dynamic Hero Section (Video Scoped Here Only) ── */}
-      <section className="relative min-h-[92vh] overflow-hidden flex flex-col justify-center pt-28 bg-[#010101]">
+      {/* ── SECTION 1: HERO (Raw video background, giant serif title) ── */}
+      <section className="relative min-h-screen flex flex-col justify-between pt-32 pb-16 px-6 sm:px-12 bg-black overflow-hidden">
         
-        {/* Living Background Video - Strictly Scoped to Hero Section */}
+        {/* Living Background Video (Raw, No Overlay Vignette) */}
         <LivingBackground mode="hero" />
 
-        <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-12 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center relative z-10">
+        <div className="w-full max-w-7xl mx-auto my-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-end">
           
-          {/* Hero Left Column (Mid-Left Bolder Editorial Text) */}
-          <div className="lg:col-span-6 space-y-8 text-left z-10">
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-sky-500/10 border border-sky-400/20 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-sky-400" />
-              <span className="font-sans text-xs uppercase tracking-[0.18em] text-sky-300 font-extrabold">
-                Empowering Your Health Journey
-              </span>
-            </div>
-
-            <h1 className="text-fluid-hero text-white font-extrabold leading-[1.02]">
+          {/* Main Editorial Hero Title */}
+          <div className="lg:col-span-8 space-y-6">
+            <span className="text-micro-caps text-amber-200/90">Confidential Healthcare & Counseling</span>
+            
+            <h1 className="text-fluid-hero text-white">
               Healthcare <br />
-              <span className="font-serif-editorial bg-gradient-to-r from-sky-300 via-sky-100 to-white bg-clip-text text-transparent font-normal">
-                designed around
-              </span> <br />
+              <span className="font-serif-editorial">designed around</span> <br />
               your dignity.
             </h1>
+          </div>
 
-            <p className="font-sans text-base sm:text-lg text-white/70 max-w-lg leading-relaxed font-normal">
-              Consult with top licensed medical professionals, order home diagnostic test kits, and receive prescriptions in plain, unmarked packages. Complete confidentiality, zero judgment.
+          {/* Structured Hero Info & CTA Column */}
+          <div className="lg:col-span-4 space-y-6 text-left border-l border-white/10 pl-6 lg:pl-8 py-2">
+            <p className="font-sans text-sm text-white/80 leading-relaxed">
+              Consult with top licensed medical professionals, order home diagnostic test kits, and receive prescriptions in plain packaging. 100% confidential.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+            <div className="pt-2 flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => navigate('/auth')}
-                className="btn btn-primary w-full sm:w-auto h-13 rounded-full px-8 text-xs font-extrabold flex items-center justify-center gap-2 shadow-xl shadow-sky-500/25"
+                className="btn btn-primary w-full sm:w-auto text-xs font-bold"
               >
-                <span>Get Started Now</span>
+                <span>Get Started</span>
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
               </button>
               <a
-                href="#features"
-                className="btn btn-secondary w-full sm:w-auto h-13 rounded-full px-7 text-xs font-bold flex items-center justify-center gap-2 border-white/10 hover:border-white/30"
+                href="#overview"
+                className="btn btn-secondary w-full sm:w-auto text-xs"
               >
-                <span className="material-symbols-outlined text-sm">explore</span>
-                View Medical Services
+                Learn More
               </a>
             </div>
 
-            {/* Trust Ribbon */}
-            <div className="pt-8 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-white/10">
-              {[
-                { icon: 'lock', label: 'Private & Secure' },
-                { icon: 'package_2', label: 'Plain Packaging' },
-                { icon: 'verified_user', label: 'Licensed Doctors' },
-                { icon: 'crisis_hotline', label: '24/7 Care Support' },
-              ].map((badge, idx) => (
-                <div key={idx} className="flex items-center gap-2.5 text-white/70">
-                  <span className="material-symbols-outlined text-sky-400 text-base">{badge.icon}</span>
-                  <span className="font-sans text-xs font-bold text-white/80">{badge.label}</span>
-                </div>
-              ))}
+            <div className="pt-4 flex items-center gap-6 text-[11px] font-mono text-white/50 uppercase tracking-wider">
+              <span>24/7 Available</span>
+              <span>•</span>
+              <span>Lagos, Nigeria</span>
             </div>
           </div>
+        </div>
 
-          {/* Hero Right Column (Centered Small Ethereal Structure & Strategic Floating Cards) */}
-          <div className="lg:col-span-6 flex flex-col items-center justify-center relative z-10 space-y-6">
+        {/* Footer info line on Hero */}
+        <div className="w-full max-w-7xl mx-auto pt-12 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-white/40 uppercase tracking-widest relative z-10">
+          <span>+234 (0) 800 INCOGNI</span>
+          <span>End-to-End Client Confidentiality</span>
+          <span>Scroll Down ↓</span>
+        </div>
+      </section>
+
+      {/* ── SECTION 2: ABOUT / OVERVIEW ── */}
+      <section id="overview" className="max-w-7xl mx-auto w-full px-6 sm:px-12 py-24 sm:py-32 border-t border-white/10 bg-black relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+          
+          <div className="lg:col-span-7 space-y-6">
+            <span className="text-micro-caps text-amber-200/90">Our Mission</span>
+            <h2 className="text-fluid-title text-white">
+              Reclaiming privacy as a fundamental human right in clinical care.
+            </h2>
+            <p className="font-sans text-sm sm:text-base text-white/70 leading-relaxed">
+              IncogniCare provides a safe, anonymous medical portal designed specifically for individuals navigating sensitive health challenges, trauma recovery, or chronic care management where privacy is paramount.
+            </p>
+            <p className="font-sans text-sm text-white/60 leading-relaxed">
+              By decoupling patient identities from medical ledgers and enforcing client-side encryption, we ensure that every consultation, prescription, and diagnostic test kit remains completely private.
+            </p>
+          </div>
+
+          <div className="lg:col-span-5 border border-white/10 p-8 space-y-6 bg-black">
+            <h3 className="font-serif text-xl font-normal text-white border-b border-white/10 pb-4">
+              Clinical Support Specifications
+            </h3>
             
-            {/* Top Right Strategic Telemetry Pill */}
-            <div className="self-end hidden sm:flex items-center gap-3 bg-black/60 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full shadow-lg">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-micro-caps text-[9px] text-emerald-400 font-bold">100% Confidential Care Active</span>
-            </div>
-
-            {/* Centered Small Ethereal Structure Container */}
-            <div className="relative w-full max-w-sm sm:max-w-md aspect-square rounded-[3rem] p-4 bg-black/60 border border-white/10 bento-glass overflow-hidden shadow-2xl flex flex-col justify-between group hover:border-sky-400/40 transition-all duration-500 mx-auto select-none">
-              
-              <div className="p-2 flex items-center justify-between border-b border-white/10 bg-white/5 rounded-2xl">
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setModelType('product')}
-                    className={`h-7 px-3 rounded-lg font-mono text-[8px] uppercase tracking-wider transition-all ${
-                      modelType === 'product'
-                        ? 'bg-sky-400 text-black font-extrabold'
-                        : 'text-white/40 hover:text-white'
-                    }`}
-                  >
-                    Care Pack
-                  </button>
-                  <button
-                    onClick={() => setModelType('anatomy')}
-                    className={`h-7 px-3 rounded-lg font-mono text-[8px] uppercase tracking-wider transition-all ${
-                      modelType === 'anatomy'
-                        ? 'bg-sky-400 text-black font-extrabold'
-                        : 'text-white/40 hover:text-white'
-                    }`}
-                  >
-                    Body Map
-                  </button>
-                </div>
-                <span className="text-micro-caps text-[8px] text-white/50">
-                  {modelType === 'product' ? 'Product Zero' : 'Anatomy'}
-                </span>
+            <div className="space-y-4 text-xs font-mono">
+              <div className="flex justify-between py-2 border-b border-white/5">
+                <span className="text-white/40">SERVICE HOURS</span>
+                <span className="text-white font-bold">24 Hours / 7 Days</span>
               </div>
-
-              <div className="flex-1 my-3 rounded-2xl overflow-hidden bg-black/50 border border-white/5 flex items-center justify-center relative select-none">
-                <ThreeDViewer type={modelType} />
+              <div className="flex justify-between py-2 border-b border-white/5">
+                <span className="text-white/40">COVERAGE</span>
+                <span className="text-white font-bold">Lagos, Abuja & Nationwide</span>
               </div>
-
-              <div className="p-3.5 bg-black/80 rounded-2xl space-y-1.5 border border-white/10">
-                <p className="font-sans text-xs font-bold text-white">
-                  {modelType === 'product' ? 'Interactive 3D Care Pack' : 'Clinical Symptom Navigator'}
-                </p>
-                <p className="font-sans text-[11px] text-white/60 leading-relaxed">
-                  {modelType === 'product'
-                    ? 'Examine plain, unmarked, tamper-evident package dispatches in 3D.'
-                    : 'Tap symptom regions to view recommended specialists and home test kits.'}
-                </p>
+              <div className="flex justify-between py-2 border-b border-white/5">
+                <span className="text-white/40">MEDICAL STAFF</span>
+                <span className="text-white font-bold">Licensed Doctors & SARC Officers</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-white/5">
+                <span className="text-white/40">PACKAGING</span>
+                <span className="text-white font-bold">Plain, Unmarked Sealed Boxes</span>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ── Services Section ── */}
-      <section id="features" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 lg:py-32 border-t border-white/5 relative z-10 bg-[#010101]">
-        <header className="text-center max-w-3xl mx-auto mb-20 space-y-4">
-          <p className="text-micro-caps">Clinical Services</p>
-          <h2 className="text-fluid-title text-white">
-            Healthcare <span className="font-serif-editorial text-sky-300 font-normal">designed around your dignity</span>
-          </h2>
-          <p className="font-sans text-sm text-white/70 leading-relaxed">
-            A comprehensive suite of medical, lab, and counseling services built with end-to-end client confidentiality at the core.
-          </p>
-        </header>
-
-        {/* cardsGridRef is used by GSAP for the linear-gradient scroll masking */}
-        <div ref={cardsGridRef} className="grid grid-cols-1 md:grid-cols-12 gap-6 transition-all duration-300">
-          {[
-            {
-              span: 'md:col-span-6 lg:col-span-6',
-              icon: 'video_camera_front',
-              title: 'Private Telehealth Consultations',
-              desc: 'Book secure video or text chat sessions with verified physicians and SARC counselors anytime, anywhere.',
-              badge: 'Featured Care',
-              highlight: true
-            },
-            {
-              span: 'md:col-span-6 lg:col-span-6',
-              icon: 'local_pharmacy',
-              title: 'Discreet Express Delivery',
-              desc: 'Prescriptions filled by certified partner pharmacies and delivered in plain, unmarked packages with secure PIN delivery.',
-              badge: 'Plain Packaging'
-            },
-            {
-              span: 'md:col-span-6 lg:col-span-6',
-              icon: 'biotech',
-              title: 'Home Diagnostic Test Kits',
-              desc: 'STI & HIV testing kits shipped anonymously to your home. Fast, accurate lab results delivered straight to your secure device.',
-              badge: 'Lab Diagnostic'
-            },
-            {
-              span: 'md:col-span-6 lg:col-span-6',
-              icon: 'shield_with_heart',
-              title: 'Safe Haven Log & Journal',
-              desc: 'A local client-side encrypted journal with anti-coercion PIN locks to record private health entries safely.',
-              badge: 'Private Storage'
-            },
-          ].map((service, idx) => (
-            <div
-              key={idx}
-              className={`card p-8 flex flex-col justify-between hover:border-sky-400/40 transition-all duration-300 group cursor-default shadow-lg ${service.span} ${
-                service.highlight ? 'bg-gradient-to-br from-sky-500/10 via-black/60 to-black/40 border-sky-400/30' : 'bento-glass'
-              }`}
+            <button
+              onClick={() => navigate('/auth')}
+              className="btn btn-secondary w-full text-xs"
             >
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-400/20 flex items-center justify-center text-sky-300">
-                    <span className="material-symbols-outlined text-xl">{service.icon}</span>
-                  </div>
-                  <span className="text-micro-caps text-[9px] px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                    {service.badge}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-sans text-xl font-bold text-white group-hover:text-sky-300 transition-colors">
-                    {service.title}
-                  </h3>
-                  <p className="font-sans text-xs text-white/70 leading-relaxed">
-                    {service.desc}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+              Get Started Now →
+            </button>
+          </div>
+
         </div>
       </section>
 
-      {/* ── Patient Stories Gallery ── */}
-      <section className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 border-t border-white/5 relative z-10 bg-[#010101]">
-        <header className="max-w-3xl mx-auto text-center mb-16 space-y-4">
-          <p className="text-micro-caps">Real Patient Journeys</p>
+      {/* ── SECTION 3: SERVICES (Text List Left + Interactive Navigator Right) ── */}
+      <section id="features" className="max-w-7xl mx-auto w-full px-6 sm:px-12 py-24 sm:py-32 border-t border-white/10 bg-black relative z-10">
+        <header className="mb-16 space-y-3">
+          <span className="text-micro-caps text-amber-200/90">Clinical Services</span>
           <h2 className="text-fluid-title text-white">
-            Empowerment through <span className="font-serif-editorial text-sky-300 font-normal">compassionate care</span>
+            Comprehensive care built <span className="font-serif-editorial">for your peace of mind</span>
           </h2>
-          <p className="font-sans text-sm text-white/70 leading-relaxed">
-            Discover how IncogniCare works behind the scenes to support survivors, manage chronic health challenges, and ensure complete clinical confidentiality.
-          </p>
         </header>
 
-        {/* storiesGridRef is used by GSAP for the linear-gradient scroll masking */}
-        <div ref={storiesGridRef} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+          
+          {/* Services Text List */}
+          <div className="lg:col-span-7 space-y-8">
+            {[
+              {
+                num: '01',
+                title: 'Private Telehealth Consultations',
+                desc: 'Book secure video or text chat sessions with verified physicians and SARC counselors anytime, anywhere without exposing your personal identity.',
+              },
+              {
+                num: '02',
+                title: 'Discreet Express Delivery',
+                desc: 'Prescriptions filled by certified partner pharmacies and delivered in plain, unmarked packages with secure PIN-code handover.',
+              },
+              {
+                num: '03',
+                title: 'Home Diagnostic Test Kits',
+                desc: 'STI & HIV testing kits shipped anonymously to your doorstep. Accurate lab results delivered straight to your encrypted log.',
+              },
+              {
+                num: '04',
+                title: 'Safe Haven Private Log',
+                desc: 'A local client-side encrypted journal with anti-coercion PIN locks to record sensitive health entries with complete peace of mind.',
+              },
+            ].map((service, idx) => (
+              <div key={idx} className="border-b border-white/10 pb-8 space-y-3 hover:border-white/30 transition-colors">
+                <div className="flex items-center gap-4">
+                  <span className="font-mono text-xs text-amber-200/80">{service.num}</span>
+                  <h3 className="font-serif text-2xl font-normal text-white">{service.title}</h3>
+                </div>
+                <p className="font-sans text-sm text-white/60 leading-relaxed pl-8">
+                  {service.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Interactive 3D Model Column */}
+          <div className="lg:col-span-5 border border-white/10 p-4 bg-black">
+            <div className="p-2 border-b border-white/10 flex items-center justify-between mb-4">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setModelType('product')}
+                  className={`px-3 py-1 text-[10px] font-mono uppercase transition-all ${
+                    modelType === 'product' ? 'bg-white text-black font-bold' : 'text-white/40 hover:text-white'
+                  }`}
+                >
+                  Care Pack
+                </button>
+                <button
+                  onClick={() => setModelType('anatomy')}
+                  className={`px-3 py-1 text-[10px] font-mono uppercase transition-all ${
+                    modelType === 'anatomy' ? 'bg-white text-black font-bold' : 'text-white/40 hover:text-white'
+                  }`}
+                >
+                  Body Map
+                </button>
+              </div>
+              <span className="font-mono text-[9px] text-white/40 uppercase">3D Preview</span>
+            </div>
+
+            <ThreeDViewer type={modelType} />
+          </div>
+
+        </div>
+      </section>
+
+      {/* ── SECTION 4: PATIENT STORIES GALLERY (Asymmetric Image Grid) ── */}
+      <section className="max-w-7xl mx-auto w-full px-6 sm:px-12 py-24 border-t border-white/10 bg-black relative z-10">
+        <header className="mb-16 space-y-3">
+          <span className="text-micro-caps text-amber-200/90">Real Patient Journeys</span>
+          <h2 className="text-fluid-title text-white">
+            Empowerment through <span className="font-serif-editorial">compassionate care</span>
+          </h2>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             {
               src: '/story_1.png',
-              title: 'Anonymous Cancer Coaching',
-              tag: 'Oncology Support',
-              desc: 'Connecting patients with expert cancer support coaches under complete anonymity. We help navigate treatments, nutrition, and mental well-being securely.'
+              title: 'Anonymous Cancer Support',
+              tag: 'ONCOLOGY CARE',
+              desc: 'Connecting patients with expert cancer coaches under complete anonymity for treatment guidance and mental well-being.'
             },
             {
               src: '/story_2.png',
               title: 'Empowering Chronic Wellness',
-              tag: 'Diabetes Hub',
-              desc: 'Providing 1-1 guidance and clinical tracking tools for diabetes management. Take control of your blood glucose levels with dedicated coaching.'
+              tag: 'DIABETES HUB',
+              desc: 'Providing 1-1 guidance and clinical tracking tools for diabetes management with dedicated coaching.'
             },
             {
               src: '/story_3.png',
-              title: 'Survivor-First Safety Protocols',
-              tag: 'Clinical Discretion',
-              desc: 'Unmarked packaging, duress lock keypads, and de-identified medical ledgers ensure your privacy is fiercely protected at every single step.'
+              title: 'Survivor Safety Protocols',
+              tag: 'CLINICAL DISCRETION',
+              desc: 'Unmarked packaging, duress lock keypads, and de-identified medical ledgers protecting patient privacy at every step.'
             }
           ].map((story, idx) => (
-            <div key={idx} className="card overflow-hidden flex flex-col hover:border-sky-400/40 transition-all duration-300 group shadow-xl bento-glass">
-              <div className="aspect-[4/3] w-full overflow-hidden bg-black relative">
+            <div key={idx} className="space-y-4">
+              <div className="aspect-[4/3] w-full bg-black border border-white/10 overflow-hidden">
                 <img 
                   src={story.src} 
                   alt={story.title} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-85" 
+                  className="w-full h-full object-cover opacity-85 hover:opacity-100 transition-opacity duration-300" 
                 />
-                <span className="absolute top-4 left-4 bg-sky-500/20 backdrop-blur-md text-sky-300 border border-sky-400/30 text-micro-caps text-[9px] px-3.5 py-1.5 rounded-full shadow-lg">
-                  {story.tag}
-                </span>
               </div>
-              <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                <div className="space-y-2">
-                  <h3 className="font-sans text-lg font-bold text-white group-hover:text-sky-300 transition-colors">
-                    {story.title}
-                  </h3>
-                  <p className="font-sans text-xs text-white/70 leading-relaxed">
-                    {story.desc}
-                  </p>
-                </div>
+              <div className="space-y-1.5">
+                <span className="font-mono text-[9px] text-amber-200/80 uppercase tracking-widest">{story.tag}</span>
+                <h3 className="font-serif text-xl font-normal text-white">{story.title}</h3>
+                <p className="font-sans text-xs text-white/60 leading-relaxed">{story.desc}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── CSS Scroll-Snap Product Showcase ── */}
-      <section id="showcase" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 border-t border-white/5 relative z-10 bg-[#010101]">
-        <header className="mb-12 text-left space-y-2">
-          <p className="text-micro-caps">Pharmacy & Care Packages</p>
-          <h2 className="text-fluid-title text-white mt-2">
-            Discreet Clinical Diagnostics & <span className="font-serif-editorial text-sky-300 font-normal">Care</span>
+      {/* ── SECTION 5: PRODUCT SHOWCASE / CAROUSEL ── */}
+      <section id="showcase" className="max-w-7xl mx-auto w-full px-6 sm:px-12 py-24 border-t border-white/10 bg-black relative z-10">
+        <header className="mb-12 space-y-3">
+          <span className="text-micro-caps text-amber-200/90">Pharmacy & Care Packages</span>
+          <h2 className="text-fluid-title text-white">
+            Discreet Clinical Diagnostics & <span className="font-serif-editorial">Care</span>
           </h2>
-          <p className="font-sans text-xs text-white/70 mt-1">
-            Swipe or scroll horizontally. Cards snap automatically. Plain, unmarked packaging guaranteed.
+          <p className="font-sans text-xs text-white/60">
+            Unmarked, tamper-evident packaging dispatched nationwide.
           </p>
         </header>
 
         <InfiniteProductScroll />
       </section>
 
-      {/* ── GSAP ScrollTrigger Pinned Feature Showcase ── */}
-      <section id="protocol" ref={pinnedRef} className="pinned-container max-w-7xl mx-auto w-full px-6 sm:px-10 py-24 border-t border-white/5 relative z-10 flex flex-col lg:flex-row gap-12 items-start bg-[#010101]">
+      {/* ── SECTION 6: SAFETY & PRIVACY (Pinned GSAP Section) ── */}
+      <section id="protocol" ref={pinnedRef} className="pinned-container max-w-7xl mx-auto w-full px-6 sm:px-12 py-28 border-t border-white/10 relative z-10 flex flex-col lg:flex-row gap-16 items-start bg-black">
         
         {/* Left scrolling copy column */}
-        <div className="w-full lg:w-1/2 space-y-24 py-10">
+        <div className="w-full lg:w-1/2 space-y-24 py-6">
           <div className="space-y-4">
-            <p className="text-micro-caps">Safety & Privacy Safeguards</p>
+            <span className="text-micro-caps text-amber-200/90">Safety & Privacy Mechanics</span>
             <h2 className="text-fluid-title text-white">
-              Built to protect <span className="font-serif-editorial text-sky-300 font-normal">what matters most</span>
+              Built to protect <span className="font-serif-editorial">what matters most</span>
             </h2>
             <p className="font-sans text-sm text-white/70 leading-relaxed">
               Scroll down to inspect our defense-in-depth measures engineered to protect patients from exposure, coercion, and identity tracking.
@@ -879,21 +846,20 @@ export default function Welcome() {
             <div
               key={idx}
               ref={el => featureRefs.current[idx] = el}
-              className="space-y-4 border-l-2 border-sky-400/30 pl-6 py-2 hover:border-sky-400 transition-colors"
+              className="space-y-3 border-l border-white/20 pl-6 py-2 hover:border-white transition-colors"
             >
-              <h3 className="font-sans text-lg sm:text-xl font-bold text-white">{item.title}</h3>
-              <p className="font-sans text-sm text-white/70 leading-relaxed">{item.desc}</p>
+              <h3 className="font-serif text-xl font-normal text-white">{item.title}</h3>
+              <p className="font-sans text-sm text-white/60 leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>
 
         {/* Right pinned preview column */}
-        <div ref={rightPinRef} className="pinned-right w-full lg:w-1/2 h-[350px] lg:h-[480px] rounded-[2.5rem] bg-black/60 border border-white/10 bento-glass flex items-center justify-center relative overflow-hidden self-start shadow-2xl">
-          <div className="absolute top-4 left-6 flex items-center gap-2.5 z-20">
-            <span className="w-2 h-2 rounded-full bg-sky-400" />
-            <p className="text-micro-caps text-[9px]">
+        <div ref={rightPinRef} className="pinned-right w-full lg:w-1/2 h-[380px] lg:h-[480px] border border-white/10 bg-black flex items-center justify-center relative overflow-hidden self-start">
+          <div className="absolute top-4 left-6 z-20">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-amber-200/90">
               {activeFeature === 0 ? 'Protected Data Storage' : activeFeature === 1 ? 'Anti-Coercion Mode' : 'Anonymous Record Index'}
-            </p>
+            </span>
           </div>
           
           <div className="w-full h-full flex items-center justify-center relative z-10">
@@ -905,9 +871,9 @@ export default function Welcome() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.3 }}
-                  className="w-[200px] sm:w-[260px] aspect-square flex items-center justify-center bg-sky-500/10 border border-sky-400/20 rounded-full shadow-xl"
+                  className="w-[180px] sm:w-[220px] aspect-square flex items-center justify-center border border-white/20"
                 >
-                  <span className="material-symbols-outlined text-sky-300 text-5xl">shield</span>
+                  <span className="material-symbols-outlined text-white text-5xl">shield</span>
                 </motion.div>
               )}
 
@@ -941,99 +907,136 @@ export default function Welcome() {
         </div>
       </section>
 
-      {/* ── Humanitarian quote block ── */}
-      <section className="max-w-4xl mx-auto w-full px-6 sm:px-10 py-12 lg:py-16 relative z-10">
-        <div className="text-center space-y-6">
-          <span className="material-symbols-outlined text-white/50 text-3xl">format_quote</span>
-          <blockquote className="font-sans text-xl sm:text-2xl font-medium text-white italic leading-relaxed">
-            "Clinical confidentiality is not just a technology protocol — it is a basic human safeguard that restores choice, safety, and dignity to patients when they need it most."
-          </blockquote>
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-white" />
-            <p className="font-mono text-[9px] uppercase tracking-widest text-white/50">Advocacy and Care Support Board</p>
+      {/* ── SECTION 7: HUMANITARIAN / NGO ALIGNMENT ── */}
+      <section className="max-w-7xl mx-auto w-full px-6 sm:px-12 py-24 border-t border-white/10 bg-black relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="lg:col-span-7 space-y-6">
+            <span className="text-micro-caps text-amber-200/90">NGO & Government Alignment</span>
+            <h2 className="text-fluid-title text-white">
+              Aligning with international standards for human rights protection
+            </h2>
+            <p className="font-sans text-sm leading-relaxed text-white/70">
+              IncogniCare's technical protocols are engineered to support survivors of domestic abuse, gender-based violence (GBV), and marginalized groups. We decouple identities from health data, enforce browser-only storage locks, and support stealth interfaces to protect users at risk of coercion.
+            </p>
+          </div>
+
+          <div className="lg:col-span-5 border border-white/10 p-8 space-y-6 bg-black">
+            <h3 className="font-serif text-lg font-normal text-white">Humanitarian Support</h3>
+            <p className="font-sans text-xs text-white/60 leading-relaxed">
+              Are you an NGO partner, health officer, or clinical agency representative? Contact our partnership board to explore clinic integrations, custom crisis hubs, and secure voucher funding methods.
+            </p>
+            <button
+              onClick={() => navigate('/auth')}
+              className="btn btn-secondary w-full text-xs"
+            >
+              Request Integration Guide
+            </button>
           </div>
         </div>
       </section>
 
-      {/* ── Sponsoring section (NGO Fundable Feature) ── */}
-      <section id="protocol" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 lg:py-32 border-t border-white/5 relative z-10">
-        <div className="bg-black/40 border border-white/5 rounded-[2.5rem] p-8 sm:p-12 lg:p-16 relative overflow-hidden bento-glass">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-white/5 border border-white/10">
-                <span className="material-symbols-outlined text-white text-xs">verified</span>
-                <span className="font-mono text-[9px] uppercase tracking-wider text-white/70 font-bold">
-                  NGO & Government Alignment
-                </span>
-              </div>
-
-              <h2 className="font-sans text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-[1.1] tracking-tight">
-                Aligning with international standards for human rights protection
-              </h2>
-
-              <p className="font-sans text-sm leading-relaxed text-white/60">
-                IncogniCare's technical protocols are engineered to support survivors of domestic abuse, gender-based violence (GBV), and marginalized groups. We decouple identities from health data, enforce browser-only storage locks, and support stealth interfaces to protect users at risk of coercion.
-              </p>
-
-              <div className="space-y-4 pt-4">
-                {[
-                  { title: 'Zero Personal Identifier Logs', desc: 'No phone numbers, emails, or names are ever stored in plain text on our servers.' },
-                  { title: 'Survivor-Safety Anti-Coercion Features', desc: 'Duress PIN locks load harmless, generic data screens instantly when under duress.' },
-                  { title: 'Decoupled Consultation Ledger', desc: 'Medical records are indexed under random public Ghost IDs, protecting patient metadata.' }
-                ].map((item, idx) => (
-                  <div key={idx} className="flex gap-4">
-                    <span className="w-1.5 h-1.5 rounded-sm bg-sky-400 mt-2 shrink-0" />
-                    <div>
-                      <h4 className="font-sans text-xs font-bold text-white">{item.title}</h4>
-                      <p className="font-sans text-xs text-white/50 mt-0.5">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="lg:col-span-5 flex justify-center">
-              <div className="p-6 rounded-3xl bg-black/40 border border-white/5 space-y-6 w-full max-w-sm">
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-white text-xl">health_and_safety</span>
-                  <h3 className="font-sans text-sm font-bold text-white">Humanitarian Support</h3>
-                </div>
-                <div className="h-[1px] w-full bg-white/5" />
-                <p className="font-sans text-xs text-white/60 leading-relaxed">
-                  Are you an NGO partner, health officer, or clinical agency representative? Contact our partnership board to explore clinic integrations, custom crisis hubs, and secure voucher funding methods.
-                </p>
-                <button
-                  onClick={() => navigate('/auth')}
-                  className="btn btn-secondary w-full text-[10px] rounded-full border-white/10"
-                >
-                  Request Integration Guide
-                </button>
-              </div>
-            </div>
+      {/* ── SECTION 8: CONTACT FORM (Matching Reference) ── */}
+      <section id="contact" className="max-w-7xl mx-auto w-full px-6 sm:px-12 py-28 border-t border-white/10 bg-black relative z-10">
+        <div className="max-w-3xl mx-auto space-y-12">
+          <div className="text-center space-y-3">
+            <span className="text-micro-caps text-amber-200/90">Get In Touch</span>
+            <h2 className="text-fluid-title text-white">
+              Contact <span className="font-serif-editorial">IncogniCare</span>
+            </h2>
+            <p className="font-sans text-xs text-white/60">
+              Have questions about clinical confidentiality or agency partnerships? Reach out below.
+            </p>
           </div>
+
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-mono uppercase text-white/50 mb-2">First Name</label>
+                <input type="text" placeholder="John" className="input-field" />
+              </div>
+              <div>
+                <label className="block text-xs font-mono uppercase text-white/50 mb-2">Last Name</label>
+                <input type="text" placeholder="Doe" className="input-field" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-mono uppercase text-white/50 mb-2">Email Address</label>
+                <input type="email" placeholder="john@example.com" className="input-field" />
+              </div>
+              <div>
+                <label className="block text-xs font-mono uppercase text-white/50 mb-2">Phone Number</label>
+                <input type="tel" placeholder="+234..." className="input-field" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono uppercase text-white/50 mb-2">Your Message</label>
+              <textarea rows={4} placeholder="How can our clinical team assist you?" className="input-field py-3 min-h-[120px]" />
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4 border-t border-white/10">
+              <div className="flex items-center gap-6 text-xs font-mono text-white/50">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="topic" defaultChecked className="accent-white" />
+                  <span>General Inquiry</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="topic" className="accent-white" />
+                  <span>NGO Partnership</span>
+                </label>
+              </div>
+
+              <button type="submit" className="btn btn-primary w-full sm:w-auto px-8">
+                Send Message
+              </button>
+            </div>
+          </form>
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="border-t border-white/5 py-10 bg-black/60 backdrop-blur-md relative z-10">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-white text-sm">shield_with_heart</span>
-            <span className="font-mono text-[10px] text-white/60 tracking-wider uppercase font-bold">
-              IncogniCare
-            </span>
+      {/* ── SECTION 9: FOOTER (4-Column Editorial) ── */}
+      <footer className="border-t border-white/10 py-16 bg-black relative z-10">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 grid grid-cols-1 md:grid-cols-4 gap-12 text-xs font-mono">
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-white text-base">shield_with_heart</span>
+              <span className="font-bold tracking-[0.2em] uppercase text-white">IncogniCare</span>
+            </div>
+            <p className="font-sans text-xs text-white/50 leading-relaxed">
+              Empowering individuals and survivors with end-to-end confidential healthcare and counseling.
+            </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-6 text-[10px] font-mono text-white/50 uppercase tracking-wider font-bold">
-            <a href="#features" className="hover:text-white transition-colors">Services</a>
-            <a href="#showcase" className="hover:text-white transition-colors">Discreet Products</a>
-            <a href="#protocol" className="hover:text-white transition-colors">Security Protocol</a>
-            <button onClick={() => navigate('/auth')} className="hover:text-white transition-colors bg-transparent border-none cursor-pointer">Auth Terminal</button>
+          <div className="space-y-3">
+            <h4 className="text-micro-caps text-white">Navigation</h4>
+            <ul className="space-y-2 text-white/60">
+              <li><a href="#features" className="hover:text-white transition-colors">Clinical Services</a></li>
+              <li><a href="#showcase" className="hover:text-white transition-colors">Discreet Pharmacy</a></li>
+              <li><a href="#protocol" className="hover:text-white transition-colors">Safety Protocol</a></li>
+              <li><a href="#contact" className="hover:text-white transition-colors">Contact Us</a></li>
+            </ul>
           </div>
 
-          <p className="font-mono text-[9px] text-white/30 tracking-wider uppercase">
-            © {new Date().getFullYear()} IncogniCare. Empowering survivors with confidential care.
-          </p>
+          <div className="space-y-3">
+            <h4 className="text-micro-caps text-white">Legal & Ethics</h4>
+            <ul className="space-y-2 text-white/60">
+              <li><span className="hover:text-white transition-colors">Patient Dignity Charter</span></li>
+              <li><span className="hover:text-white transition-colors">Zero-Log Encryption</span></li>
+              <li><span className="hover:text-white transition-colors">De-Identified Data Ledger</span></li>
+              <li><span className="hover:text-white transition-colors">Survivor Safety Guide</span></li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="text-micro-caps text-white">Direct Line</h4>
+            <p className="text-white/60">+234 (0) 800 INCOGNI</p>
+            <p className="text-white/40">Lagos, Nigeria</p>
+            <p className="text-white/30 pt-4">© {new Date().getFullYear()} IncogniCare Inc.</p>
+          </div>
+
         </div>
       </footer>
     </div>
