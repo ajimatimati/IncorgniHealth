@@ -123,18 +123,18 @@ const LivingBackground = ({ mode = "ambient" }) => {
 
   return (
     <>
-      {/* ── Video Background ───────────────────────────────────────────────── */}
-      <div id="scroll-video-container">
+      {/* ── Video Background (Scoped to Hero Section) ─────────────────────── */}
+      <div id="scroll-video-container" className={mode === 'hero' || mode === 'scroll' ? 'hero-scoped' : ''}>
         <video
           ref={videoRef}
-          id={mode === 'scroll' ? 'welcome-scroll-video' : 'ambient-video'}
+          id={mode === 'scroll' || mode === 'hero' ? 'welcome-scroll-video' : 'ambient-video'}
           src={getVideoSource()}
           muted
           loop
           autoPlay
           playsInline
           preload="auto"
-          className="opacity-[0.35] object-cover w-full h-full"
+          className="opacity-[0.4] object-cover w-full h-full"
           style={{ display: 'block' }}
         />
         <div className="overlay" />

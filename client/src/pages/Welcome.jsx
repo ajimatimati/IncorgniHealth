@@ -596,11 +596,8 @@ export default function Welcome() {
   }, [isWelcomeLoading]);
 
   return (
-    <div className="min-h-screen text-white font-sans overflow-x-hidden bg-dots relative flex flex-col justify-between">
+    <div className="min-h-screen text-white font-sans overflow-x-hidden bg-[#010101] relative flex flex-col justify-between">
       
-      {/* ── Background Engine (Scroll Mode) ── */}
-      <LivingBackground mode="scroll" />
-
       {/* ── Welcome Animated Loader ── */}
       {isWelcomeLoading && (
         <div className="welcome-loader fixed inset-0 flex flex-col items-center justify-center bg-[#010101] z-[99999] select-none">
@@ -617,7 +614,7 @@ export default function Welcome() {
       )}
 
       {/* ── Header / Glass Nav ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#010101]/40 backdrop-blur-xl border-b border-white/5 px-6 sm:px-10 py-5 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#010101]/60 backdrop-blur-2xl border-b border-white/5 px-6 sm:px-10 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2.5 interactive" onClick={() => navigate('/')}>
           <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center shadow-lg bg-sky-500/10">
             <span className="material-symbols-outlined text-sky-300 text-base">shield_with_heart</span>
@@ -670,9 +667,13 @@ export default function Welcome() {
         </AnimatePresence>
       </nav>
 
-      {/* ── Hero Section ── */}
-      <main className="flex-1 flex flex-col justify-center relative z-10 pt-28">
-        <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-12 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+      {/* ── Dynamic Hero Section (Video Scoped Here Only) ── */}
+      <section className="relative min-h-[92vh] overflow-hidden flex flex-col justify-center pt-28 bg-[#010101]">
+        
+        {/* Living Background Video - Strictly Scoped to Hero Section */}
+        <LivingBackground mode="hero" />
+
+        <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-12 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center relative z-10">
           
           <div className="lg:col-span-7 space-y-8 text-left">
             <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-sky-500/10 border border-sky-400/20 shadow-sm">
@@ -776,57 +777,73 @@ export default function Welcome() {
             </div>
           </div>
         </div>
-      </main>
+      </section>
 
       {/* ── Services Section ── */}
-      <section id="features" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 lg:py-32 border-t border-white/5 relative z-10">
-        <header className="text-center max-w-2xl mx-auto mb-20 space-y-4">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">Confidential Services</p>
-          <h2 className="font-sans text-3xl sm:text-5xl font-black text-white tracking-tight">
-            Healthcare designed around your dignity
+      <section id="features" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 lg:py-32 border-t border-white/5 relative z-10 bg-[#010101]">
+        <header className="text-center max-w-3xl mx-auto mb-20 space-y-4">
+          <p className="text-micro-caps">Clinical Services</p>
+          <h2 className="text-fluid-title text-white">
+            Healthcare <span className="font-serif-editorial text-sky-300 font-normal">designed around your dignity</span>
           </h2>
-          <p className="font-sans text-base text-white/60">
-            A comprehensive suite of medical and counseling services built with end-to-end client confidentiality at the core.
+          <p className="font-sans text-sm text-white/70 leading-relaxed">
+            A comprehensive suite of medical, lab, and counseling services built with end-to-end client confidentiality at the core.
           </p>
         </header>
 
         {/* cardsGridRef is used by GSAP for the linear-gradient scroll masking */}
-        <div ref={cardsGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 transition-all duration-300">
+        <div ref={cardsGridRef} className="grid grid-cols-1 md:grid-cols-12 gap-6 transition-all duration-300">
           {[
             {
+              span: 'md:col-span-6 lg:col-span-6',
               icon: 'video_camera_front',
-              title: 'Private Telehealth',
-              desc: 'Book secure video or text chat sessions with verified physicians and SARC counselors.',
+              title: 'Private Telehealth Consultations',
+              desc: 'Book secure video or text chat sessions with verified physicians and SARC counselors anytime, anywhere.',
+              badge: 'Featured Care',
+              highlight: true
             },
             {
+              span: 'md:col-span-6 lg:col-span-6',
               icon: 'local_pharmacy',
-              title: 'Discreet Delivery',
-              desc: 'Prescriptions filled by partner stores and delivered in plain, unmarked packages with secure PIN verification.',
+              title: 'Discreet Express Delivery',
+              desc: 'Prescriptions filled by certified partner pharmacies and delivered in plain, unmarked packages with secure PIN delivery.',
+              badge: 'Plain Packaging'
             },
             {
+              span: 'md:col-span-6 lg:col-span-6',
               icon: 'biotech',
-              title: 'Home Lab Testing',
-              desc: 'STI & HIV testing kits shipped anonymously. Get fast results sent securely to your log.',
+              title: 'Home Diagnostic Test Kits',
+              desc: 'STI & HIV testing kits shipped anonymously to your home. Fast, accurate lab results delivered straight to your secure device.',
+              badge: 'Lab Diagnostic'
             },
             {
+              span: 'md:col-span-6 lg:col-span-6',
               icon: 'shield_with_heart',
-              title: 'Safe Haven Log',
-              desc: 'A local client-side encrypted journal with Duress PIN locks to hide sensitive evidence safely.',
+              title: 'Safe Haven Log & Journal',
+              desc: 'A local client-side encrypted journal with anti-coercion PIN locks to record private health entries safely.',
+              badge: 'Private Storage'
             },
           ].map((service, idx) => (
             <div
               key={idx}
-              className="card p-8 flex flex-col justify-between hover:border-white/20 transition-all duration-300 group cursor-default shadow-sm"
+              className={`card p-8 flex flex-col justify-between hover:border-sky-400/40 transition-all duration-300 group cursor-default shadow-lg ${service.span} ${
+                service.highlight ? 'bg-gradient-to-br from-sky-500/10 via-black/60 to-black/40 border-sky-400/30' : 'bento-glass'
+              }`}
             >
-              <div className="space-y-8">
-                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white">
-                  <span className="material-symbols-outlined text-xl">{service.icon}</span>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-400/20 flex items-center justify-center text-sky-300">
+                    <span className="material-symbols-outlined text-xl">{service.icon}</span>
+                  </div>
+                  <span className="text-micro-caps text-[9px] px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                    {service.badge}
+                  </span>
                 </div>
-                <div className="space-y-3">
-                  <h3 className="font-sans text-lg font-bold text-white group-hover:text-white/80 transition-colors">
+                <div className="space-y-2">
+                  <h3 className="font-sans text-xl font-bold text-white group-hover:text-sky-300 transition-colors">
                     {service.title}
                   </h3>
-                  <p className="font-sans text-xs text-white/50 leading-relaxed">
+                  <p className="font-sans text-xs text-white/70 leading-relaxed">
                     {service.desc}
                   </p>
                 </div>
@@ -837,13 +854,13 @@ export default function Welcome() {
       </section>
 
       {/* ── Patient Stories Gallery ── */}
-      <section className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-16 border-t border-white/5 relative z-10">
-        <header className="max-w-2xl mx-auto text-center mb-16 space-y-4">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">Real Patient Journeys</p>
-          <h2 className="font-sans text-3xl sm:text-4xl font-black text-white tracking-tight">
-            Empowerment through Compassionate Care
+      <section className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 border-t border-white/5 relative z-10 bg-[#010101]">
+        <header className="max-w-3xl mx-auto text-center mb-16 space-y-4">
+          <p className="text-micro-caps">Real Patient Journeys</p>
+          <h2 className="text-fluid-title text-white">
+            Empowerment through <span className="font-serif-editorial text-sky-300 font-normal">compassionate care</span>
           </h2>
-          <p className="font-sans text-sm text-white/60">
+          <p className="font-sans text-sm text-white/70 leading-relaxed">
             Discover how IncogniCare works behind the scenes to support survivors, manage chronic health challenges, and ensure complete clinical confidentiality.
           </p>
         </header>
@@ -870,23 +887,23 @@ export default function Welcome() {
               desc: 'Unmarked packaging, duress lock keypads, and de-identified medical ledgers ensure your privacy is fiercely protected at every single step.'
             }
           ].map((story, idx) => (
-            <div key={idx} className="card overflow-hidden flex flex-col hover:border-white/20 transition-all duration-300 group shadow-lg">
+            <div key={idx} className="card overflow-hidden flex flex-col hover:border-sky-400/40 transition-all duration-300 group shadow-xl bento-glass">
               <div className="aspect-[4/3] w-full overflow-hidden bg-black relative">
                 <img 
                   src={story.src} 
                   alt={story.title} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-80" 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-85" 
                 />
-                <span className="absolute top-4 left-4 bg-white text-black font-mono text-[9px] uppercase tracking-wider font-semibold px-3 py-1 rounded-full">
+                <span className="absolute top-4 left-4 bg-sky-500/20 backdrop-blur-md text-sky-300 border border-sky-400/30 text-micro-caps text-[9px] px-3.5 py-1.5 rounded-full shadow-lg">
                   {story.tag}
                 </span>
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                 <div className="space-y-2">
-                  <h3 className="font-sans text-lg font-bold text-white group-hover:text-white/80 transition-colors">
+                  <h3 className="font-sans text-lg font-bold text-white group-hover:text-sky-300 transition-colors">
                     {story.title}
                   </h3>
-                  <p className="font-sans text-xs text-white/50 leading-relaxed">
+                  <p className="font-sans text-xs text-white/70 leading-relaxed">
                     {story.desc}
                   </p>
                 </div>
@@ -897,14 +914,14 @@ export default function Welcome() {
       </section>
 
       {/* ── CSS Scroll-Snap Product Showcase ── */}
-      <section id="showcase" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-16 border-t border-white/5 relative z-10">
-        <header className="mb-10 text-left">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">Product Showcase</p>
-          <h2 className="font-sans text-2xl sm:text-3xl font-black text-white mt-2">
-            Discreet Clinical Diagnostics & Care
+      <section id="showcase" className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 border-t border-white/5 relative z-10 bg-[#010101]">
+        <header className="mb-12 text-left space-y-2">
+          <p className="text-micro-caps">Pharmacy & Care Packages</p>
+          <h2 className="text-fluid-title text-white mt-2">
+            Discreet Clinical Diagnostics & <span className="font-serif-editorial text-sky-300 font-normal">Care</span>
           </h2>
-          <p className="font-sans text-xs text-white/50 mt-1">
-            Swipe or scroll horizontally. Cards snap automatically to center. Plain, unmarked packaging guaranteed.
+          <p className="font-sans text-xs text-white/70 mt-1">
+            Swipe or scroll horizontally. Cards snap automatically. Plain, unmarked packaging guaranteed.
           </p>
         </header>
 
@@ -912,51 +929,51 @@ export default function Welcome() {
       </section>
 
       {/* ── GSAP ScrollTrigger Pinned Feature Showcase ── */}
-      <section ref={pinnedRef} className="pinned-container max-w-7xl mx-auto w-full px-6 sm:px-10 py-20 border-t border-white/5 relative z-10 flex flex-col lg:flex-row gap-12 items-start">
+      <section id="protocol" ref={pinnedRef} className="pinned-container max-w-7xl mx-auto w-full px-6 sm:px-10 py-24 border-t border-white/5 relative z-10 flex flex-col lg:flex-row gap-12 items-start bg-[#010101]">
         
         {/* Left scrolling copy column */}
         <div className="w-full lg:w-1/2 space-y-24 py-10">
           <div className="space-y-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">Securing Your Space</p>
-            <h2 className="font-sans text-3xl sm:text-4xl font-black text-white">
-              Next-generation privacy mechanics
+            <p className="text-micro-caps">Safety & Privacy Safeguards</p>
+            <h2 className="text-fluid-title text-white">
+              Built to protect <span className="font-serif-editorial text-sky-300 font-normal">what matters most</span>
             </h2>
-            <p className="font-sans text-sm text-white/50 leading-relaxed">
-              Scroll down to inspect our defense-in-depth measures designed to protect patients from exposure, coercion, and metadata tracking.
+            <p className="font-sans text-sm text-white/70 leading-relaxed">
+              Scroll down to inspect our defense-in-depth measures engineered to protect patients from exposure, coercion, and identity tracking.
             </p>
           </div>
 
           {[
             {
-              title: 'Client-Side Cryptography (Safe Haven)',
-              desc: 'Your journal logs are encrypted directly on your local device using military-grade AES-256 keys generated from your Master PIN. The plain text records never reach our servers, preventing intercept leaks.'
+              title: 'Local Encrypted Journal (Safe Haven)',
+              desc: 'Your journal logs remain stored directly on your personal device using client-side encryption keys generated from your Master PIN. Plain text records never reach our servers.'
             },
             {
               title: 'Anti-Coercion Duress Keypad',
-              desc: 'If forced to open your vault by an outside party, entering your optional Duress PIN unlocks a benign mockup vault containing first aid guides, grocery lists, and school notes instead of your real entries.'
+              desc: 'If forced to open your vault by an outside party, entering your optional Duress PIN unlocks a benign mockup view containing study notes and grocery lists instead of your real entries.'
             },
             {
-              title: 'De-Identified Data Ledger',
-              desc: 'No personal identification is linked to your medical consultations or wallet payment history. Everything is indexed under a random public Ghost ID, decoupling your true identity from critical care.'
+              title: 'Anonymous Record System',
+              desc: 'No personal identification is linked to your medical consultations or wallet payment history. Everything is indexed under a temporary Private ID.'
             }
           ].map((item, idx) => (
             <div
               key={idx}
               ref={el => featureRefs.current[idx] = el}
-              className="space-y-4 border-l border-white/20 pl-6 py-2 hover:border-white transition-colors"
+              className="space-y-4 border-l-2 border-sky-400/30 pl-6 py-2 hover:border-sky-400 transition-colors"
             >
               <h3 className="font-sans text-lg sm:text-xl font-bold text-white">{item.title}</h3>
-              <p className="font-sans text-sm text-white/60 leading-relaxed">{item.desc}</p>
+              <p className="font-sans text-sm text-white/70 leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>
 
-        {/* Right pinned Lottie preview column */}
-        <div ref={rightPinRef} className="pinned-right w-full lg:w-1/2 h-[350px] lg:h-[480px] rounded-[2.5rem] bg-black/40 border border-white/5 bento-glass flex items-center justify-center relative overflow-hidden self-start">
-          <div className="absolute top-4 left-6 flex items-center gap-2 z-20">
-            <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-            <p className="font-mono text-[8px] uppercase tracking-widest text-white/50">
-              {activeFeature === 0 ? 'Active Security Enclave' : activeFeature === 1 ? 'Coercion Detection Engine' : 'Anonymous Data Ledger'}
+        {/* Right pinned preview column */}
+        <div ref={rightPinRef} className="pinned-right w-full lg:w-1/2 h-[350px] lg:h-[480px] rounded-[2.5rem] bg-black/60 border border-white/10 bento-glass flex items-center justify-center relative overflow-hidden self-start shadow-2xl">
+          <div className="absolute top-4 left-6 flex items-center gap-2.5 z-20">
+            <span className="w-2 h-2 rounded-full bg-sky-400" />
+            <p className="text-micro-caps text-[9px]">
+              {activeFeature === 0 ? 'Protected Data Storage' : activeFeature === 1 ? 'Anti-Coercion Mode' : 'Anonymous Record Index'}
             </p>
           </div>
           
@@ -969,9 +986,9 @@ export default function Welcome() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.3 }}
-                  className="w-[200px] sm:w-[260px] aspect-square flex items-center justify-center bg-white/5 border border-white/5 rounded-full"
+                  className="w-[200px] sm:w-[260px] aspect-square flex items-center justify-center bg-sky-500/10 border border-sky-400/20 rounded-full shadow-xl"
                 >
-                  <span className="material-symbols-outlined text-white text-5xl animate-pulse">shield</span>
+                  <span className="material-symbols-outlined text-sky-300 text-5xl">shield</span>
                 </motion.div>
               )}
 
