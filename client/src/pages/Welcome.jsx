@@ -378,9 +378,6 @@ function DuressDemo() {
 // ── Infinite Product Carousel Component ──────────────────────────────────────
 function InfiniteProductScroll() {
   const navigate = useNavigate();
-  const scrollRef = useRef(null);
-  const [isInteracting, setIsInteracting] = useState(false);
-  const interactionTimeoutRef = useRef(null);
 
   const products = [
     { name: 'Complete STI Panel', price: '₦12,500', desc: 'Comprehensive testing for HIV, Chlamydia, Gonorrhoea, and Syphilis.', badge: 'Popular', icon: 'science' },
@@ -390,99 +387,42 @@ function InfiniteProductScroll() {
     { name: 'Zinc + Selenium Bundle', price: '₦4,200', desc: 'Immune health and clinical reproductive support supplements.', badge: 'Wellness', icon: 'spa' }
   ];
 
-  const triplicatedProducts = [...products, ...products, ...products];
-
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-
-    const totalSetWidth = container.scrollWidth / 3;
-    container.scrollLeft = totalSetWidth;
-
-    const handleScroll = () => {
-      if (container.scrollLeft < totalSetWidth / 2) {
-        container.scrollLeft += totalSetWidth;
-      } else if (container.scrollLeft > totalSetWidth * 1.8) {
-        container.scrollLeft -= totalSetWidth;
-      }
-    };
-
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-
-    let animId;
-    const speed = 0.4;
-
-    const animate = () => {
-      if (!isInteracting) {
-        container.scrollLeft += speed;
-      }
-      animId = requestAnimationFrame(animate);
-    };
-
-    animId = requestAnimationFrame(animate);
-
-    return () => cancelAnimationFrame(animId);
-  }, [isInteracting]);
-
-  const handleInteractionStart = () => {
-    setIsInteracting(true);
-    if (interactionTimeoutRef.current) {
-      clearTimeout(interactionTimeoutRef.current);
-    }
-  };
-
-  const handleInteractionEnd = () => {
-    interactionTimeoutRef.current = setTimeout(() => {
-      setIsInteracting(false);
-    }, 3000);
-  };
+  const duplicatedProducts = [...products, ...products];
 
   return (
-    <div
-      ref={scrollRef}
-      onMouseEnter={handleInteractionStart}
-      onMouseLeave={handleInteractionEnd}
-      onTouchStart={handleInteractionStart}
-      onTouchEnd={handleInteractionEnd}
-      className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 no-scrollbar"
-      style={{ scrollBehavior: isInteracting ? 'smooth' : 'auto' }}
-    >
-      {triplicatedProducts.map((p, i) => (
-        <div
-          key={i}
-          className="snap-center shrink-0 w-[290px] sm:w-[330px] bg-black/40 backdrop-blur-md border border-white/5 rounded-[2rem] p-6 flex flex-col justify-between hover:border-white/20 transition-all duration-300 shadow-xl"
-        >
-          <div className="space-y-4">
-            <div className="flex justify-between items-start">
-              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white">
-                <span className="material-symbols-outlined text-lg">{p.icon}</span>
+    <div className="w-full overflow-hidden py-4 select-none">
+      <div className="animate-marquee flex gap-6">
+        {duplicatedProducts.map((p, i) => (
+          <div
+            key={i}
+            className="shrink-0 w-[290px] sm:w-[330px] bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 flex flex-col justify-between hover:border-sky-400/40 transition-all duration-300 shadow-2xl bento-glass group"
+          >
+            <div className="space-y-4">
+              <div className="flex justify-between items-start">
+                <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-400/20 flex items-center justify-center text-sky-300">
+                  <span className="material-symbols-outlined text-lg">{p.icon}</span>
+                </div>
+                <span className="text-micro-caps text-[8px] px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white font-bold">
+                  {p.badge}
+                </span>
               </div>
-              <span className="font-mono text-[8px] uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white">
-                {p.badge}
-              </span>
+              <div>
+                <h3 className="font-sans text-base font-bold text-white group-hover:text-sky-300 transition-colors">{p.name}</h3>
+                <p className="font-sans text-xs text-white/70 leading-relaxed mt-1">{p.desc}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-sans text-base font-bold text-white">{p.name}</h3>
-              <p className="font-sans text-xs text-white/60 leading-relaxed mt-1">{p.desc}</p>
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/10">
+              <span className="font-mono text-base font-bold text-white">{p.price}</span>
+              <button
+                onClick={() => navigate('/auth')}
+                className="btn btn-primary h-8 min-h-0 px-5 text-[10px] rounded-full font-bold"
+              >
+                Order Kit
+              </button>
             </div>
           </div>
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5">
-            <span className="font-mono text-base font-bold text-white">{p.price}</span>
-            <button
-              onClick={() => navigate('/auth')}
-              className="btn btn-secondary h-8 min-h-0 px-4 text-[9px] rounded-full"
-            >
-              Order
-            </button>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -536,37 +476,7 @@ export default function Welcome() {
     });
   }, []);
 
-  // Initialize GSAP card gradient masking scroll reveals
-  useEffect(() => {
-    if (isWelcomeLoading) return;
-
-    const setupMaskReveal = (gridRef) => {
-      if (!gridRef.current) return;
-      ScrollTrigger.create({
-        trigger: gridRef.current,
-        start: "top bottom-=50",
-        end: "bottom top+=50",
-        scrub: true,
-        onUpdate: (self) => {
-          const progress = self.progress;
-          const grid = gridRef.current;
-          if (!grid) return;
-          const revealPct = progress * 130;
-          const isMobile = window.innerWidth < 768;
-          if (isMobile) {
-            grid.style.maskImage = `linear-gradient(to bottom, black ${revealPct}%, transparent ${revealPct + 25}%)`;
-            grid.style.webkitMaskImage = `linear-gradient(to bottom, black ${revealPct}%, transparent ${revealPct + 25}%)`;
-          } else {
-            grid.style.maskImage = `linear-gradient(to right, black ${revealPct}%, transparent ${revealPct + 15}%)`;
-            grid.style.webkitMaskImage = `linear-gradient(to right, black ${revealPct}%, transparent ${revealPct + 15}%)`;
-          }
-        }
-      });
-    };
-
-    setupMaskReveal(cardsGridRef);
-    setupMaskReveal(storiesGridRef);
-  }, [isWelcomeLoading]);
+  // Card scroll reveals are now clean and unmasked for full visibility
 
   // Pinning & individual features transitions
   useEffect(() => {
@@ -675,7 +585,8 @@ export default function Welcome() {
 
         <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 py-12 lg:py-24 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center relative z-10">
           
-          <div className="lg:col-span-7 space-y-8 text-left">
+          {/* Hero Left Column (Mid-Left Bolder Editorial Text) */}
+          <div className="lg:col-span-6 space-y-8 text-left z-10">
             <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-sky-500/10 border border-sky-400/20 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-sky-400" />
               <span className="font-sans text-xs uppercase tracking-[0.18em] text-sky-300 font-extrabold">
@@ -683,22 +594,22 @@ export default function Welcome() {
               </span>
             </div>
 
-            <h1 className="text-fluid-hero text-white">
+            <h1 className="text-fluid-hero text-white font-extrabold leading-[1.02]">
               Healthcare <br />
-              <span className="font-serif-editorial bg-gradient-to-r from-sky-300 via-sky-100 to-white bg-clip-text text-transparent">
+              <span className="font-serif-editorial bg-gradient-to-r from-sky-300 via-sky-100 to-white bg-clip-text text-transparent font-normal">
                 designed around
               </span> <br />
               your dignity.
             </h1>
 
-            <p className="font-sans text-base sm:text-lg text-white/70 max-w-xl leading-relaxed">
+            <p className="font-sans text-base sm:text-lg text-white/70 max-w-lg leading-relaxed font-normal">
               Consult with top licensed medical professionals, order home diagnostic test kits, and receive prescriptions in plain, unmarked packages. Complete confidentiality, zero judgment.
             </p>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
               <button
                 onClick={() => navigate('/auth')}
-                className="btn btn-primary w-full sm:w-auto h-13 rounded-full px-8 text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20"
+                className="btn btn-primary w-full sm:w-auto h-13 rounded-full px-8 text-xs font-extrabold flex items-center justify-center gap-2 shadow-xl shadow-sky-500/25"
               >
                 <span>Get Started Now</span>
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -728,17 +639,25 @@ export default function Welcome() {
             </div>
           </div>
 
-          {/* Hero Right Column (3D interactive model wrapper) */}
-          <div className="lg:col-span-5 flex justify-center">
-            <div className="relative w-full max-w-md aspect-[4/5] rounded-[2.5rem] p-4 bg-black/40 border border-white/5 bento-glass overflow-hidden shadow-2xl flex flex-col justify-between group hover:border-white/20 transition-all duration-500">
+          {/* Hero Right Column (Centered Small Ethereal Structure & Strategic Floating Cards) */}
+          <div className="lg:col-span-6 flex flex-col items-center justify-center relative z-10 space-y-6">
+            
+            {/* Top Right Strategic Telemetry Pill */}
+            <div className="self-end hidden sm:flex items-center gap-3 bg-black/60 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full shadow-lg">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-micro-caps text-[9px] text-emerald-400 font-bold">100% Confidential Care Active</span>
+            </div>
+
+            {/* Centered Small Ethereal Structure Container */}
+            <div className="relative w-full max-w-sm sm:max-w-md aspect-square rounded-[3rem] p-4 bg-black/60 border border-white/10 bento-glass overflow-hidden shadow-2xl flex flex-col justify-between group hover:border-sky-400/40 transition-all duration-500 mx-auto select-none">
               
-              <div className="p-2 flex items-center justify-between border-b border-white/5 bg-white/5 rounded-2xl">
+              <div className="p-2 flex items-center justify-between border-b border-white/10 bg-white/5 rounded-2xl">
                 <div className="flex gap-1">
                   <button
                     onClick={() => setModelType('product')}
                     className={`h-7 px-3 rounded-lg font-mono text-[8px] uppercase tracking-wider transition-all ${
                       modelType === 'product'
-                        ? 'bg-white text-black font-bold'
+                        ? 'bg-sky-400 text-black font-extrabold'
                         : 'text-white/40 hover:text-white'
                     }`}
                   >
@@ -748,30 +667,30 @@ export default function Welcome() {
                     onClick={() => setModelType('anatomy')}
                     className={`h-7 px-3 rounded-lg font-mono text-[8px] uppercase tracking-wider transition-all ${
                       modelType === 'anatomy'
-                        ? 'bg-white text-black font-bold'
+                        ? 'bg-sky-400 text-black font-extrabold'
                         : 'text-white/40 hover:text-white'
                     }`}
                   >
                     Body Map
                   </button>
                 </div>
-                <span className="font-mono text-[8px] text-white/40 uppercase tracking-widest">
+                <span className="text-micro-caps text-[8px] text-white/50">
                   {modelType === 'product' ? 'Product Zero' : 'Anatomy'}
                 </span>
               </div>
 
-              <div className="flex-1 my-4 rounded-2xl overflow-hidden bg-black/50 border border-white/5 flex items-center justify-center relative select-none">
+              <div className="flex-1 my-3 rounded-2xl overflow-hidden bg-black/50 border border-white/5 flex items-center justify-center relative select-none">
                 <ThreeDViewer type={modelType} />
               </div>
 
-              <div className="p-4 bg-black/60 rounded-2xl space-y-2 border border-white/5">
+              <div className="p-3.5 bg-black/80 rounded-2xl space-y-1.5 border border-white/10">
                 <p className="font-sans text-xs font-bold text-white">
-                  {modelType === 'product' ? 'Interactive 3D Care Pack' : '3D Anatomical Body Mapping'}
+                  {modelType === 'product' ? 'Interactive 3D Care Pack' : 'Clinical Symptom Navigator'}
                 </p>
-                <p className="font-sans text-[11px] text-white/50 leading-relaxed">
+                <p className="font-sans text-[11px] text-white/60 leading-relaxed">
                   {modelType === 'product'
-                    ? 'Examine our unmarked, tamper-evident 3D package (Product Zero). Real-time 360° inspection shows secure handover seals.'
-                    : 'Drag with your cursor to rotate the clinical wireframe. Track diagnostics and mark symptom regions in real-time.'}
+                    ? 'Examine plain, unmarked, tamper-evident package dispatches in 3D.'
+                    : 'Tap symptom regions to view recommended specialists and home test kits.'}
                 </p>
               </div>
             </div>

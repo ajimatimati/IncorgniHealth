@@ -133,9 +133,14 @@ const LivingBackground = ({ mode = "ambient" }) => {
           loop
           autoPlay
           playsInline
+          webkit-playsinline="true"
+          x5-playsinline="true"
+          x5-video-player-type="h5"
+          controls={false}
+          disablePictureInPicture
           preload="auto"
-          className="opacity-[0.4] object-cover w-full h-full"
-          style={{ display: 'block' }}
+          className="opacity-[0.45] object-cover w-full h-full pointer-events-none select-none"
+          style={{ display: 'block', pointerEvents: 'none' }}
         />
         <div className="overlay" />
       </div>
