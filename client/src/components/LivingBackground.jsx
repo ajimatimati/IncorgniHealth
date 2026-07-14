@@ -17,6 +17,7 @@ const LivingBackground = ({ mode = "ambient" }) => {
       case 'ethereal': return '/bg_ethereal.mp4';
       case 'metallic': return '/bg_light_metallic.mp4';
       case 'scroll':   return '/welcome_hero.mp4';
+      case 'hero':     return '/welcome_hero.mp4';
       default:         return '/bg_ethereal.mp4';
     }
   };

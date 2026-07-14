@@ -113,6 +113,12 @@ h3 { font-size: clamp(1.0625rem, 2.5vw, 1.25rem); font-weight: 600; line-height:
   color: var(--muted);
 }
 
+.font-serif-editorial {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
 p  { margin: 0; font-family: var(--font-sans); font-weight: 400; color: var(--on-surface-variant); }
 
 /* ── Layout Panels ───────────────────────────────────────────────────────── */

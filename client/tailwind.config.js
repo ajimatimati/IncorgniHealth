@@ -71,6 +71,7 @@ export default {
         headline: ['Manrope', 'sans-serif'],
         body:     ['Inter', 'system-ui', 'sans-serif'],
         label:    ['Space Grotesk', 'monospace'],
+        serif:    ['Playfair Display', 'Georgia', 'serif'],
         // legacy
         sans:     ['Inter', 'system-ui', 'sans-serif'],
         display:  ['Manrope', 'sans-serif'],

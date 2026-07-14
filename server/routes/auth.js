@@ -137,11 +137,17 @@ router.post('/signup', authLimiter, validate(signupSchema), async (req, res) => 
 
     const emailResult = await sendVerificationEmail(cleanEmail, otpCode);
 
-    res.status(200).json({
-      msg: 'Verification code sent to email.',
+    const response = {
+      msg: emailResult.sent ? 'Verification code sent to email.' : 'Verification code generated.',
       isExisting: false,
       emailSent: emailResult.sent,
-    });
+    };
+
+    if (!emailResult.sent) {
+      response.demoOtp = otpCode;
+    }
+
+    res.status(200).json(response);
   } catch (err) {
     logger.error('Signup check error', { error: err.message });
     res.status(500).json({ msg: 'Server Error' });
@@ -161,10 +167,16 @@ router.post('/resend-otp', authLimiter, validate(resendOtpSchema), async (req, r
 
     const emailResult = await sendVerificationEmail(cleanEmail, otpCode);
 
-    res.status(200).json({
-      msg: 'Verification code sent to email.',
+    const response = {
+      msg: emailResult.sent ? 'Verification code sent to email.' : 'Verification code generated.',
       emailSent: emailResult.sent,
-    });
+    };
+
+    if (!emailResult.sent) {
+      response.demoOtp = otpCode;
+    }
+
+    res.status(200).json(response);
   } catch (err) {
     logger.error('Resend OTP error', { error: err.message });
     res.status(500).json({ msg: 'Server Error' });
