@@ -2,7 +2,7 @@ import React, { useRef, useEffect, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -397,12 +397,9 @@ export default function Welcome() {
   const [activeFeature, setActiveFeature] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isWelcomeLoading, setIsWelcomeLoading] = useState(true);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   const featureRefs = useRef([]);
-
-  const { scrollYProgress } = useScroll();
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -415,6 +412,60 @@ export default function Welcome() {
     }, 1400);
     return () => clearTimeout(timer);
   }, []);
+
+  // Initialize Smooth Cinematic Video Scrubbing with seeking guard
+  useEffect(() => {
+    if (isWelcomeLoading) return;
+    const video = document.getElementById('hero-physician-video');
+    if (!video) return;
+
+    video.pause(); // Take over manual control
+
+    let targetTime = 0;
+    let currentTime = 0;
+    let rafId;
+
+    const setupScrubbing = () => {
+      const heroEl = document.getElementById('hero-section');
+      if (!heroEl) return;
+
+      ScrollTrigger.create({
+        trigger: heroEl,
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: true,
+        onUpdate: (self) => {
+          if (video.duration) {
+            targetTime = video.duration * self.progress;
+          }
+        },
+      });
+
+      const tick = () => {
+        // Smooth lerp - buttery interpolation
+        currentTime += (targetTime - currentTime) * 0.08;
+
+        // Critical seeking guard from screenshot: only seek when browser is ready
+        if (!video.seeking && Math.abs(video.currentTime - currentTime) > 0.01) {
+          video.currentTime = currentTime;
+        }
+
+        rafId = requestAnimationFrame(tick);
+      };
+      tick();
+    };
+
+    if (video.readyState >= 1) {
+      setupScrubbing();
+    } else {
+      video.addEventListener('loadedmetadata', setupScrubbing);
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      video.removeEventListener('loadedmetadata', setupScrubbing);
+    };
+  }, [isWelcomeLoading]);
 
   useEffect(() => {
     if (isWelcomeLoading || !pinnedRef.current || !rightPinRef.current) return;
@@ -511,65 +562,91 @@ export default function Welcome() {
         </AnimatePresence>
       </nav>
 
-      {/* HERO */}
-      <motion.section
-        style={{ opacity: heroOpacity, scale: heroScale }}
-        className="relative min-h-[100dvh] flex flex-col justify-end pt-32 pb-16 px-6 sm:px-12 overflow-hidden"
-      >
-        {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-black/90 to-black z-0" />
-        <div className="absolute inset-0 opacity-30 z-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 30%, rgba(208, 188, 255, 0.12) 0%, transparent 70%)' }} />
-        <div className="absolute inset-0 opacity-20 z-0" style={{ background: 'radial-gradient(ellipse 60% 50% at 80% 60%, rgba(140, 205, 255, 0.08) 0%, transparent 60%)' }} />
+      {/* HERO SECTION WITH CORRECT SCROLL-SCRUBBING ON PHYSICIAN VIDEO */}
+      <section id="hero-section" className="relative min-h-[200vh] bg-[#0a0a0a]">
+        {/* Sticky inner container - pins the layout in screen during the scroll */}
+        <div className="sticky top-0 h-screen flex flex-col justify-between overflow-hidden">
+          
+          {/* Cinematic Grain Overlay */}
+          <div className="hero-grain" />
 
-        {/* Floating grid dots */}
-        <div className="absolute inset-0 bg-dots opacity-40 z-0" />
+          {/* Radial Violet Glow */}
+          <div className="absolute inset-0 z-0" style={{ background: 'radial-gradient(ellipse 60% 80% at 20% 50%, rgba(208, 188, 255, 0.06) 0%, transparent 70%)' }} />
 
-        <div className="w-full max-w-7xl mx-auto relative z-10 flex flex-col gap-16 flex-1 justify-center">
+          {/* Content Grid */}
+          <div className="relative z-10 flex-1 flex items-center max-w-7xl mx-auto w-full px-6 sm:px-12 pt-20 gap-8 lg:gap-16">
+            
+            {/* LEFT - Editorial Hero Text */}
+            <FadeInSection className="flex-1 space-y-8 max-w-xl">
+              <div className="inline-flex items-center gap-2 px-4 py-2 border border-primary/20 bg-primary/5 rounded-full">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                  Confidential Healthcare — Lagos, Nigeria
+                </span>
+              </div>
 
-          <FadeInSection className="max-w-4xl space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 border border-primary/20 bg-primary/5 rounded-full">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="font-mono text-[10px] uppercase tracking-widest text-primary">Confidential Healthcare</span>
+              <h1 className="text-fluid-hero text-white !text-[clamp(2.8rem,7vw,5.5rem)] !leading-[0.92]">
+                You deserve care<br />
+                <span className="font-serif-editorial">without</span><br />
+                compromise.
+              </h1>
+
+              <p className="font-sans text-base sm:text-lg text-white/60 leading-relaxed">
+                Speak with licensed doctors, order home test kits, and receive prescriptions — all under complete anonymity.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => navigate('/auth')}
+                  className="btn btn-primary px-8 py-4 text-xs font-bold shadow-lg shadow-primary/20"
+                >
+                  <span>Start Private Consultation</span>
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+                <a href="#overview" className="btn btn-secondary px-8 py-4 text-xs">
+                  How It Works
+                </a>
+              </div>
+            </FadeInSection>
+
+            {/* RIGHT - Scroll-Scrubbed Physician Video */}
+            <div className="hidden lg:block relative flex-shrink-0 w-[45%] h-[80vh] overflow-hidden bg-black/20 border border-white/[0.05] rounded-2xl">
+              {!videoLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
+                  <div className="w-10 h-10 border border-white/20 border-t-primary animate-spin rounded-full" />
+                </div>
+              )}
+              {/* Left-edge gradient fade */}
+              <div className="absolute inset-y-0 left-0 w-32 z-10 bg-gradient-to-r from-[#0a0a0a] to-transparent" />
+              {/* Bottom-edge gradient fade */}
+              <div className="absolute inset-x-0 bottom-0 h-32 z-10 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+              <video
+                id="hero-physician-video"
+                src="/physician_standing.mp4"
+                muted
+                playsInline
+                preload="auto"
+                controls={false}
+                disablePictureInPicture
+                className="w-full h-full object-cover object-top"
+                onLoadedData={() => setVideoLoaded(true)}
+              />
             </div>
 
-            <h1 className="text-fluid-hero text-white !text-[clamp(2.5rem,8vw,5rem)] !leading-[0.95]">
-              Healthcare <br className="hidden sm:block" />
-              <span className="font-serif-editorial">designed around</span> <br />
-              your dignity.
-            </h1>
-
-            <p className="font-sans text-base sm:text-lg text-white/60 leading-relaxed max-w-xl">
-              Consult licensed doctors, order home diagnostic kits, and receive prescriptions in plain packaging. Zero identity exposure. 100% confidential.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <button
-                onClick={() => navigate('/auth')}
-                className="btn btn-primary px-8 py-4 text-xs font-bold shadow-lg shadow-primary/20"
-              >
-                <span>Start Private Consultation</span>
-                <span className="material-symbols-outlined text-sm">arrow_forward</span>
-              </button>
-              <a
-                href="#overview"
-                className="btn btn-secondary px-8 py-4 text-xs"
-              >
-                Learn How It Works
-              </a>
-            </div>
-          </FadeInSection>
-        </div>
-
-        {/* Stats bar at bottom */}
-        <FadeInSection delay={0.3} className="w-full max-w-7xl mx-auto pt-12 border-t border-white/10 relative z-10">
-          <div className="flex flex-wrap items-center justify-between gap-8">
-            <StatCounter value="24/7" label="Always Available" />
-            <StatCounter value="5,000+" label="Patients Served" />
-            <StatCounter value="100%" label="End-to-End Encrypted" />
-            <StatCounter value="48hr" label="Kit Delivery" />
           </div>
-        </FadeInSection>
-      </motion.section>
+
+          {/* Stats Bar at Bottom of Sticky Container */}
+          <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-12 pb-10 border-t border-white/[0.06] pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-8">
+              <StatCounter value="24/7" label="Always Available" />
+              <StatCounter value="5,000+" label="Patients Served" />
+              <StatCounter value="100%" label="End-to-End Encrypted" />
+              <StatCounter value="48hr" label="Kit Delivery" />
+            </div>
+          </div>
+
+        </div>
+      </section>
 
       {/* OVERVIEW */}
       <section id="overview" className="relative bg-black z-10">
