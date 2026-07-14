@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+
 
 const SECTIONS = [
   {
@@ -154,7 +154,7 @@ export default function EvidenceGuide() {
             <p className="font-label text-[10px] text-outline uppercase tracking-widest mb-12">Actionable Care Guide</p>
             
             <div className="space-y-16">
-              {SECTIONS.map((section, index) => (
+              {SECTIONS.map((section) => (
                 <div key={section.id} id={section.id} className="scroll-mt-24 group relative">
                   {/* Stripe-style Section Anchors/Markers */}
                   <div className="absolute -left-12 top-1.5 hidden xl:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

@@ -11,7 +11,7 @@ const Sarc = () => {
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="bg-[#010101] min-h-screen text-white select-none"
+      className="bg-[#131313] min-h-screen text-white select-none"
     >
       <div className="max-w-5xl mx-auto px-6 sm:px-10 py-10 lg:py-14 space-y-10">
 

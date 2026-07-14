@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import api from '../api';
 import { supabase } from '../supabase';
 
@@ -167,7 +167,7 @@ export default function VideoConsultation() {
       setRxName('');
       setRxDosage('');
       setTimeout(() => setRxSent(false), 3000);
-    } catch (err) {
+    } catch {
       toast.error('Unable to transmit prescription.');
     } finally {
       setRxLoading(false);
@@ -183,7 +183,7 @@ export default function VideoConsultation() {
       toast.success(`Investigation for ${testName} requested.`);
       setTestName('');
       setTimeout(() => setInvSent(false), 3000);
-    } catch (err) {
+    } catch {
       toast.error('Unable to send clinical request.');
     } finally {
       setInvLoading(false);
@@ -197,7 +197,7 @@ export default function VideoConsultation() {
     try {
       const res = await api.post('/ai/analyze', { symptoms: aiSymptoms });
       setAiResult(res.data);
-    } catch (err) {
+    } catch {
       toast.error('Diagnostic synthesis interrupted.');
     } finally {
       setAiLoading(false);
@@ -205,11 +205,11 @@ export default function VideoConsultation() {
   };
 
   return (
-    <div className="h-screen w-full bg-[#010101] flex flex-col md:flex-row overflow-hidden relative select-none">
+    <div className="h-screen w-full bg-[#131313] flex flex-col md:flex-row overflow-hidden relative select-none">
       
       {/* Immersive HUD Overlay Title */}
       <div className="absolute top-6 left-6 z-40 flex items-center gap-3">
-        <div className="bg-[#010101]/60 backdrop-blur-xl border border-white/5 px-4 py-2 rounded-full flex items-center gap-2">
+        <div className="bg-[#131313]/60 backdrop-blur-xl border border-white/5 px-4 py-2 rounded-full flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           <span className="font-sans text-[10px] text-white/70 uppercase tracking-[0.2em] font-extrabold">Secure Video Consultation</span>
         </div>
@@ -244,7 +244,7 @@ export default function VideoConsultation() {
             className="w-full h-full object-cover transform scale-x-[-1]" 
           />
           {!cameraActive && (
-             <div className="absolute inset-0 bg-[#010101]/80 flex flex-col items-center justify-center gap-2">
+             <div className="absolute inset-0 bg-[#131313]/80 flex flex-col items-center justify-center gap-2">
                <div className="w-5 h-5 border border-white/20 border-t-white rounded-full animate-spin" />
                <span className="font-mono text-[8px] text-white/40 uppercase tracking-wider">Syncing feed</span>
              </div>
@@ -423,7 +423,7 @@ export default function VideoConsultation() {
       )}
 
       {/* Floating FaceTime HUD bar */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-[#010101]/60 backdrop-blur-xl border border-white/5 px-6 py-3.5 rounded-full shadow-2xl">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-[#131313]/60 backdrop-blur-xl border border-white/5 px-6 py-3.5 rounded-full shadow-2xl">
         <button 
           onClick={toggleMic} 
           className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all ${

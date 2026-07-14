@@ -778,7 +778,7 @@ function DepositModal({ isOpen, onClose, onDepositSuccess }) {
                 {method === 'moniepoint' && (
                   <div className="space-y-4 p-4 rounded-2xl bg-surface-container border border-outline-variant/10">
                     <div className="flex items-center gap-2 border-b border-outline-variant/5 pb-3 mb-2">
-                      <div className="w-6 h-6 rounded-md bg-[#008b5e] flex items-center justify-center font-bold text-white text-[10px]">M</div>
+                      <div className="w-6 h-6 rounded-lg bg-[#008b5e] flex items-center justify-center font-bold text-white text-[10px]">M</div>
                       <p className="font-headline text-xs font-bold text-on-surface">Moniepoint Secure Checkout</p>
                     </div>
 
@@ -1066,7 +1066,7 @@ function DepositModal({ isOpen, onClose, onDepositSuccess }) {
                                   setAmount('');
                                   setStep('input');
                                 }, 1500);
-                              } catch (e) {
+                              } catch {
                                 toast.error('Simulation ledger write failed.');
                                 setMpPopupStep('card_input');
                               }

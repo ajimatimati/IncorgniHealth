@@ -86,7 +86,7 @@ function StatCard({ icon, label, value, sub, color = 'text-white' }) {
           <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>{icon}</span>
         </div>
         {label === 'Consultations' && (
-          <div className="w-1.5 h-1.5 rounded-sm bg-sky-400" />
+          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
         )}
       </div>
       <div className="mt-4">
@@ -189,6 +189,7 @@ export default function Dashboard() {
   const [consultations, setConsults]  = useState([]);
   const [orders, setOrders]           = useState([]);
   const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState(null);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isStealthMode, setIsStealthMode] = useState(() => localStorage.getItem('stealth_mode') === 'true');
   const [tourStep, setTourStep] = useState(null);
@@ -223,6 +224,7 @@ export default function Dashboard() {
 
   const fetchData = useCallback(async () => {
     try {
+      setError(null);
       const [profileRes, consultRes, ordersRes] = await Promise.all([
         api.get('/user/profile'),
         api.get('/user/consultations?limit=5'),
@@ -231,8 +233,8 @@ export default function Dashboard() {
       setProfile(profileRes.data);
       setConsults(consultRes.data?.data || consultRes.data || []);
       setOrders(ordersRes.data?.data || ordersRes.data || []);
-    } catch (err) {
-      console.error('Dashboard fetch error:', err);
+    } catch {
+      setError('Unable to load your dashboard. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -272,7 +274,7 @@ export default function Dashboard() {
   const nickname = profile?.nickname || user?.publicId || 'Anonymous';
 
   return (
-    <div className="bg-[#010101] min-h-screen text-white select-none">
+    <div className="bg-[#131313] min-h-screen text-white select-none">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 py-10 lg:py-14">
 
         {/* Page header */}
@@ -288,7 +290,16 @@ export default function Dashboard() {
           </p>
         </header>
 
-        {loading ? (
+        {error ? (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <span className="material-symbols-outlined text-4xl text-white/20">cloud_off</span>
+            <p className="text-sm text-white/60 text-center max-w-xs">{error}</p>
+            <button onClick={fetchData} className="btn btn-secondary text-xs">
+              <span className="material-symbols-outlined text-sm">refresh</span>
+              Try again
+            </button>
+          </div>
+        ) : loading ? (
           <BreathingLoader />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -312,9 +323,9 @@ export default function Dashboard() {
                       </div>
                       <p className="font-mono text-[9px] text-white/40 uppercase tracking-[0.25em] font-semibold">Care Wallet</p>
                     </div>
-                    <div className="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-lg border border-white/10">
-                      <div className="w-1.5 h-1.5 rounded-sm bg-emerald-400" />
-                      <p className="font-mono text-[8px] text-white/70 uppercase tracking-widest font-semibold">Available</p>
+                    <div className="flex items-center gap-2 bg-tertiary/10 px-3 py-1 rounded-full border border-tertiary/20">
+                      <div className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse shadow-[0_0_8px_#8ccdff]" />
+                      <p className="font-mono text-[8px] text-tertiary uppercase tracking-widest font-bold">Available for care</p>
                     </div>
                   </div>
                   
@@ -329,17 +340,17 @@ export default function Dashboard() {
                 <div className="mt-8 relative z-10 flex flex-col sm:flex-row items-center gap-3">
                   <button
                     onClick={() => navigate('/profile')}
-                    className="w-full sm:flex-1 bg-white text-black font-sans text-xs font-bold py-3.5 px-6 rounded-full hover:bg-white/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow"
+                    className="w-full sm:flex-1 bg-white text-black font-mono text-[10px] uppercase tracking-wider font-bold py-3.5 px-6 rounded-full hover:bg-white/90 active:scale-[0.97] transition-all flex items-center justify-center gap-2 shadow"
                   >
                     <span className="material-symbols-outlined text-sm">add</span>
-                    Top-up Funds
+                    Add Funds
                   </button>
                   <button
                     onClick={() => navigate('/profile')}
-                    className="w-full sm:flex-1 bg-white/5 border border-white/10 text-white font-sans text-xs font-bold py-3.5 px-6 rounded-full hover:bg-white/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    className="w-full sm:flex-1 bg-white/5 border border-white/10 text-white font-mono text-[10px] uppercase tracking-wider font-bold py-3.5 px-6 rounded-full hover:bg-white/10 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
                   >
                     <span className="material-symbols-outlined text-sm">history</span>
-                    Ledger Audit
+                    History
                   </button>
                 </div>
               </motion.div>
@@ -642,7 +653,7 @@ export default function Dashboard() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-[#010101]/80 backdrop-blur-md"
+              className="fixed inset-0 bg-[#131313]/80 backdrop-blur-md"
               onClick={() => setIsAvatarModalOpen(false)}
             />
             <motion.div
@@ -664,7 +675,7 @@ export default function Dashboard() {
                 </button>
               </div>
               
-              <div className="p-6 bg-[#010101]">
+              <div className="p-6 bg-[#131313]">
                 <DiagnosticOverview
                   patientData={{ nickname: nickname, age: profile?.age || user?.age }}
                   vitals={getMockVitals(user?.publicId)}

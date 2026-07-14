@@ -69,7 +69,6 @@ function OrderCard({ order, onAccept, onReady }) {
 export default function PharmacyDashboard() {
   const [orders, setOrders]   = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter]   = useState('ALL');
   const [visibleCounts, setVisibleCounts] = useState({
     PENDING: 10,
     PROCESSING: 10,

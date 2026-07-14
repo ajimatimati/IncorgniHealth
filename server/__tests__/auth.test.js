@@ -1,3 +1,4 @@
+process.env.NODE_ENV = 'test';
 const request = require('supertest');
 const express = require('express');
 const authRoutes = require('../routes/auth');
@@ -33,7 +34,7 @@ describe('Auth Routes', () => {
   });
 
   describe('POST /signup', () => {
-    it('should generate email registration OTP when email is new', async () => {
+    it('should generate email registration OTP when email is new (OTP not exposed in response)', async () => {
       prisma.user.findFirst.mockResolvedValue(null); // new email
 
       const res = await request(app)
@@ -42,7 +43,14 @@ describe('Auth Routes', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body.isExisting).toBe(false);
-      expect(res.body).toHaveProperty('testOtp');
+      expect(res.body.emailSent).toBeDefined();
+      // OTP must NOT be leaked in the response (security fix)
+      expect(res.body).not.toHaveProperty('testOtp');
+      expect(res.body).not.toHaveProperty('demoOtp');
+      // But we can verify OTP was stored internally for testing
+      const cached = authRoutes._otpCache.get('newuser@example.com');
+      expect(cached).toBeDefined();
+      expect(cached.otp).toHaveLength(6);
     });
 
     it('should return isExisting true for registered emails without generating OTP', async () => {
@@ -77,11 +85,13 @@ describe('Auth Routes', () => {
       });
 
       // 1. Generate OTP first
-      const signupRes = await request(app)
+      await request(app)
         .post('/api/v1/auth/signup')
         .send({ email: 'newuser@example.com', role: 'PATIENT' });
 
-      const testOtp = signupRes.body.testOtp;
+      // Get OTP from internal cache (not from response — that's the security fix)
+      const cached = authRoutes._otpCache.get('newuser@example.com');
+      const testOtp = cached.otp;
 
       // 2. Submit verify with incorrect OTP -> should fail
       const failedVerify = await request(app)

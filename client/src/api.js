@@ -20,13 +20,14 @@ if (!isDev && apiUrl.startsWith('http://') && !apiUrl.includes('localhost')) {
 }
 
 const api = axios.create({
-  // In dev mode: use relative URL — Vite proxy forwards /api → localhost:3001
-  // In production: use the explicit env var or fall back to Render
   baseURL: isDev ? '/api/v1' : apiUrl,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
-    'Bypass-Tunnel-Reminder': 'true',
-    'ngrok-skip-browser-warning': 'true'
+    ...(isDev && {
+      'Bypass-Tunnel-Reminder': 'true',
+      'ngrok-skip-browser-warning': 'true',
+    }),
   }
 });
 

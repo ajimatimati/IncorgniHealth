@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from './Toast';
 import { SOSTrigger } from './SOSModal';
 import JournalModal from './JournalModal';
@@ -9,8 +8,6 @@ import MoodModal from './MoodModal';
 import SafetyCheckModal from './SafetyCheckModal';
 
 export default function UtilityRail() {
-  const { user } = useAuth();
-  const toast = useToast();
   const [activePanel, setActivePanel] = useState(null);
 
   const togglePanel = (panelName) => {

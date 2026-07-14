@@ -1,25 +1,28 @@
 /**
- * Mock Payment Gateway
- * Simulates a payment provider like Paystack or Flutterwave.
+ * Simulated Moniepoint Payment Gateway
+ * Models the integration responses of Moniepoint Checkout API.
  */
-const processPayment = async (amount, currency = 'NGN') => {
+const processPayment = async (amount, currency = 'NGN', channel = 'MONIEPOINT_TRANSFER') => {
     return new Promise((resolve) => {
         setTimeout(() => {
-            // Simulate 90% success rate
-            const isSuccess = Math.random() < 0.9;
+            // Simulate a highly reliable 98% success rate for seamless payments
+            const isSuccess = Math.random() < 0.98;
             if (isSuccess) {
                 resolve({ 
                     success: true, 
-                    transactionId: `TX-${Math.floor(Math.random() * 1000000)}`,
-                    message: "Payment Successful" 
+                    transactionId: `MP-TX-${Math.floor(100000 + Math.random() * 900000)}`,
+                    channel,
+                    amount,
+                    currency,
+                    message: "Moniepoint Payment Approved" 
                 });
             } else {
                 resolve({ 
                     success: false, 
-                    message: "Payment Declined (Insufficient Funds or Network Error)" 
+                    message: "Moniepoint Payment Declined (Insufficient Funds or Gateway Timeout)" 
                 });
             }
-        }, 1500); // Simulate network delay
+        }, 1000); // Network delay simulation
     });
 };
 

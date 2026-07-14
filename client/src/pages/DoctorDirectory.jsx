@@ -131,7 +131,7 @@ export default function DoctorDirectory() {
     try {
       await api.post('/consultation', { doctorId: doctor.id });
       navigate(`/waiting-room/${doctor.publicId}`);
-    } catch (err) {
+    } catch {
       navigate(`/waiting-room/${doctor.publicId}`);
     }
   };
@@ -155,11 +155,11 @@ export default function DoctorDirectory() {
         <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/5 pb-6">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
               <p className="text-micro-caps">Specialist Network</p>
             </div>
             <h1 className="text-fluid-title text-on-surface mt-1.5">
-              Consult with <span className="font-serif-editorial text-sky-300 font-normal">verified clinical experts</span>
+              Consult with <span className="font-serif-editorial text-primary font-normal">verified clinical experts</span>
             </h1>
             <p className="font-sans text-xs text-white/70 mt-1.5 max-w-xl leading-relaxed">
               Connect privately with certified Nigerian physicians, medical specialists, and compassionate counselors around the clock.
@@ -183,7 +183,7 @@ export default function DoctorDirectory() {
             className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:scale-105 transition-transform duration-700 pointer-events-none"
           />
           <div className="relative z-10 max-w-xl space-y-2">
-            <span className="font-mono text-[9px] uppercase tracking-[0.25em] px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 font-bold inline-block">
+            <span className="font-mono text-[9px] uppercase tracking-[0.25em] px-3 py-1 rounded-full bg-primary/20 text-primary border border-primary/30 font-bold inline-block">
               Live Clinical Consultation On-Duty
             </span>
             <h2 className="font-sans text-xl sm:text-2xl font-black text-white">

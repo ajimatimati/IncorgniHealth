@@ -114,7 +114,7 @@ function SidebarContent({ onClose }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#010101]/40 backdrop-blur-3xl border-r border-white/5 relative z-25">
+    <div className="flex flex-col h-full bg-[#131313]/40 backdrop-blur-3xl border-r border-white/5 relative z-25">
       {/* Brand logo header */}
       <div className="flex items-center gap-3 px-6 py-6 border-b border-white/5 shrink-0">
         <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 shadow-md">
@@ -222,7 +222,7 @@ export default function Sidebar() {
   return (
     <>
       {/* ── Desktop: Fixed sticky sidebar ── */}
-      <aside className="hidden lg:flex w-60 shrink-0 h-screen sticky top-0 bg-[#010101] border-r border-white/5 z-20">
+      <aside className="hidden lg:flex w-60 shrink-0 h-screen sticky top-0 bg-[#131313] border-r border-white/5 z-20">
         <SidebarContent />
       </aside>
 
@@ -230,7 +230,7 @@ export default function Sidebar() {
       {!isFullScreen && (
         <>
           {/* Mobile top bar */}
-          <div className="lg:hidden fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-5 bg-[#010101]/40 backdrop-blur-xl border-b border-white/5">
+          <div className="lg:hidden fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-5 bg-[#131313]/40 backdrop-blur-xl border-b border-white/5">
             <div className="flex items-center gap-2">
               <span
                 className="material-symbols-outlined text-white text-base"
@@ -271,7 +271,7 @@ export default function Sidebar() {
           <div className="lg:hidden h-14 shrink-0" />
 
           {/* Mobile bottom floating glass navigation bar */}
-          <nav className="fixed bottom-4 inset-x-4 h-16 bg-[#010101]/55 backdrop-blur-2xl border border-white/5 rounded-full lg:hidden flex justify-around items-center px-4 z-40 shadow-2xl">
+          <nav className="fixed bottom-4 inset-x-4 h-16 bg-[#131313]/55 backdrop-blur-2xl border border-white/5 rounded-full lg:hidden flex justify-around items-center px-4 z-40 shadow-2xl">
             {bottomNavItems.map((item) => {
               const isActive = location.pathname === item.to;
               return (
@@ -334,7 +334,7 @@ export default function Sidebar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-45 bg-[#010101]/60 backdrop-blur-md"
+              className="fixed inset-0 z-45 bg-[#131313]/60 backdrop-blur-md"
               onClick={() => setDrawerOpen(false)}
             />
             {/* Slide-in sidebar panel */}
@@ -344,7 +344,7 @@ export default function Sidebar() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="fixed left-0 top-0 bottom-0 w-72 z-50 bg-[#010101]"
+              className="fixed left-0 top-0 bottom-0 w-72 z-50 bg-[#131313]"
             >
               <SidebarContent onClose={() => setDrawerOpen(false)} />
             </motion.aside>

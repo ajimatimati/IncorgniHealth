@@ -41,7 +41,7 @@ const SpecializedHub        = lazy(() => import('./pages/SpecializedHub'));
 // ─── Loading fallback ─────────────────────────────────────────────────────────
 function PageLoader() {
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#010101] z-[9999] select-none pointer-events-none">
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#131313] z-[9999] select-none pointer-events-none">
       <div className="flex flex-col items-center gap-5">
         <div className="w-8 h-8 rounded-full border border-white/10 border-t-white animate-spin" />
         <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-white/50">IncogniCare</p>

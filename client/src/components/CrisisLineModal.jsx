@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 
 const LINES = [
   { name: 'Samaritans Nigeria', number: '0800-800-2000', available: '24/7', icon: 'call' },

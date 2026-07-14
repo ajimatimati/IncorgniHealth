@@ -248,7 +248,7 @@ export default function SafeHaven() {
   };
 
   return (
-    <div className="bg-[#010101] text-white min-h-screen select-none relative">
+    <div className="bg-[#131313] text-white min-h-screen select-none relative">
       <LivingBackground mode="metallic" />
 
       {/* ── Decrypting splash ── */}
@@ -258,7 +258,7 @@ export default function SafeHaven() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#010101] z-[9999] flex flex-col items-center justify-center select-none"
+            className="fixed inset-0 bg-[#131313] z-[9999] flex flex-col items-center justify-center select-none"
           >
             <div className="text-center space-y-4">
               <div className="w-14 h-14 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-2 shadow-lg">
@@ -286,7 +286,7 @@ export default function SafeHaven() {
               <span className="material-symbols-outlined text-white text-base" style={{ fontVariationSettings: "'FILL' 1" }}>shield_with_heart</span>
             </div>
             <div>
-              <p className="font-sans text-[10px] text-sky-400 uppercase tracking-[0.2em] font-extrabold mb-0.5">Personal Care & Support</p>
+              <p className="font-sans text-[10px] text-primary uppercase tracking-[0.2em] font-extrabold mb-0.5">Personal Care & Support</p>
               <h1 className="font-sans text-3xl lg:text-4xl font-black text-white tracking-tight">Safe Haven</h1>
             </div>
           </div>
@@ -302,7 +302,7 @@ export default function SafeHaven() {
 
         {/* Privacy alert bar */}
         <section className="bg-white/[0.02] rounded-3xl border border-white/5 p-5 flex items-start gap-4 bento-glass">
-          <span className="material-symbols-outlined text-sky-400 text-lg mt-0.5">verified_user</span>
+          <span className="material-symbols-outlined text-primary text-lg mt-0.5">verified_user</span>
           <p className="font-sans text-xs text-white/70 leading-relaxed">
             <strong>Your Privacy is Guaranteed.</strong> All journal logs remain stored locally on your device. Tapping Quick Exit redirects immediately to Google and clears current view memory.
           </p>

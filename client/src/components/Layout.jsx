@@ -1,20 +1,17 @@
 import { useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from './Sidebar';
 import UtilityRail from './UtilityRail';
 import OfflineBanner from './OfflineBanner';
-import { motion } from 'framer-motion';
 
 function PageLoader() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-[#010101] z-[9999]">
-      <div className="flex flex-col items-center gap-6">
-        <div className="w-10 h-10 border border-white/10 border-t-white rounded-full animate-spin" />
-        <div className="text-center space-y-1">
-          <p className="font-sans text-xs font-black tracking-[0.1em] text-white uppercase">IncogniCare Enclave</p>
-          <p className="font-mono text-[9px] text-white/50 uppercase tracking-widest">Decrypting session state…</p>
-        </div>
+    <div className="fixed inset-0 flex items-center justify-center bg-[#131313] z-[9999]">
+      <div className="flex flex-col items-center gap-5">
+        <div className="w-8 h-8 border border-white/10 border-t-[#d0bcff] rounded-full animate-spin" />
+        <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-white/50">IncogniCare</p>
       </div>
     </div>
   );
@@ -52,16 +49,18 @@ export default function Layout() {
             ${isFullScreen ? '' : 'pb-24 lg:pb-0'}
           `}
         >
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="h-full"
-          >
-            <Outlet />
-          </motion.div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="h-full"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 

@@ -15,7 +15,7 @@ const defaultVitals = {
   status:        'Optimal',
 };
 
-const BodyDot = ({ color = 'primary', label, severity = 'normal' }) => {
+const BodyDot = ({ color = 'primary', label }) => {
   const palette = {
     primary:   { bg: 'bg-primary/20',     dot: 'bg-primary',     text: 'text-primary' },
     tertiary:  { bg: 'bg-tertiary/20',    dot: 'bg-tertiary',    text: 'text-tertiary' },

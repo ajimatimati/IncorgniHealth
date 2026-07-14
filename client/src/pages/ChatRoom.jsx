@@ -151,21 +151,21 @@ export default function ChatRoom() {
 
   if (loading) {
     return (
-      <div className="bg-[#010101] min-h-screen flex flex-col items-center justify-center gap-4">
+      <div className="bg-[#131313] min-h-screen flex flex-col items-center justify-center gap-4">
         <div className="w-10 h-10 border border-white/10 border-t-white rounded-full animate-spin" />
         <span className="font-mono text-[9px] uppercase tracking-widest text-white/40">Synchronizing Session</span>
       </div>
     );
   }
-  if (!consultation) return <div className="bg-[#010101] min-h-screen flex items-center justify-center text-white/40 font-mono text-xs">Consultation terminated.</div>;
+  if (!consultation) return <div className="bg-[#131313] min-h-screen flex items-center justify-center text-white/40 font-mono text-xs">Consultation terminated.</div>;
 
   const otherPerson = user.role === 'DOCTOR' ? consultation.patient : consultation.doctor;
 
   return (
-    <div className="bg-[#010101] text-white h-screen flex overflow-hidden font-sans select-none relative">
+    <div className="bg-[#131313] text-white h-screen flex overflow-hidden font-sans select-none relative">
       
       {/* ── Left Sidebar: Context / History (Desktop Only) ── */}
-      <aside className="w-72 border-r border-white/5 hidden lg:flex flex-col bg-[#010101]/40 backdrop-blur-3xl shrink-0 z-10">
+      <aside className="w-72 border-r border-white/5 hidden lg:flex flex-col bg-[#131313]/40 backdrop-blur-3xl shrink-0 z-10">
         <div className="h-[72px] border-b border-white/5 flex items-center px-6 shrink-0 bg-white/5">
           <h2 className="font-mono text-[10px] text-white/40 uppercase tracking-widest font-black">Clinical Log Context</h2>
         </div>
@@ -207,7 +207,7 @@ export default function ChatRoom() {
       <div className="flex-1 flex flex-col h-full relative min-w-0">
         
         {/* Top Header Panel */}
-        <header className="fixed top-0 inset-x-0 lg:left-72 h-[72px] bg-[#010101]/40 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-40 select-none">
+        <header className="fixed top-0 inset-x-0 lg:left-72 h-[72px] bg-[#131313]/40 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-40 select-none">
           <div className="flex items-center gap-4">
             <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all lg:hidden">
               <span className="material-symbols-outlined text-white/70 text-sm">arrow_back</span>
@@ -249,7 +249,7 @@ export default function ChatRoom() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="absolute top-[72px] inset-x-0 bg-[#010101]/95 border-b border-white/5 overflow-hidden z-40"
+              className="absolute top-[72px] inset-x-0 bg-[#131313]/95 border-b border-white/5 overflow-hidden z-40"
             >
               <div className="px-6 py-4">
                 <input 
@@ -269,7 +269,7 @@ export default function ChatRoom() {
         <main 
           ref={scrollContainerRef} 
           onScroll={handleScroll} 
-          className="flex-1 overflow-y-auto px-6 pt-24 pb-32 space-y-6 no-scrollbar bg-[#010101]"
+          className="flex-1 overflow-y-auto px-6 pt-24 pb-32 space-y-6 no-scrollbar bg-[#131313]"
         >
           {filteredMessages.map((msg, idx) => {
             const isMe = msg.senderId === user.id;
@@ -312,7 +312,7 @@ export default function ChatRoom() {
                           const bytes = CryptoJS.AES.decrypt(msg.content, chatSecret);
                           const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
                           return decryptedText ? decryptedText : msg.content;
-                        } catch (e) {
+                        } catch {
                           return msg.content;
                         }
                       })()}

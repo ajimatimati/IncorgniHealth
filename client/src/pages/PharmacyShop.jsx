@@ -54,7 +54,7 @@ function OrderSheet({ product, onClose, onSuccess }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[90] bg-[#010101]/60 backdrop-blur-md"
+            className="fixed inset-0 z-[90] bg-[#131313]/60 backdrop-blur-md"
             onClick={onClose}
           />
           <motion.div
@@ -177,7 +177,7 @@ export default function PharmacyShop() {
   };
 
   return (
-    <div className="bg-[#010101] text-white min-h-screen select-none">
+    <div className="bg-[#131313] text-white min-h-screen select-none">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 py-10 lg:py-14 space-y-10">
 
         {/* Header */}
@@ -189,7 +189,7 @@ export default function PharmacyShop() {
             <div>
               <p className="text-micro-caps mb-0.5">Discreet Dispensary</p>
               <h1 className="text-fluid-title text-white tracking-tight">
-                Pharmacy & <span className="font-serif-editorial text-sky-300 font-normal">Discreet Dispensary</span>
+                Pharmacy & <span className="font-serif-editorial text-primary font-normal">Discreet Dispensary</span>
               </h1>
             </div>
           </div>
@@ -209,7 +209,7 @@ export default function PharmacyShop() {
             className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:scale-105 transition-transform duration-700 pointer-events-none"
           />
           <div className="relative z-10 max-w-xl space-y-2">
-            <span className="font-mono text-[9px] uppercase tracking-[0.25em] px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 font-bold inline-block">
+            <span className="font-mono text-[9px] uppercase tracking-[0.25em] px-3 py-1 rounded-full bg-primary/20 text-primary border border-primary/30 font-bold inline-block">
               Zero-Exposure Fulfillment Protocol
             </span>
             <h2 className="font-sans text-xl sm:text-2xl font-black text-white">

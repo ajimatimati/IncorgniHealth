@@ -39,6 +39,15 @@ export default function AdminDashboard() {
 
   useEffect(() => { fetchData(); }, []);
 
+  const filteredUsers = useMemo(() => {
+    return users.filter(u => {
+      const matchRole = roleFilter ? u.role === roleFilter : true;
+      const matchStatus = statusFilter === 'ONLINE' ? u.isOnline : statusFilter === 'OFFLINE' ? !u.isOnline : true;
+      const matchSearch = searchQuery ? (u.publicId?.toLowerCase().includes(searchQuery.toLowerCase()) || u.nickname?.toLowerCase().includes(searchQuery.toLowerCase())) : true;
+      return matchRole && matchStatus && matchSearch;
+    });
+  }, [users, roleFilter, statusFilter, searchQuery]);
+
   if (user?.role !== 'ADMIN') {
     return (
       <div className="bg-background min-h-screen flex items-center justify-center p-6">
@@ -61,20 +70,11 @@ export default function AdminDashboard() {
     { label: 'Platform Revenue', value: `₦${(metrics.revenue.platformFees || 0).toLocaleString()}`, icon: 'payments', color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20', trend: '+24%' },
   ] : [];
 
-  const filteredUsers = useMemo(() => {
-    return users.filter(u => {
-      const matchRole = roleFilter ? u.role === roleFilter : true;
-      const matchStatus = statusFilter === 'ONLINE' ? u.isOnline : statusFilter === 'OFFLINE' ? !u.isOnline : true;
-      const matchSearch = searchQuery ? (u.publicId?.toLowerCase().includes(searchQuery.toLowerCase()) || u.nickname?.toLowerCase().includes(searchQuery.toLowerCase())) : true;
-      return matchRole && matchStatus && matchSearch;
-    });
-  }, [users, roleFilter, statusFilter, searchQuery]);
-
   return (
     <PullToRefresh onRefresh={fetchData}>
       <div className="bg-background min-h-full text-on-background">
         <main className="px-4 sm:px-6 lg:px-10 max-w-[1600px] mx-auto py-8 lg:py-10 space-y-8">
-          
+
           {/* Header */}
           <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
@@ -115,7 +115,7 @@ export default function AdminDashboard() {
                     <div className={`w-12 h-12 rounded-2xl ${card.bg} flex items-center justify-center shrink-0`}>
                       <span className={`material-symbols-outlined ${card.color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{card.icon}</span>
                     </div>
-                    <span className={`font-mono text-[10px] ${card.trend.includes('-') ? 'text-error' : 'text-emerald-400'} bg-surface-container-highest px-2 py-1 rounded-md`}>
+                    <span className={`font-mono text-[10px] ${card.trend.includes('-') ? 'text-error' : 'text-emerald-400'} bg-surface-container-highest px-2 py-1 rounded-full`}>
                       {card.trend}
                     </span>
                   </div>

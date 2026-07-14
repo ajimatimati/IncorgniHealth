@@ -128,22 +128,19 @@ router.post('/signup', authLimiter, validate(signupSchema), async (req, res) => 
       });
     }
 
-    // New user: Generate 6-digit OTP code
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // New user: Generate 6-digit OTP code (cryptographically secure)
+    const otpCode = crypto.randomInt(100000, 999999).toString();
     const expires = Date.now() + 5 * 60 * 1000; // 5 minutes validity
-    
-    otpCache.set(cleanEmail, { otp: otpCode, expires });
-    logger.info(`[Registration OTP] Generated for ${cleanEmail}: ${otpCode}`);
 
-    // Send actual verification email via Nodemailer / SMTP
+    otpCache.set(cleanEmail, { otp: otpCode, expires });
+    logger.info('[Registration OTP] Generated', { email: cleanEmail.slice(0, 3) + '***' });
+
     const emailResult = await sendVerificationEmail(cleanEmail, otpCode);
 
     res.status(200).json({
       msg: 'Verification code sent to email.',
       isExisting: false,
       emailSent: emailResult.sent,
-      // Provide demo OTP only if email dispatch was not configured or in test mode
-      ...((!emailResult.sent || process.env.NODE_ENV === 'test') && { demoOtp: otpCode }),
     });
   } catch (err) {
     logger.error('Signup check error', { error: err.message });
@@ -158,7 +155,7 @@ router.post('/resend-otp', authLimiter, validate(resendOtpSchema), async (req, r
     const { email } = req.body;
     const cleanEmail = email.toLowerCase().trim();
 
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpCode = crypto.randomInt(100000, 999999).toString();
     const expires = Date.now() + 5 * 60 * 1000;
     otpCache.set(cleanEmail, { otp: otpCode, expires });
 
@@ -167,7 +164,6 @@ router.post('/resend-otp', authLimiter, validate(resendOtpSchema), async (req, r
     res.status(200).json({
       msg: 'Verification code sent to email.',
       emailSent: emailResult.sent,
-      ...((!emailResult.sent || process.env.NODE_ENV === 'test') && { demoOtp: otpCode }),
     });
   } catch (err) {
     logger.error('Resend OTP error', { error: err.message });
@@ -188,8 +184,16 @@ router.post('/verify', authLimiter, validate(verifySchema), async (req, res) => 
     });
 
     if (user) {
-      // Legacy user who doesn't have a PIN set yet -> set this as their PIN!
+      // Legacy user who doesn't have a PIN set yet: require email OTP verification first
       if (!user.pinHash) {
+        if (!emailOtp) {
+          return res.status(400).json({ msg: 'Email verification required to set your PIN. Please request a code first.', requiresOtp: true });
+        }
+        const cached = otpCache.get(email.toLowerCase().trim());
+        if (!cached || cached.expires < Date.now() || cached.otp !== emailOtp) {
+          return res.status(400).json({ msg: 'Invalid or expired email verification code.' });
+        }
+        otpCache.delete(email.toLowerCase().trim());
         await prisma.user.update({
           where: { id: user.id },
           data: { pinHash: pinHash },
@@ -197,8 +201,10 @@ router.post('/verify', authLimiter, validate(verifySchema), async (req, res) => 
         user.pinHash = pinHash;
       }
 
-      // Verify passcode
-      if (user.pinHash !== pinHash) {
+      // Verify passcode (timing-safe comparison)
+      const pinMatches = user.pinHash.length === pinHash.length &&
+        crypto.timingSafeEqual(Buffer.from(user.pinHash), Buffer.from(pinHash));
+      if (!pinMatches) {
         return res.status(401).json({ msg: 'Invalid passcode. Please try again.' });
       }
     } else {
@@ -398,6 +404,11 @@ router.post('/logout', auth, async (req, res) => {
     res.status(500).json({ msg: 'Server Error' });
   }
 });
+
+// Expose OTP cache for test harness only
+if (process.env.NODE_ENV === 'test') {
+  router._otpCache = otpCache;
+}
 
 module.exports = router;
 

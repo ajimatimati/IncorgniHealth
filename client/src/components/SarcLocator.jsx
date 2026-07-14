@@ -148,7 +148,7 @@ export default function SarcLocator() {
         </div>
 
         {/* Leaflet map */}
-        <div className="flex-1 rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl relative bg-[#010101]">
+        <div className="flex-1 rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl relative bg-[#131313]">
           <MapContainer center={[20, 5]} zoom={2} style={{ height: '100%', width: '100%', zIndex: 1 }} zoomControl>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -182,10 +182,10 @@ export default function SarcLocator() {
 
       {/* Selected centre detail overlay card */}
       {selected && (
-        <div className="bg-[#010101]/40 backdrop-blur-3xl border border-white/5 rounded-[2rem] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 bento-glass shadow-2xl animate-fadeIn">
+        <div className="bg-[#131313]/40 backdrop-blur-3xl border border-white/5 rounded-[2rem] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 bento-glass shadow-2xl animate-fadeIn">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ background: REGION_COLORS[selected.region] || '#aaa' }} />
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: REGION_COLORS[selected.region] || '#aaa' }} />
               <span className="font-mono text-[8px] text-white/40 uppercase tracking-widest font-semibold">{selected.country}</span>
             </div>
             <h3 className="font-sans text-sm font-bold text-white">{selected.name}</h3>

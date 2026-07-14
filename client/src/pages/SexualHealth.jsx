@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import PanicButton from '../components/PanicButton';
 
 const TABS = ['Clinical Testing', 'Health Education', 'Confidential Consult'];

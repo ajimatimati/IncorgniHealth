@@ -52,7 +52,7 @@ export default function AvatarGenerator({
   if (seed && typeof seed === 'string' && seed.startsWith('{')) {
     try {
       config = JSON.parse(seed);
-    } catch (e) {}
+    } catch { /* invalid JSON seed, use defaults */ }
   }
 
   const hash = hashSeed(config.seed || seed);

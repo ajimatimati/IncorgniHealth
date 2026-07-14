@@ -26,11 +26,11 @@ export default defineConfig({
       manifest: {
         name: "IncogniCare",
         short_name: "IncogniCare",
-        description: "Anonymous healthcare built on zero-knowledge identity. Your health, your secret.",
+        description: "Professional, confidential healthcare. Your health information is safe.",
         start_url: "/",
         display: "standalone",
-        background_color: "#010101",
-        theme_color: "#010101",
+        background_color: "#131313",
+        theme_color: "#131313",
         orientation: "portrait-primary",
         icons: [
           {
@@ -53,6 +53,17 @@ export default defineConfig({
       }
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'three-core': ['three'],
+          'three-fiber': ['@react-three/fiber', '@react-three/drei'],
+          'framer': ['framer-motion'],
+        },
+      },
+    },
+  },
   server: {
     port: 5174,
     proxy: {

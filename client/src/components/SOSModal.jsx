@@ -139,7 +139,6 @@ export default function SOSModal({ isOpen, onClose }) {
  * Usage: <SOSTrigger onActivate={openModal} />
  */
 export function SOSTrigger({ onActivate, children, className = '' }) {
-  const holdRef = useRef(null);
   const [progress, setProgress] = useState(0);
   const progressRef = useRef(null);
 

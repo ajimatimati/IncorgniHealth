@@ -293,7 +293,7 @@ export default function DoctorDashboard() {
                     <span className="font-sans text-[10px] uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded font-extrabold">Active Patient Session</span>
                   </div>
                   <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
-                    Patient consultation session active. All diagnostic vitals, symptoms, and medical notes are securely linked to Private ID: <strong className="font-mono text-white">{selected.patient?.publicId}</strong>.
+                    Patient consultation session active. All diagnostic vitals, symptoms, and medical notes are securely linked to Private ID: <strong className="font-mono text-white">{selectedPatient.type === 'waiting' ? selectedPatient.data.publicId : selectedPatient.data.patient?.publicId}</strong>.
                   </p>
                 </div>
                 

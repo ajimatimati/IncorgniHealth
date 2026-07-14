@@ -1,13 +1,10 @@
-import { useState, useEffect } from 'react';
-import api from '../api';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../components/Toast';
 import PullToRefresh from '../components/PullToRefresh';
 import AvatarGenerator from '../components/AvatarGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SarcOfficerDashboard() {
-  const { user } = useAuth();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState('inbound');
   const [cases, setCases] = useState([]);
@@ -15,7 +12,7 @@ export default function SarcOfficerDashboard() {
   const [visibleCount, setVisibleCount] = useState(10);
   const [selectedCase, setSelectedCase] = useState(null);
 
-  const fetchCases = async () => {
+  const fetchCases = useCallback(async () => {
     try {
       setLoading(true);
       setTimeout(() => {
@@ -29,13 +26,13 @@ export default function SarcOfficerDashboard() {
       toast.error('Failed to connect to SARC feed');
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchCases();
     const interval = setInterval(fetchCases, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchCases]);
 
   const pendingCases = cases.filter(c => c.status === 'PENDING');
   const activeCases = cases.filter(c => c.status === 'ACTIVE');
@@ -169,7 +166,7 @@ export default function SarcOfficerDashboard() {
                                       </div>
                                     </div>
                                     {c.priority === 'HIGH' && (
-                                      <span className="px-2 py-1 rounded-md bg-error text-on-error font-label text-[8px] uppercase tracking-widest">Priority</span>
+                                       <span className="px-2 py-1 rounded-full bg-error text-on-error font-label text-[8px] uppercase tracking-widest">Priority</span>
                                     )}
                                   </div>
                                   <p className="font-body text-xs text-on-surface-variant opacity-90 leading-relaxed truncate">
@@ -227,7 +224,7 @@ export default function SarcOfficerDashboard() {
                     <div className="p-8 border-b border-outline-variant/10 bg-surface-container flex items-start justify-between shrink-0">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
-                          <span className={`px-2.5 py-1 rounded-md font-label text-[9px] uppercase tracking-widest ${selectedCase.priority === 'HIGH' ? 'bg-error text-on-error' : 'bg-surface-container-highest text-on-surface-variant'}`}>{selectedCase.priority}</span>
+                           <span className={`px-2.5 py-1 rounded-full font-label text-[9px] uppercase tracking-widest ${selectedCase.priority === 'HIGH' ? 'bg-error text-on-error' : 'bg-surface-container-highest text-on-surface-variant'}`}>{selectedCase.priority}</span>
                           <span className="font-label text-[10px] text-outline uppercase tracking-widest">{selectedCase.id}</span>
                         </div>
                         <h2 className="font-headline text-2xl font-bold text-on-surface">Incident Report</h2>

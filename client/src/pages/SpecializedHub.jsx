@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 // Simple encrypted storage mockup using base64 for obfuscation to preserve zero-knowledge privacy client-side
@@ -10,7 +10,7 @@ function getSecureLogs() {
     const raw = localStorage.getItem(SECURE_STORAGE_KEY);
     if (!raw) return { cycle: [], chemo: [], bp: [], glucose: [] };
     return JSON.parse(atob(raw));
-  } catch (e) {
+  } catch {
     return { cycle: [], chemo: [], bp: [], glucose: [] };
   }
 }
@@ -30,12 +30,7 @@ export default function SpecializedHub() {
     return location.state?.category || 'womens-health';
   });
   
-  // State for all logs
-  const [logs, setLogs] = useState({ cycle: [], chemo: [], bp: [], glucose: [] });
-
-  useEffect(() => {
-    setLogs(getSecureLogs());
-  }, []);
+  const [logs, setLogs] = useState(getSecureLogs);
 
   const updateLogs = (newLogs) => {
     setLogs(newLogs);
@@ -159,7 +154,7 @@ export default function SpecializedHub() {
   ];
 
   return (
-    <div className="bg-[#010101] min-h-screen text-white select-none">
+    <div className="bg-[#131313] min-h-screen text-white select-none">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 py-10 lg:py-14">
         
         {/* Header */}

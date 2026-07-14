@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 
 const MOODS = [
   { emoji: '😞', label: 'Low',       val: 1, color: 'border-error/40 bg-error/10',       text: 'text-error'          },

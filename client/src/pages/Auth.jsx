@@ -64,7 +64,7 @@ export default function Auth() {
   const [demoCode, setDemoCode] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
   const [resendSuccess, setResendSuccess] = useState('');
-  const [useEmailVerification, setUseEmailVerification] = useState(false);
+  const [useEmailVerification] = useState(false);
   
   // Custom decryption states
   const [decrypting, setDecrypting] = useState(false);
@@ -149,9 +149,8 @@ export default function Auth() {
     let activeType = 'pin';
     
     // If not existing, we have two fields. We prioritize active focused element or PIN if none.
-    const isPinFocused = document.activeElement && document.activeElement.id.startsWith('otp-');
     const isEmailOtpFocused = document.activeElement && document.activeElement.id.startsWith('emailOtp-');
-    
+
     if (isEmailOtpFocused) {
       activeOtp = [...emailOtp];
       activeType = 'email';
@@ -171,9 +170,8 @@ export default function Auth() {
     let activeOtp = [...otp];
     let activeType = 'pin';
     
-    const isPinFocused = document.activeElement && document.activeElement.id.startsWith('otp-');
     const isEmailOtpFocused = document.activeElement && document.activeElement.id.startsWith('emailOtp-');
-    
+
     if (isEmailOtpFocused) {
       activeOtp = [...emailOtp];
       activeType = 'email';
@@ -300,7 +298,7 @@ export default function Auth() {
 
   /* ── render ────────────────────────────────────── */
   return (
-    <div className="bg-[#010101] text-white min-h-screen flex flex-col md:flex-row overflow-x-hidden relative font-sans">
+    <div className="bg-[#131313] text-white min-h-screen flex flex-col md:flex-row overflow-x-hidden relative font-sans">
       
       {/* Ambient background loops */}
       <LivingBackground mode="ambient" />
@@ -312,7 +310,7 @@ export default function Auth() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#010101] z-[99999] flex flex-col items-center justify-center select-none"
+            className="fixed inset-0 bg-[#131313] z-[99999] flex flex-col items-center justify-center select-none"
           >
             <div className="text-center space-y-4">
               <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-2 shadow-lg">
@@ -386,7 +384,7 @@ export default function Auth() {
                 className="space-y-6"
               >
                 <header className="space-y-1">
-                  <span className="font-sans text-[10px] text-sky-400 uppercase tracking-[0.2em] font-extrabold">Welcome to IncogniCare</span>
+                  <span className="font-sans text-[10px] text-primary uppercase tracking-[0.2em] font-extrabold">Welcome to IncogniCare</span>
                   <h3 className="font-sans text-2xl font-black text-white leading-none">Sign In or Register</h3>
                   <p className="font-sans text-xs text-white/60">Your health information remains safe and confidential.</p>
                 </header>
@@ -403,7 +401,7 @@ export default function Auth() {
                           onClick={() => setRole(r.id)}
                           className={`py-2 rounded-full font-sans text-[10px] font-bold transition-all whitespace-nowrap text-center
                             ${role === r.id
-                              ? 'bg-sky-400 text-black font-extrabold'
+                              ? 'bg-primary text-black font-extrabold'
                               : 'text-white/50 hover:text-white'}`}
                         >
                           {r.label.split(' ')[0]}
@@ -434,7 +432,7 @@ export default function Auth() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="btn btn-primary w-full text-xs font-extrabold py-3.5 rounded-full shadow-lg shadow-sky-500/20"
+                    className="btn btn-primary w-full text-xs font-extrabold py-3.5 rounded-full shadow-lg shadow-primary/20"
                   >
                     {loading ? 'Checking...' : 'Continue'}
                   </button>
@@ -486,7 +484,7 @@ export default function Auth() {
                 className="space-y-6"
               >
                 <header className="space-y-1">
-                  <span className="font-sans text-[10px] text-sky-400 uppercase tracking-[0.2em] font-extrabold">Verification</span>
+                  <span className="font-sans text-[10px] text-primary uppercase tracking-[0.2em] font-extrabold">Verification</span>
                   <h3 className="font-sans text-2xl font-black text-white leading-none">
                     {isExisting ? 'Enter Your PIN' : 'Create Your PIN'}
                   </h3>
@@ -500,9 +498,9 @@ export default function Auth() {
 
                 <form onSubmit={handleVerify} className="space-y-6">
                   {demoCode && (
-                    <div className="p-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-200 text-xs flex items-center justify-between shadow-lg">
+                    <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/30 text-primary-fixed-dim text-xs flex items-center justify-between shadow-lg">
                       <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-base text-sky-400">mark_email_read</span>
+                        <span className="material-symbols-outlined text-base text-primary">mark_email_read</span>
                         <span className="font-sans text-[11px]">Code: <strong className="font-mono text-white text-xs tracking-wider">{demoCode}</strong></span>
                       </div>
                       <button
@@ -511,7 +509,7 @@ export default function Auth() {
                           const digits = demoCode.split('');
                           setEmailOtp(digits);
                         }}
-                        className="font-mono text-[9px] uppercase tracking-widest px-3 py-1 rounded-xl bg-sky-400 hover:bg-sky-300 text-black font-extrabold transition-all"
+                        className="font-mono text-[9px] uppercase tracking-widest px-3 py-1 rounded-xl bg-primary hover:bg-primary-fixed-dim text-black font-extrabold transition-all"
                       >
                         Auto-fill
                       </button>
@@ -534,7 +532,7 @@ export default function Auth() {
                           type="button"
                           onClick={handleResendOtp}
                           disabled={resendTimer > 0 || loading}
-                          className="font-mono text-[9px] uppercase tracking-widest text-sky-400 hover:text-sky-300 transition-colors disabled:opacity-40"
+                          className="font-mono text-[9px] uppercase tracking-widest text-primary hover:text-primary-fixed-dim transition-colors disabled:opacity-40"
                         >
                           {resendTimer > 0 ? `Resend (${resendTimer}s)` : 'Resend Code'}
                         </button>

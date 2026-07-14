@@ -3,7 +3,7 @@ import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import AvatarGenerator from '../components/AvatarGenerator';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 
 export default function Settings() {
   const { user, logout, token, login } = useAuth();

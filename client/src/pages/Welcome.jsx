@@ -1,13 +1,12 @@
 import React, { useRef, useEffect, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import LivingBackground from '../components/LivingBackground';
 
-// Register GSAP ScrollTrigger
 gsap.registerPlugin(ScrollTrigger);
 
 // ── 3D Product Zero Model Component ──────────────────────────────────────────
