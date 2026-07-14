@@ -447,22 +447,58 @@ export default function Welcome() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Initialize Smooth Ambient Loop with Scroll Acceleration
+  // Initialize Smooth Cinematic Video Scrubbing
   useEffect(() => {
     const video = document.getElementById("welcome-scroll-video");
     if (!video) return;
 
-    video.play().catch(() => {});
+    // Pause video to take over manual scrubbing control
+    video.pause();
 
-    ScrollTrigger.create({
-      trigger: "body",
-      start: "top top",
-      end: "bottom bottom",
-      scrub: true,
-      onUpdate: (self) => {
-        video.playbackRate = 1.0 + self.getVelocity() * 0.0005;
-      }
-    });
+    let targetTime = 0;
+    let currentTime = 0;
+    let animationFrameId;
+
+    const setupScrubbing = () => {
+      ScrollTrigger.create({
+        trigger: "body",
+        start: "top top",
+        end: "bottom bottom",
+        scrub: true,
+        onUpdate: (self) => {
+          if (video.duration) {
+            // Map scroll progress to video duration
+            targetTime = video.duration * self.progress;
+          }
+        }
+      });
+
+      const updateVideo = () => {
+        // Smooth interpolation
+        currentTime += (targetTime - currentTime) * 0.08;
+
+        // Seeking guard
+        if (!video.seeking && Math.abs(video.currentTime - currentTime) > 0.01) {
+          video.currentTime = currentTime;
+        }
+
+        animationFrameId = requestAnimationFrame(updateVideo);
+      };
+
+      updateVideo();
+    };
+
+    if (video.readyState >= 1) {
+      setupScrubbing();
+    } else {
+      video.addEventListener('loadedmetadata', setupScrubbing);
+    }
+
+    return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      video.removeEventListener('loadedmetadata', setupScrubbing);
+      // Clean up ScrollTrigger related to this instance if needed, though they usually auto-cleanup on unmount if configured right.
+    };
   }, []);
 
   // Pinning & individual features transitions
