@@ -578,10 +578,9 @@ export default function Welcome() {
             
             {/* LEFT - Editorial Hero Text */}
             <FadeInSection className="flex-1 space-y-8 max-w-xl">
-              <div className="inline-flex items-center gap-2 px-4 py-2 border border-primary/20 bg-primary/5 rounded-full">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
-                  Confidential Healthcare — Lagos, Nigeria
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+                  Confidential Healthcare &bull; Lagos, Nigeria
                 </span>
               </div>
 
